@@ -13,8 +13,6 @@ prompts/
 
 ## Установка
 
-Скопируй в глобальный конфиг Claude Code:
-
 ```bash
 cp commands/bootstrap.md ~/.claude/commands/
 cp prompts/meta-prompt-bootstrap.md ~/.claude/prompts/
@@ -22,16 +20,14 @@ cp prompts/meta-prompt-bootstrap.md ~/.claude/prompts/
 
 ## Использование
 
-В корне любого проекта:
+`/bootstrap` — slash-команда, запускается **внутри Claude Code**, не в обычном терминале:
 
+```bash
+cd /path/to/your-project
+claude
 ```
-/bootstrap
 ```
-
-Или с кастомным промпт-файлом:
-
-```
-/bootstrap path/to/custom-prompt.md
+> /bootstrap
 ```
 
 ## Что генерируется
