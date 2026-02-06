@@ -2,6 +2,13 @@
 
 Система автоматического bootstrap для Claude Code. Анализирует любой проект и генерирует полную структуру `.claude/`: агенты, скиллы, пайплайны, hooks, state, settings, CLAUDE.md.
 
+## Требования
+
+- [Claude Code CLI](https://docs.anthropic.com/en/docs/claude-code)
+- Bash 4+
+- `jq`
+- macOS, Linux или Windows (WSL)
+
 ## Структура
 
 ```
