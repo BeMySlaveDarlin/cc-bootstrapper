@@ -151,6 +151,7 @@ PKG_MANAGER=composer|npm|yarn|pnpm|pip|cargo|go|maven|gradle|bundler
 | Database | `database/` | миграции, типы данных, индексы |
 | Testing | `testing/` | тест-паттерны |
 | Routing | `routing/` | маршрутизация задач по пайплайнам |
+| Memory | `memory/` | трёхуровневая память: facts, decisions, archive |
 {CUSTOM_SKILLS_ROWS}
 
 ## Pipelines
@@ -175,6 +176,9 @@ PKG_MANAGER=composer|npm|yarn|pnpm|pip|cargo|go|maven|gradle|bundler
 
 - `.claude/state/session.md` — активная сессия
 - `.claude/state/task-log.md` — реестр задач
+- `.claude/state/facts.md` — текущие факты проекта (стек, пути, решения, проблемы)
+- `.claude/state/decisions/` — архитектурные решения (ADR-lite)
+- `.claude/state/decisions/archive/` — устаревшие решения (автоматическая ротация)
 - `.claude/state/sessions/` — архив сессий
 - `.claude/output/` — API-контракты, QA-документация
 - `.claude/input/` — входные задачи, планы
@@ -289,7 +293,7 @@ PKG_MANAGER=composer|npm|yarn|pnpm|pip|cargo|go|maven|gradle|bundler
 ### 4.1 Директории
 
 ```bash
-mkdir -p .claude/{agents,skills/{code-style,architecture,database,testing,routing},pipelines,scripts/hooks,state/sessions,output/{contracts,qa},input,database}
+mkdir -p .claude/{agents,skills/{code-style,architecture,database,testing,routing,memory},pipelines,scripts/hooks,state/{sessions,decisions,decisions/archive},output/{contracts,qa},input,database}
 ```
 
 Если CUSTOM_SKILLS не пуст — создай дополнительные директории:
@@ -316,6 +320,8 @@ mkdir -p .claude/skills/{custom_skill_1,custom_skill_2,...}
 Планирование модулей, сервисов, архитектуры. READ-ONLY — не пишет код.
 
 ## Контекст
+- `.claude/state/facts.md` — текущие факты проекта (ЧИТАЙ ПЕРВЫМ)
+- `.claude/state/decisions/` — архитектурные решения
 - `.claude/database/schema.sql` — схема БД (обновляется автоматически)
 - {SOURCE_DIR} — код существующих модулей (сканируй напрямую)
 - `.claude/skills/architecture/SKILL.md` — архитектурные паттерны
@@ -327,6 +333,8 @@ mkdir -p .claude/skills/{custom_skill_1,custom_skill_2,...}
 2. Изучи существующие модули для понимания паттернов
 3. Определи затрагиваемые модули и cross-module зависимости
 4. Создай план реализации
+5. Запиши ключевые архитектурные решения в `state/decisions/{date}-{slug}.md`
+6. Обнови `state/facts.md` (Active Decisions, Key Paths если изменились)
 
 ## Формат вывода
 
@@ -356,6 +364,8 @@ mkdir -p .claude/skills/{custom_skill_1,custom_skill_2,...}
 Пишет {LANG}-код по плану архитектора.
 
 ## Контекст
+- `.claude/state/facts.md` — текущие факты проекта (ЧИТАЙ ПЕРВЫМ)
+- `.claude/state/decisions/` — архитектурные решения
 - План архитектора (передаётся в prompt)
 - Код модуля: {SOURCE_DIR}
 - `.claude/skills/code-style/SKILL.md` — стиль кода
@@ -408,6 +418,8 @@ mkdir -p .claude/skills/{custom_skill_1,custom_skill_2,...}
 Пишет unit-тесты.
 
 ## Контекст
+- `.claude/state/facts.md` — текущие факты проекта (ЧИТАЙ ПЕРВЫМ)
+- `.claude/state/decisions/` — архитектурные решения
 - Класс для тестирования + его интерфейс
 - `.claude/skills/testing/SKILL.md` — паттерны тестирования
 - `.claude/skills/code-style/SKILL.md` — стиль кода
@@ -462,6 +474,8 @@ mkdir -p .claude/skills/{custom_skill_1,custom_skill_2,...}
 Ревью бизнес-логики и архитектуры. READ-ONLY — не изменяет код.
 
 ## Контекст
+- `.claude/state/facts.md` — текущие факты проекта (ЧИТАЙ ПЕРВЫМ)
+- `.claude/state/decisions/` — архитектурные решения
 - Файлы для ревью (передаются в prompt или diff)
 - `.claude/skills/code-style/SKILL.md`
 - `.claude/skills/architecture/SKILL.md`
@@ -509,6 +523,8 @@ mkdir -p .claude/skills/{custom_skill_1,custom_skill_2,...}
 Ревью безопасности кода. READ-ONLY — не изменяет код.
 
 ## Контекст
+- `.claude/state/facts.md` — текущие факты проекта (ЧИТАЙ ПЕРВЫМ)
+- `.claude/state/decisions/` — архитектурные решения
 - Файлы для ревью (передаются в prompt или diff)
 - `.claude/skills/code-style/SKILL.md`
 
@@ -556,6 +572,8 @@ mkdir -p .claude/skills/{custom_skill_1,custom_skill_2,...}
 Дизайн БД, миграции, оптимизация запросов.
 
 ## Контекст
+- `.claude/state/facts.md` — текущие факты проекта (ЧИТАЙ ПЕРВЫМ)
+- `.claude/state/decisions/` — архитектурные решения
 - `.claude/database/schema.sql` — текущая схема
 - `.claude/database/migrations.txt` — список миграций
 - {MIGRATIONS_DIR} — файлы миграций
@@ -606,6 +624,8 @@ mkdir -p .claude/skills/{custom_skill_1,custom_skill_2,...}
 Docker, инфраструктура, окружение, диагностика.
 
 ## Контекст
+- `.claude/state/facts.md` — текущие факты проекта (ЧИТАЙ ПЕРВЫМ)
+- `.claude/state/decisions/` — архитектурные решения
 - `{COMPOSE_FILE}` — конфигурация контейнеров
 - `{CONFIG_DIR}` — конфиги сервисов
 - `{ENV_FILE}` — переменные окружения
@@ -642,6 +662,8 @@ Docker, инфраструктура, окружение, диагностика
 Пишет frontend-код: компоненты, страницы, сервисы, стейт.
 
 ## Контекст
+- `.claude/state/facts.md` — текущие факты проекта (ЧИТАЙ ПЕРВЫМ)
+- `.claude/state/decisions/` — архитектурные решения
 - `.claude/input/structure.json` — структура фронта
 - `.claude/skills/code-style/SKILL.md` — стиль кода
 - `.claude/skills/architecture/SKILL.md` — архитектура
@@ -714,6 +736,8 @@ Docker, инфраструктура, окружение, диагностика
 Пишет тесты для frontend-компонентов и сервисов.
 
 ## Контекст
+- `.claude/state/facts.md` — текущие факты проекта (ЧИТАЙ ПЕРВЫМ)
+- `.claude/state/decisions/` — архитектурные решения
 - Компонент/сервис для тестирования
 - `.claude/skills/testing/SKILL.md`
 
@@ -767,6 +791,12 @@ Docker, инфраструктура, окружение, диагностика
 ## Роль
 Ревью frontend-кода. READ-ONLY.
 
+## Контекст
+- `.claude/state/facts.md` — текущие факты проекта (ЧИТАЙ ПЕРВЫМ)
+- `.claude/state/decisions/` — архитектурные решения
+- Файлы для ревью (передаются в prompt или diff)
+- `.claude/skills/code-style/SKILL.md`
+
 ## Чеклист (10 пунктов)
 
 | # | Проверка | Severity |
@@ -804,6 +834,8 @@ Docker, инфраструктура, окружение, диагностика
 Генерация API-контрактов для фронтенд-разработчиков.
 
 ## Контекст
+- `.claude/state/facts.md` — текущие факты проекта (ЧИТАЙ ПЕРВЫМ)
+- `.claude/state/decisions/` — архитектурные решения
 - Routes/endpoints модуля
 - Controllers/handlers
 - Validation/DTOs/Schemas
@@ -844,6 +876,8 @@ Docker, инфраструктура, окружение, диагностика
 Генерация тест-кейсов, чеклистов и Postman-коллекций.
 
 ## Контекст
+- `.claude/state/facts.md` — текущие факты проекта (ЧИТАЙ ПЕРВЫМ)
+- `.claude/state/decisions/` — архитектурные решения
 - `.claude/output/contracts/{module}.md` — API-контракты
 - Routes модуля
 - Бизнес-требования (передаются в prompt)
@@ -879,6 +913,8 @@ Postman Collection v2.1 с переменными base_url и token.
 {ROLE — из ответа пользователя}
 
 ## Контекст
+- `.claude/state/facts.md` — текущие факты проекта (ЧИТАЙ ПЕРВЫМ)
+- `.claude/state/decisions/` — архитектурные решения
 - Код модуля: {SOURCE_DIR}
 - `.claude/skills/code-style/SKILL.md` — стиль кода
 - `.claude/skills/architecture/SKILL.md` — архитектура
@@ -938,6 +974,13 @@ Postman Collection v2.1 с переменными base_url и token.
 ```markdown
 # Skill: Routing — Маршрутизация задач по пайплайнам
 
+## Pre-routing
+
+Перед маршрутизацией задачи ВСЕГДА:
+1. Прочитай `.claude/state/facts.md` — актуальный контекст проекта
+2. Проверь `.claude/state/decisions/` — есть ли релевантные решения
+3. Учти контекст при выборе пайплайна и агентов
+
 ## Автоматическое определение пайплайна
 
 | Ключевые слова / контекст | Пайплайн |
@@ -967,6 +1010,71 @@ Postman Collection v2.1 с переменными base_url и token.
 3. "полный цикл"/"feature" → `full-feature`
 4. Контекст → соответствующий пайплайн
 5. Неоднозначно → спросить
+```
+
+#### skills/memory/SKILL.md
+
+```markdown
+# Skill: Memory — Трёхуровневая система памяти проекта
+
+## Уровни
+
+### 1. Facts (`state/facts.md`)
+Текущие факты проекта: стек, пути, активные решения, известные проблемы.
+- Обновляется агентами после значимых изменений
+- Читается ПЕРВЫМ при старте любой задачи
+- Один файл, компактный, актуальный
+
+### 2. Decisions (`state/decisions/`)
+Архитектурные решения в формате ADR-lite.
+- Файл: `{YYYY-MM-DD}-{slug}.md`
+- Содержит: контекст, решение, альтернативы, последствия
+- Записывается Architect при планировании, пайплайнами в фазе CAPTURE
+- Максимум 20 активных, остальные → archive
+
+### 3. Archive (`state/decisions/archive/`)
+Устаревшие decisions (старше 30 дней или вытесненные).
+- Автоматическая ротация через `maintain-memory.sh`
+- Доступны для поиска при необходимости
+
+## Формат Decision
+
+```
+# Decision: {title}
+
+**Date:** {YYYY-MM-DD}
+**Status:** active | superseded | deprecated
+**Author:** {agent}
+
+## Context
+{Почему возник вопрос}
+
+## Decision
+{Что решили}
+
+## Alternatives
+{Что рассматривали}
+
+## Consequences
+{Что это означает для проекта}
+```
+
+## Правила записи
+- Пиши decision только для архитектурно-значимых решений (не для каждого бага)
+- Обновляй facts.md после каждого нового decision
+- Не дублируй информацию между facts и decisions
+- Slug в имени файла — kebab-case, 3-5 слов максимум
+
+## Правила чтения
+- Агент ВСЕГДА читает `facts.md` перед началом работы
+- Decisions читаются при планировании (Architect) и ревью (Reviewer)
+- Archive читается только при явном поиске контекста
+
+## Антипаттерны
+- Записывать каждое мелкое изменение как decision
+- Дублировать код или конфиги в facts.md
+- Игнорировать facts.md при старте задачи
+- Оставлять устаревшие facts без обновления
 ```
 
 ---
@@ -1038,6 +1146,10 @@ Postman Collection v2.1 с переменными base_url и token.
 1. Ревью логики + безопасности
 2. Если BLOCK/CRITICAL → вернуться к Phase 3
 
+### Phase 5.5: CAPTURE
+1. Записать архитектурные решения в `state/decisions/{date}-{slug}.md`
+2. Обновить `state/facts.md` (Key Paths, Active Decisions)
+
 ### Phase 6: FINALIZATION
 1. Запусти полный test suite: `{TEST_CMD}`
 2. Обнови `.claude/state/session.md`
@@ -1081,6 +1193,10 @@ Postman Collection v2.1 с переменными base_url и token.
 **Агент:** `{lang}-reviewer-logic`
 1. Ревью только изменённых файлов
 2. Если BLOCK → Phase 2
+
+### Phase 5: CAPTURE
+1. Если фикс выявил системную проблему — записать decision в `state/decisions/{date}-{slug}.md`
+2. Обновить `state/facts.md` (Known Issues, если проблема повторяющаяся)
 ```
 
 #### pipelines/review.md
@@ -1151,6 +1267,7 @@ Postman Collection v2.1 с переменными base_url и token.
 ### 1. New Code — pipeline `new-code`
 ### 2. API Docs — pipeline `api-docs`
 ### 3. QA Docs — pipeline `qa-docs`
+### 3.5. CAPTURE — записать архитектурные решения фичи в `state/decisions/{date}-{slug}.md`, обновить `state/facts.md`
 ### 4. Final Summary — обновить state, показать итоги
 ```
 
@@ -1161,6 +1278,7 @@ Postman Collection v2.1 с переменными base_url и token.
 
 ### 1. Fix Code — pipeline `fix-code`
 ### 2. Review — pipeline `review` (diff only)
+### 2.5. CAPTURE — если исправление выявило архитектурную проблему, записать decision в `state/decisions/{date}-{slug}.md`, обновить `state/facts.md` (Known Issues)
 ### 3. Finalization — обновить state, показать итоги
 ```
 
@@ -1306,6 +1424,20 @@ EOF
 
 echo "$AGENTS_BREAKDOWN" | jq -r '.[] | "| \(.agent) | \(.calls) | \(.input_chars) | \(.output_chars) |"' >> "$SUMMARY_FILE"
 
+DECISIONS_DIR="$CLAUDE_PROJECT_DIR/.claude/state/decisions"
+if [ -d "$DECISIONS_DIR" ]; then
+    DECISION_FILES=$(find "$DECISIONS_DIR" -maxdepth 1 -name "*.md" 2>/dev/null)
+    if [ -n "$DECISION_FILES" ]; then
+        echo "" >> "$SUMMARY_FILE"
+        echo "## Decisions This Session" >> "$SUMMARY_FILE"
+        echo "" >> "$SUMMARY_FILE"
+        for df in $DECISION_FILES; do
+            DNAME=$(basename "$df" .md)
+            echo "- $DNAME" >> "$SUMMARY_FILE"
+        done
+    fi
+fi
+
 exit 0
 ```
 
@@ -1392,6 +1524,57 @@ exit 0
 chmod +x .claude/scripts/hooks/track-agent.sh
 chmod +x .claude/scripts/hooks/session-summary.sh
 chmod +x .claude/scripts/hooks/update-schema.sh
+chmod +x .claude/scripts/hooks/maintain-memory.sh
+```
+
+#### scripts/hooks/maintain-memory.sh
+
+Скрипт поддержки системы памяти. Запускается на старте сессии. Архивирует старые decisions, валидирует facts.md.
+
+```bash
+#!/bin/bash
+
+PROJECT_DIR="$CLAUDE_PROJECT_DIR"
+STATE_DIR="$PROJECT_DIR/.claude/state"
+FACTS_FILE="$STATE_DIR/facts.md"
+DECISIONS_DIR="$STATE_DIR/decisions"
+ARCHIVE_DIR="$DECISIONS_DIR/archive"
+
+mkdir -p "$DECISIONS_DIR" "$ARCHIVE_DIR"
+
+if [ ! -f "$FACTS_FILE" ]; then
+    cat > "$FACTS_FILE" << 'FACTSEOF'
+# Project Facts
+
+## Stack
+—
+
+## Key Paths
+—
+
+## Active Decisions
+—
+
+## Known Issues
+—
+
+## Last Updated
+—
+FACTSEOF
+fi
+
+ARCHIVE_DAYS=${MEMORY_ARCHIVE_DAYS:-30}
+find "$DECISIONS_DIR" -maxdepth 1 -name "*.md" -mtime +$ARCHIVE_DAYS -exec mv {} "$ARCHIVE_DIR/" \; 2>/dev/null
+
+DECISION_COUNT=$(find "$DECISIONS_DIR" -maxdepth 1 -name "*.md" 2>/dev/null | wc -l)
+if [ "$DECISION_COUNT" -gt 20 ]; then
+    OLDEST=$(find "$DECISIONS_DIR" -maxdepth 1 -name "*.md" -printf '%T+ %p\n' 2>/dev/null | sort | head -5 | awk '{print $2}')
+    for f in $OLDEST; do
+        mv "$f" "$ARCHIVE_DIR/" 2>/dev/null
+    done
+fi
+
+exit 0
 ```
 
 ---
@@ -1476,6 +1659,10 @@ chmod +x .claude/scripts/hooks/update-schema.sh
           {
             "type": "command",
             "command": "bash $CLAUDE_PROJECT_DIR/.claude/scripts/hooks/update-schema.sh"
+          },
+          {
+            "type": "command",
+            "command": "bash $CLAUDE_PROJECT_DIR/.claude/scripts/hooks/maintain-memory.sh"
           }
         ]
       }
@@ -1528,6 +1715,32 @@ chmod +x .claude/scripts/hooks/update-schema.sh
 |------|--------|------|----------|--------|
 ```
 
+#### state/facts.md
+
+```markdown
+# Project Facts
+
+## Stack
+- **Lang:** {LANGS}
+- **Framework:** {FRAMEWORK}
+- **DB:** {DB}
+- **Frontend:** {FRONTEND}
+
+## Key Paths
+- Source: {SOURCE_DIR}
+- Tests: {TEST_DIR}
+- Migrations: {MIGRATIONS_DIR}
+
+## Active Decisions
+{ссылки на файлы в state/decisions/}
+
+## Known Issues
+—
+
+## Last Updated
+{DATE}
+```
+
 ---
 
 ## ШАГ 5: ВЕРИФИКАЦИЯ
@@ -1538,7 +1751,7 @@ chmod +x .claude/scripts/hooks/update-schema.sh
 
 ```bash
 echo "=== Checking .claude/ structure ==="
-for dir in agents skills pipelines scripts/hooks state state/sessions output output/contracts output/qa input database; do
+for dir in agents skills pipelines scripts/hooks state state/sessions state/decisions state/decisions/archive output output/contracts output/qa input database; do
     if [ -d ".claude/$dir" ]; then
         echo "[OK] .claude/$dir/"
     else
@@ -1625,7 +1838,25 @@ else
 fi
 ```
 
-### 5.8 Итоговый отчёт
+### 5.8 Memory
+
+```bash
+echo "=== Checking memory ==="
+for f in .claude/state/facts.md .claude/skills/memory/SKILL.md; do
+    if [ -f "$f" ]; then
+        echo "[OK] $f"
+    else
+        echo "[MISS] $f"
+    fi
+done
+if [ -d ".claude/state/decisions" ]; then
+    echo "[OK] .claude/state/decisions/"
+else
+    echo "[MISS] .claude/state/decisions/"
+fi
+```
+
+### 5.9 Итоговый отчёт
 
 Покажи:
 - Количество агентов, скиллов, пайплайнов
@@ -1759,7 +1990,8 @@ fi
 ║  Agents: {N_BASE + N_CUSTOM}                 ║
 ║  Skills: {5 + N_CUSTOM_SKILLS}               ║
 ║  Pipelines: {8 + N_CUSTOM_PIPELINES}         ║
-║  Hooks: 3                                    ║
+║  Hooks: 4                                    ║
+║  Memory: facts + decisions + archive         ║
 ║                                              ║
 ║  Quick start:                                ║
 ║  {задача} by pipeline new-code               ║
