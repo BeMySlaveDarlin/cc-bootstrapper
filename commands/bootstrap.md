@@ -15,18 +15,23 @@
 ### Если `.bootstrap-version` существует:
 
 1. Прочитай файл, извлеки `version`
-2. Сравни с `VERSION_CURRENT` из meta-prompt (`2.0.0`)
+2. Сравни с `VERSION_CURRENT` из meta-prompt (`2.1.0`)
 3. **Если версии совпадают:**
    - Выведи `[CURRENT] Версия актуальна (v{version}). Запускаю PRE-CHECK...`
    - Перейди к PRE-CHECK
 
 4. **Если версия meta-prompt новее:**
    - Покажи CHANGELOG изменений между версиями (из секции CHANGELOG meta-prompt)
-   - Предложи режимы обновления:
-     - **Полное обновление** — перегенерировать всё кроме кастомных файлов
-     - **Только новые** — добавить отсутствующие компоненты
-     - **Только хуки** — обновить скрипты
-     - **Выборочно** — показать каждый файл с маркерами:
+   - Предложи режимы обновления через AskUserQuestion:
+     - question: "Режим обновления до v{VERSION_CURRENT}?"
+     - header: "Upgrade"
+     - options:
+       - {label: "Полное обновление", description: "Перегенерировать всё кроме кастомизированных файлов"}
+       - {label: "Только новые", description: "Добавить отсутствующие компоненты, не трогать существующие"}
+       - {label: "Только хуки", description: "Обновить только скрипты в scripts/hooks/"}
+       - {label: "Выборочно", description: "Показать каждый файл с маркерами [=]/[~]/[+] для ручного выбора"}
+     - multiSelect: false
+   - При выборе «Выборочно» показать каждый файл с маркерами:
        - `[=]` файл не изменён (hash совпадает) — обновить
        - `[~]` файл кастомизирован (hash отличается) — НЕ перезаписывать
        - `[+]` новый компонент в этой версии — создать
@@ -47,27 +52,59 @@
 [МИГРАЦИЯ v1→v2] Обнаружен bootstrapped проект без version tracking.
 ```
 
-Предложи варианты:
-- **Полная миграция v2** — обновить до v2 (pipeline skill, memory, cleanup)
-- **Только version tracking** — создать .bootstrap-version для текущего состояния
-- **Пропустить** — продолжить как обычный PRE-CHECK
+Используй AskUserQuestion:
+- question: "Обнаружен bootstrapped проект v1. Как мигрировать?"
+- header: "Миграция"
+- options:
+  - {label: "Полная миграция v2", description: "Добавить pipeline skill, memory, cleanup, version tracking"}
+  - {label: "Только version tracking", description: "Создать .bootstrap-version для текущего состояния без изменений"}
+  - {label: "Пропустить", description: "Продолжить как обычный PRE-CHECK без миграции"}
+- multiSelect: false
 
 **При полной миграции v1→v2:**
 
-1. `[МИГРАЦИЯ] Добавить pipeline skill-роутер?` (y/n)
+1. Используй AskUserQuestion:
+   - question: "Добавить pipeline skill-роутер? Создаст skills/pipeline/ и skills/p/, удалит skills/routing/ если есть"
+   - header: "Pipeline"
+   - options:
+     - {label: "Да", description: "Создать pipeline/SKILL.md и p/SKILL.md, обновить CLAUDE.md"}
+     - {label: "Нет", description: "Пропустить"}
+   - multiSelect: false
+   При "Да":
    - Создать `skills/pipeline/SKILL.md` и `skills/p/SKILL.md`
    - Удалить `skills/routing/` если есть
    - Обновить CLAUDE.md: добавить Auto-Pipeline Rule, заменить `by pipeline {name}` на `/pipeline {name}`
 
-2. `[МИГРАЦИЯ] Добавить memory-систему?` (y/n)
+2. Используй AskUserQuestion:
+   - question: "Добавить memory-систему?"
+   - header: "Memory"
+   - options:
+     - {label: "Да", description: "Создать state/memory/patterns.md и issues.md, обновить maintain-memory.sh"}
+     - {label: "Нет", description: "Пропустить"}
+   - multiSelect: false
+   При "Да":
    - Создать `state/memory/patterns.md` и `state/memory/issues.md`
    - Обновить `maintain-memory.sh` (добавить ротацию usage.jsonl, архивацию сессий)
 
-3. `[МИГРАЦИЯ] Удалить устаревшие файлы?` (y/n)
+3. Используй AskUserQuestion:
+   - question: "Удалить устаревшие файлы v1? (session.md, task-log.md)"
+   - header: "Cleanup"
+   - options:
+     - {label: "Да", description: "Удалить state/session.md и state/task-log.md, убрать ссылки из CLAUDE.md"}
+     - {label: "Нет", description: "Оставить как есть"}
+   - multiSelect: false
+   При "Да":
    - Удалить `state/session.md` и `state/task-log.md` если есть
    - Убрать ссылки на них из CLAUDE.md
 
-4. `[МИГРАЦИЯ] Добавить verify-bootstrap.sh?` (y/n)
+4. Используй AskUserQuestion:
+   - question: "Добавить verify-bootstrap.sh?"
+   - header: "Verify"
+   - options:
+     - {label: "Да", description: "Создать scripts/verify-bootstrap.sh для проверки структуры"}
+     - {label: "Нет", description: "Пропустить"}
+   - multiSelect: false
+   При "Да":
    - Создать `scripts/verify-bootstrap.sh`
 
 5. Сгенерировать `.claude/.bootstrap-version` с текущим состоянием
@@ -116,11 +153,25 @@
 
 Если `.claude/settings.json` уже существует:
 - Покажи текущее содержимое
-- Спроси: **Перезаписать `.claude/settings.json`?** (Да / Нет / Merge — добавить недостающие permissions)
+- Используй AskUserQuestion:
+  - question: "Что сделать с settings.json?"
+  - header: "Settings"
+  - options:
+    - {label: "Перезаписать", description: "Заменить текущий файл сгенерированным"}
+    - {label: "Оставить", description: "Не трогать существующий файл"}
+    - {label: "Merge", description: "Добавить недостающие permissions, сохранить существующие"}
+  - multiSelect: false
 
 Если `.claude/settings.local.json` уже существует:
 - Покажи текущее содержимое
-- Спроси: **Перезаписать `.claude/settings.local.json`?** (Да / Нет / Merge)
+- Используй AskUserQuestion:
+  - question: "Что сделать с settings.local.json?"
+  - header: "Settings"
+  - options:
+    - {label: "Перезаписать", description: "Заменить текущий файл сгенерированным"}
+    - {label: "Оставить", description: "Не трогать существующий файл"}
+    - {label: "Merge", description: "Добавить недостающие permissions, сохранить существующие"}
+  - multiSelect: false
 
 ### 2. Очистка устаревшего
 
@@ -132,7 +183,14 @@
 
 Если найдено что-то из списка:
 - Покажи список найденного
-- Спроси: **Удалить устаревшие файлы?** (Да, все / Выбрать вручную / Нет, оставить)
+- Используй AskUserQuestion:
+  - question: "Найдены устаревшие файлы: {список}. Удалить?"
+  - header: "Cleanup"
+  - options:
+    - {label: "Да, все", description: "Удалить все устаревшие файлы"}
+    - {label: "Выбрать вручную", description: "Показать каждый файл для индивидуального решения"}
+    - {label: "Нет, оставить", description: "Не трогать файлы"}
+  - multiSelect: false
 - При «Выбрать вручную» — показать каждый файл отдельно
 
 **Если проект пустой** — пропускай INTERACTIVE, создавай всё с нуля.

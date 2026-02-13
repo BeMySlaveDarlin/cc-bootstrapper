@@ -9,10 +9,14 @@
 ## VERSION
 
 ```
-VERSION_CURRENT = "2.0.0"
+VERSION_CURRENT = "2.1.0"
 ```
 
 ## CHANGELOG
+
+### 2.1.0 (2026-02-13)
+- Все интерактивные вопросы через AskUserQuestion (структурированный UI вместо текстовых y/n)
+- Кастомные агенты/скиллы/пайплайны: двухшаговый процесс (Да/Нет → multiSelect с примерами)
 
 ### 2.0.0 (2026-02-13)
 - Pipeline skill-роутер (`/pipeline`, `/p`) вместо пассивного `skills/routing/`
@@ -30,6 +34,8 @@ VERSION_CURRENT = "2.0.0"
 ---
 
 ## ИНСТРУКЦИЯ
+
+Все вопросы пользователю задавай через инструмент AskUserQuestion. Не задавай вопросы текстом — используй структурированные варианты ответа с options. Для открытых вопросов пользователь может выбрать "Other" и ввести произвольный текст.
 
 Ты — инженер автоматизации. Твоя задача — проанализировать текущий проект и создать полную систему автоматизации Claude Code в директории `.claude/`.
 
@@ -258,16 +264,36 @@ PKG_MANAGER=composer|npm|yarn|pnpm|pip|cargo|go|maven|gradle|bundler
 
 ### 3.1.1 Кастомные агенты
 
-После формирования базового реестра спроси пользователя:
+После формирования базового реестра:
 
-**Добавить кастомных агентов?** (названия через запятую или «Нет»)
+**Шаг 1.** Используй AskUserQuestion:
+- question: "Добавить кастомных агентов помимо базовых?"
+- header: "Агенты"
+- options:
+  - {label: "Нет", description: "Только базовые агенты по стеку"}
+  - {label: "Да", description: "Добавить кастомных агентов"}
+- multiSelect: false
 
-Пример ввода: `api-documenter, migration-manager, notification-handler`
+**Шаг 2.** Если "Да" или "Other" — используй AskUserQuestion:
+- question: "Какие кастомные агенты добавить? Выбери из примеров или укажи свои через Other"
+- header: "Агенты"
+- options:
+  - {label: "api-documenter", description: "Генерация API-документации из кода"}
+  - {label: "migration-manager", description: "Управление миграциями БД и данных"}
+- multiSelect: true
 
-Если пользователь указал агентов:
-1. Для КАЖДОГО кастомного агента спроси: **Роль агента `{name}`?** (одно предложение)
-2. Добавь в реестр с пометкой [CUSTOM]
-3. Файл: `{name}.md` (kebab-case)
+**Шаг 3.** Для КАЖДОГО кастомного агента — используй AskUserQuestion:
+- question: "Роль агента {name}? Опиши одним предложением"
+- header: "{name}"
+- options:
+  - {label: "Определи сам", description: "Автоматически определить роль по названию и стеку"}
+  - {label: "Ревью", description: "Ревью кода определённой области"}
+- multiSelect: false
+(пользователь может выбрать Other и описать роль вручную)
+
+Для каждого кастомного агента:
+1. Добавь в реестр с пометкой [CUSTOM]
+2. Файл: `{name}.md` (kebab-case)
 
 Сохрани список кастомных агентов в переменную CUSTOM_AGENTS для Шага 4.
 
@@ -285,14 +311,36 @@ PKG_MANAGER=composer|npm|yarn|pnpm|pip|cargo|go|maven|gradle|bundler
 
 ### 3.2.1 Кастомные скиллы
 
-**Добавить кастомные скиллы?** (названия через запятую или «Нет»)
+**Шаг 1.** Используй AskUserQuestion:
+- question: "Добавить кастомные скиллы?"
+- header: "Скиллы"
+- options:
+  - {label: "Нет", description: "Только базовые скиллы"}
+  - {label: "Да", description: "Добавить кастомные скиллы"}
+- multiSelect: false
 
-Пример ввода: `caching, notifications, logging`
+**Шаг 2.** Если "Да" или "Other" — используй AskUserQuestion:
+- question: "Какие кастомные скиллы добавить? Выбери из примеров или укажи свои через Other"
+- header: "Скиллы"
+- options:
+  - {label: "caching", description: "Паттерны кеширования данных"}
+  - {label: "notifications", description: "Паттерны отправки уведомлений"}
+  - {label: "logging", description: "Стандарты логирования"}
+  - {label: "monitoring", description: "Паттерны мониторинга и метрик"}
+- multiSelect: true
 
-Если пользователь указал скиллы:
-1. Для КАЖДОГО кастомного скилла спроси: **Назначение скилла `{name}`?** (одно предложение)
-2. Добавь в реестр с пометкой [CUSTOM]
-3. Директория: `skills/{name}/SKILL.md` (kebab-case)
+**Шаг 3.** Для КАЖДОГО кастомного скилла — используй AskUserQuestion:
+- question: "Назначение скилла {name}?"
+- header: "{name}"
+- options:
+  - {label: "Определи сам", description: "Автоматически определить назначение по названию и стеку"}
+  - {label: "Паттерны кода", description: "Правила и примеры кода для этой области"}
+- multiSelect: false
+(пользователь может выбрать Other и описать назначение вручную)
+
+Для каждого кастомного скилла:
+1. Добавь в реестр с пометкой [CUSTOM]
+2. Директория: `skills/{name}/SKILL.md` (kebab-case)
 
 Сохрани в CUSTOM_SKILLS.
 
@@ -302,16 +350,44 @@ PKG_MANAGER=composer|npm|yarn|pnpm|pip|cargo|go|maven|gradle|bundler
 
 ### 3.3.1 Кастомные пайплайны
 
-**Добавить кастомные пайплайны?** (названия через запятую или «Нет»)
+**Шаг 1.** Используй AskUserQuestion:
+- question: "Добавить кастомные пайплайны?"
+- header: "Пайплайны"
+- options:
+  - {label: "Нет", description: "Только базовые 8 пайплайнов"}
+  - {label: "Да", description: "Добавить кастомные пайплайны"}
+- multiSelect: false
 
-Пример ввода: `deploy, seed-data, generate-types`
+**Шаг 2.** Если "Да" или "Other" — используй AskUserQuestion:
+- question: "Какие кастомные пайплайны добавить? Выбери из примеров или укажи свои через Other"
+- header: "Пайплайны"
+- options:
+  - {label: "deploy", description: "Деплой на окружение"}
+  - {label: "seed-data", description: "Генерация тестовых данных"}
+  - {label: "generate-types", description: "Генерация TypeScript типов из API"}
+  - {label: "migration", description: "Создание и применение миграций БД"}
+- multiSelect: true
 
-Если пользователь указал пайплайны:
-1. Для КАЖДОГО кастомного пайплайна спроси:
-   - **Когда использовать `{name}`?** (одно предложение)
-   - **Какие агенты задействованы?** (из базовых + кастомных, или «определи сам»)
-2. Добавь в реестр с пометкой [CUSTOM]
-3. Файл: `pipelines/{name}.md` (kebab-case)
+**Шаг 3.** Для КАЖДОГО кастомного пайплайна — 2 вопроса через AskUserQuestion:
+
+Вопрос 1:
+- question: "Когда использовать {name}?"
+- header: "{name}"
+- options:
+  - {label: "Определи сам", description: "Автоматически определить сценарий по названию и стеку"}
+  - {label: "По запросу", description: "Только по явному вызову пользователя"}
+- multiSelect: false
+(пользователь может выбрать Other и описать сценарий вручную)
+
+Вопрос 2:
+- question: "Какие агенты задействованы в {name}?"
+- header: "{name}"
+- options из текущего реестра агентов (developer, architect, test-developer, reviewer) + {label: "Определи сам", description: "Автоматически подобрать агентов по типу пайплайна"}
+- multiSelect: true
+
+Для каждого кастомного пайплайна:
+1. Добавь в реестр с пометкой [CUSTOM]
+2. Файл: `pipelines/{name}.md` (kebab-case)
 
 Сохрани в CUSTOM_PIPELINES.
 
