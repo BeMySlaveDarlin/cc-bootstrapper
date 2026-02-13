@@ -6,6 +6,29 @@
 
 ---
 
+## VERSION
+
+```
+VERSION_CURRENT = "2.0.0"
+```
+
+## CHANGELOG
+
+### 2.0.0 (2026-02-13)
+- Pipeline skill-роутер (`/pipeline`, `/p`) вместо пассивного `skills/routing/`
+- Memory-система по умолчанию (`state/memory/patterns.md`, `issues.md`)
+- Удалены `session.md` и `task-log.md` (заменены hooks-based tracking)
+- Починены хуки: maintain-memory.sh, update-schema.sh, session-summary.sh
+- Верификация вынесена в `scripts/verify-bootstrap.sh`
+- Auto-Pipeline Rule в CLAUDE.md
+- Upgrade mode для обновления bootstrapped проектов
+- `.bootstrap-version` — отслеживание версии и хешей
+
+### 1.0.0 (initial)
+- Базовая система: agents, skills, pipelines, hooks, state, CLAUDE.md
+
+---
+
 ## ИНСТРУКЦИЯ
 
 Ты — инженер автоматизации. Твоя задача — проанализировать текущий проект и создать полную систему автоматизации Claude Code в директории `.claude/`.
@@ -150,15 +173,20 @@ PKG_MANAGER=composer|npm|yarn|pnpm|pip|cargo|go|maven|gradle|bundler
 | Architecture | `architecture/` | структура модулей, DI, routes |
 | Database | `database/` | миграции, типы данных, индексы |
 | Testing | `testing/` | тест-паттерны |
-| Routing | `routing/` | маршрутизация задач по пайплайнам |
 | Memory | `memory/` | трёхуровневая память: facts, decisions, archive |
+| Pipeline | `pipeline/` | `/pipeline` — роутер пайплайнов |
+| Pipeline Alias | `p/` | `/p` — быстрый вызов /pipeline |
 {CUSTOM_SKILLS_ROWS}
+
+## Auto-Pipeline Rule
+
+Каждый запрос пользователя проверять: если связан с написанием кода, фиксами, ревью, тестами — вызвать `/pipeline`. Роутер внутри определит тип.
 
 ## Pipelines
 
 Детали: `.claude/pipelines/{name}.md`
 
-Запуск: `{описание задачи} by pipeline {имя}`
+Запуск: `/pipeline {имя}` или `/p {имя}`
 
 | Pipeline | Файл | Когда использовать |
 |----------|------|--------------------|
@@ -174,11 +202,11 @@ PKG_MANAGER=composer|npm|yarn|pnpm|pip|cargo|go|maven|gradle|bundler
 
 ## State Management
 
-- `.claude/state/session.md` — активная сессия
-- `.claude/state/task-log.md` — реестр задач
 - `.claude/state/facts.md` — текущие факты проекта (стек, пути, решения, проблемы)
+- `.claude/state/memory/patterns.md` — повторяющиеся паттерны кода
+- `.claude/state/memory/issues.md` — known issues из ревью
 - `.claude/state/decisions/` — архитектурные решения (ADR-lite)
-- `.claude/state/decisions/archive/` — устаревшие решения (автоматическая ротация)
+- `.claude/state/decisions/archive/` — устаревшие решения (авторотация 30 дней)
 - `.claude/state/sessions/` — архив сессий
 - `.claude/output/` — API-контракты, QA-документация
 - `.claude/input/` — входные задачи, планы
@@ -224,6 +252,7 @@ PKG_MANAGER=composer|npm|yarn|pnpm|pip|cargo|go|maven|gradle|bundler
 | Frontend Reviewer | `frontend-reviewer.md` | Ревью фронта | если FRONTEND != none |
 | Frontend Contract | `frontend-contract.md` | API-контракты | если FRONTEND != none |
 | QA Engineer | `qa-engineer.md` | Чеклисты, Postman | всегда |
+| CI Manager | `ci-manager.md` | CI/CD пайплайны | если `.gitlab-ci.yml` или `.github/workflows/` |
 
 **Итого:** `len(LANGS) * 5 + общие_агенты`
 
@@ -250,7 +279,9 @@ PKG_MANAGER=composer|npm|yarn|pnpm|pip|cargo|go|maven|gradle|bundler
 | 2 | Architecture | `skills/architecture/` |
 | 3 | Database | `skills/database/` |
 | 4 | Testing | `skills/testing/` |
-| 5 | Routing | `skills/routing/` |
+| 5 | Memory | `skills/memory/` |
+| 6 | Pipeline | `skills/pipeline/` |
+| 7 | Pipeline Alias | `skills/p/` |
 
 ### 3.2.1 Кастомные скиллы
 
@@ -293,7 +324,8 @@ PKG_MANAGER=composer|npm|yarn|pnpm|pip|cargo|go|maven|gradle|bundler
 ### 4.1 Директории
 
 ```bash
-mkdir -p .claude/{agents,skills/{code-style,architecture,database,testing,routing,memory},pipelines,scripts/hooks,state/{sessions,decisions,decisions/archive},output/{contracts,qa},input,database}
+mkdir -p .claude/{agents,skills/{code-style,architecture,database,testing,memory,pipeline,p},pipelines,scripts/hooks,state/{sessions,sessions/archive,decisions,decisions/archive,memory},output/{contracts,qa},input/{tasks,plans},database}
+touch .claude/state/decisions/.gitkeep .claude/state/decisions/archive/.gitkeep
 ```
 
 Если CUSTOM_SKILLS не пуст — создай дополнительные директории:
@@ -335,6 +367,7 @@ mkdir -p .claude/skills/{custom_skill_1,custom_skill_2,...}
 4. Создай план реализации
 5. Запиши ключевые архитектурные решения в `state/decisions/{date}-{slug}.md`
 6. Обнови `state/facts.md` (Active Decisions, Key Paths если изменились)
+7. Обнови `state/memory/patterns.md` если выявлены новые архитектурные паттерны
 
 ## Формат вывода
 
@@ -389,6 +422,9 @@ mkdir -p .claude/skills/{custom_skill_1,custom_skill_2,...}
 - стиля из code-style скилла
 - вычлененных из CLAUDE.md правил
 - стандартных практик фреймворка}
+
+## Память
+- После реализации фиксируй повторяющиеся паттерны в `state/memory/patterns.md`
 
 ## Верификация
 После написания кода проверь:
@@ -479,6 +515,9 @@ mkdir -p .claude/skills/{custom_skill_1,custom_skill_2,...}
 - Файлы для ревью (передаются в prompt или diff)
 - `.claude/skills/code-style/SKILL.md`
 - `.claude/skills/architecture/SKILL.md`
+
+## Память
+- Добавляй recurring issues в `state/memory/issues.md`
 
 ## Чеклист (12 пунктов)
 
@@ -902,6 +941,46 @@ Postman Collection v2.1 с переменными base_url и token.
 
 ---
 
+#### ШАБЛОН: CI Manager (`ci-manager.md`)
+
+Создавай ТОЛЬКО если есть `.gitlab-ci.yml`, `.github/workflows/`, `Jenkinsfile` или аналогичные CI-конфиги.
+
+```markdown
+# Агент: CI Manager
+
+## Роль
+Управление CI/CD пайплайнами, анализ и оптимизация.
+
+## Контекст
+- `.claude/state/facts.md` — текущие факты проекта (ЧИТАЙ ПЕРВЫМ)
+- `.claude/state/decisions/` — архитектурные решения
+- {CI_CONFIG_FILE} — конфигурация CI/CD
+- `.claude/skills/architecture/SKILL.md` — архитектура
+
+## Задача
+
+1. Анализ текущего CI/CD пайплайна
+2. Оптимизация стадий и кеширования
+3. Добавление новых стадий (тесты, линтинг, деплой)
+4. Диагностика failed pipelines
+
+## CI/CD Стек
+
+{CI_STACK — определи:
+- GitHub Actions: .github/workflows/*.yml
+- GitLab CI: .gitlab-ci.yml
+- Jenkins: Jenkinsfile
+- CircleCI: .circleci/config.yml}
+
+## Правила
+- Не менять production deploy stages без явного подтверждения
+- Кешировать зависимости
+- Параллелизовать независимые джобы
+- Минимизировать время пайплайна
+```
+
+---
+
 ### 4.2.1 Кастомные агенты
 
 Для каждого агента из CUSTOM_AGENTS сгенерируй файл `.claude/agents/{name}.md` по универсальному шаблону:
@@ -969,10 +1048,17 @@ Postman Collection v2.1 с переменными base_url и token.
 - Именование тестов
 - Команда запуска
 
-#### skills/routing/SKILL.md
+#### skills/pipeline/SKILL.md
 
 ```markdown
-# Skill: Routing — Маршрутизация задач по пайплайнам
+---
+user-invocable: true
+description: Роутер пайплайнов — классифицирует задачу и запускает соответствующий pipeline
+---
+
+# Skill: Pipeline Router
+
+Вызов: `/pipeline [действие или имя]`
 
 ## Pre-routing
 
@@ -981,35 +1067,56 @@ Postman Collection v2.1 с переменными base_url и token.
 2. Проверь `.claude/state/decisions/` — есть ли релевантные решения
 3. Учти контекст при выборе пайплайна и агентов
 
-## Автоматическое определение пайплайна
+## Приоритеты роутинга
 
-| Ключевые слова / контекст | Пайплайн |
-|---------------------------|----------|
-| новый модуль, новый сервис, новый эндпоинт, фича | `new-code` |
-| баг, ошибка, fix, не работает, regression | `fix-code` |
-| ревью, проверь, review, посмотри код | `review` |
-| тесты, покрытие, unit test | `tests` |
-| контракт, API-документация, для фронта | `api-docs` |
-| чеклист, postman, QA, тестировщик | `qa-docs` |
-| полный цикл, feature, от начала до конца | `full-feature` |
-| хотфикс, срочно, hotfix | `hotfix` |
-{CUSTOM_PIPELINES_ROUTING — если есть кастомные пайплайны, добавь строки:
-| {ключевые слова для кастомного пайплайна} | `{name}` |}
+1. **Явное имя:** `/pipeline review` → `.claude/pipelines/review.md`
+2. **"срочно"/"hotfix"** → `hotfix.md` (высший приоритет)
+3. **"полный цикл"/"feature"** → `full-feature.md`
+4. **Keyword matching** → соответствующий pipeline
+5. **Неоднозначно** → спросить пользователя
 
-## Запуск
+## Keyword-таблица
 
-### Явный
-`{описание задачи} by pipeline {имя}`
+| Keywords | Pipeline |
+|----------|----------|
+| новый, добавь, создай, фича | `new-code.md` |
+| баг, ошибка, fix, не работает | `fix-code.md` |
+| ревью, проверь, review | `review.md` |
+| тест, покрытие, coverage | `tests.md` |
+| документация, api docs, контракт | `api-docs.md` |
+| чеклист, QA, postman | `qa-docs.md` |
+| хотфикс, срочно | `hotfix.md` |
+| полный цикл, от начала до конца | `full-feature.md` |
+{CUSTOM_PIPELINES_KEYWORDS — если есть кастомные пайплайны, добавь строки:
+| {ключевые слова для кастомного пайплайна} | `{name}.md` |}
 
-### Автоматический
-Если нет явного указания — Claude определяет по контексту, предлагает, ждёт подтверждения.
+## Действие
 
-## Приоритеты
-1. Явное `by pipeline X` → X
-2. "срочно"/"hotfix" → `hotfix`
-3. "полный цикл"/"feature" → `full-feature`
-4. Контекст → соответствующий пайплайн
-5. Неоднозначно → спросить
+1. Определи тип задачи по приоритетам выше
+2. Прочитай `.claude/pipelines/{type}.md`
+3. Выполни ВСЕ фазы из пайплайна последовательно
+
+## Кастомные пайплайны
+
+Если в `.claude/pipelines/` есть нестандартные файлы (не из базовых 8) — добавь их keywords в таблицу выше при генерации.
+```
+
+#### skills/p/SKILL.md
+
+```markdown
+---
+user-invocable: true
+description: Быстрый alias для /pipeline
+---
+
+# Skill: Pipeline Alias
+
+Вызови `/pipeline` с теми же аргументами.
+
+Примеры:
+- `/p review` = `/pipeline review`
+- `/p срочно исправить баг` = `/pipeline срочно исправить баг`
+- `/p` = `/pipeline` (без аргументов — определит тип по контексту)
 ```
 
 #### skills/memory/SKILL.md
@@ -1152,9 +1259,7 @@ Postman Collection v2.1 с переменными base_url и token.
 
 ### Phase 6: FINALIZATION
 1. Запусти полный test suite: `{TEST_CMD}`
-2. Обнови `.claude/state/session.md`
-3. Добавь запись в `.claude/state/task-log.md`
-4. Покажи summary
+2. Покажи summary
 
 ## Матрица ошибок
 
@@ -1313,6 +1418,9 @@ Postman Collection v2.1 с переменными base_url и token.
 
 ```bash
 #!/bin/bash
+set -uo pipefail
+ERR_LOG="${CLAUDE_PROJECT_DIR:-.}/.claude/state/.hook-errors.log"
+trap 'echo "[$(date -u +%Y-%m-%dT%H:%M:%SZ)] ERROR in $(basename "$0"):$LINENO" >> "$ERR_LOG" 2>/dev/null; exit 0' ERR
 
 LOG_DIR="$CLAUDE_PROJECT_DIR/.claude/state"
 LOG_FILE="$LOG_DIR/usage.jsonl"
@@ -1365,6 +1473,9 @@ exit 0
 
 ```bash
 #!/bin/bash
+set -uo pipefail
+ERR_LOG="${CLAUDE_PROJECT_DIR:-.}/.claude/state/.hook-errors.log"
+trap 'echo "[$(date -u +%Y-%m-%dT%H:%M:%SZ)] ERROR in $(basename "$0"):$LINENO" >> "$ERR_LOG" 2>/dev/null; exit 0' ERR
 
 LOG_DIR="$CLAUDE_PROJECT_DIR/.claude/state"
 LOG_FILE="$LOG_DIR/usage.jsonl"
@@ -1379,7 +1490,7 @@ if [ ! -f "$LOG_FILE" ]; then
 fi
 
 SESSION_ENTRIES=$(jq -c "select(.session_id == \"$SESSION_ID\")" "$LOG_FILE" 2>/dev/null)
-ENTRY_COUNT=$(echo "$SESSION_ENTRIES" | grep -c '^{' 2>/dev/null || echo "0")
+ENTRY_COUNT=$(echo "$SESSION_ENTRIES" | jq -s 'length' 2>/dev/null)
 
 if [ "$ENTRY_COUNT" -eq 0 ]; then
     exit 0
@@ -1447,6 +1558,9 @@ exit 0
 
 ```bash
 #!/bin/bash
+set -uo pipefail
+ERR_LOG="${CLAUDE_PROJECT_DIR:-.}/.claude/state/.hook-errors.log"
+trap 'echo "[$(date -u +%Y-%m-%dT%H:%M:%SZ)] ERROR in $(basename "$0"):$LINENO" >> "$ERR_LOG" 2>/dev/null; exit 0' ERR
 
 PROJECT_DIR="$CLAUDE_PROJECT_DIR"
 DB_DIR="$PROJECT_DIR/.claude/database"
@@ -1475,16 +1589,20 @@ if [ -z "$COMPOSE_FILE" ]; then
     exit 0
 fi
 
+ERR_LOG="$PROJECT_DIR/.claude/state/.hook-errors.log"
+
+# Dynamically detect service names from docker-compose
+pg_service_name=$(awk '/^\s+\S+:/{svc=$1} /image:.*postgres/{gsub(/:$/,"",svc); print svc; exit}' "$COMPOSE_FILE" 2>/dev/null)
+mysql_service_name=$(awk '/^\s+\S+:/{svc=$1} /image:.*(mysql|mariadb)/{gsub(/:$/,"",svc); print svc; exit}' "$COMPOSE_FILE" 2>/dev/null)
+
 # Try PostgreSQL
-PG_SERVICE=$(grep -l 'postgres' "$COMPOSE_FILE" 2>/dev/null | head -1)
-if [ -n "$PG_SERVICE" ]; then
-    PG_CONTAINER=$(cd "$PROJECT_DIR" && docker compose ps -q postgres 2>/dev/null || docker compose ps -q db 2>/dev/null || docker compose ps -q database 2>/dev/null)
+if [ -n "$pg_service_name" ]; then
+    PG_CONTAINER=$(cd "$PROJECT_DIR" && docker compose ps -q "$pg_service_name" 2>/dev/null)
     if [ -n "$PG_CONTAINER" ]; then
-        # Extract credentials from .env or docker-compose
         DB_NAME=$(grep -oP 'POSTGRES_DB=\K\S+' "$PROJECT_DIR/.env" 2>/dev/null || grep -oP 'POSTGRES_DB:\s*\K\S+' "$COMPOSE_FILE" 2>/dev/null || echo "postgres")
         DB_USER=$(grep -oP 'POSTGRES_USER=\K\S+' "$PROJECT_DIR/.env" 2>/dev/null || grep -oP 'POSTGRES_USER:\s*\K\S+' "$COMPOSE_FILE" 2>/dev/null || echo "postgres")
 
-        docker exec "$PG_CONTAINER" pg_dump -U "$DB_USER" -d "$DB_NAME" --schema-only --no-owner --no-privileges 2>/dev/null > "$DB_DIR/schema.sql.tmp"
+        docker exec "$PG_CONTAINER" pg_dump -U "$DB_USER" -d "$DB_NAME" --schema-only --no-owner --no-privileges 2>"$ERR_LOG" > "$DB_DIR/schema.sql.tmp"
         if [ $? -eq 0 ] && [ -s "$DB_DIR/schema.sql.tmp" ]; then
             mv "$DB_DIR/schema.sql.tmp" "$DB_DIR/schema.sql"
         else
@@ -1493,18 +1611,20 @@ if [ -n "$PG_SERVICE" ]; then
     fi
 fi
 
-# Try MySQL
-MYSQL_CONTAINER=$(cd "$PROJECT_DIR" && docker compose ps -q mysql 2>/dev/null || docker compose ps -q mariadb 2>/dev/null)
-if [ -n "$MYSQL_CONTAINER" ]; then
-    DB_NAME=$(grep -oP 'MYSQL_DATABASE=\K\S+' "$PROJECT_DIR/.env" 2>/dev/null || echo "app")
-    DB_USER=$(grep -oP 'MYSQL_USER=\K\S+' "$PROJECT_DIR/.env" 2>/dev/null || echo "root")
-    DB_PASS=$(grep -oP 'MYSQL_PASSWORD=\K\S+' "$PROJECT_DIR/.env" 2>/dev/null || grep -oP 'MYSQL_ROOT_PASSWORD=\K\S+' "$PROJECT_DIR/.env" 2>/dev/null || echo "")
+# Try MySQL/MariaDB
+if [ -n "$mysql_service_name" ]; then
+    MYSQL_CONTAINER=$(cd "$PROJECT_DIR" && docker compose ps -q "$mysql_service_name" 2>/dev/null)
+    if [ -n "$MYSQL_CONTAINER" ]; then
+        DB_NAME=$(grep -oP 'MYSQL_DATABASE=\K\S+' "$PROJECT_DIR/.env" 2>/dev/null || echo "app")
+        DB_USER=$(grep -oP 'MYSQL_USER=\K\S+' "$PROJECT_DIR/.env" 2>/dev/null || echo "root")
+        DB_PASS=$(grep -oP 'MYSQL_PASSWORD=\K\S+' "$PROJECT_DIR/.env" 2>/dev/null || grep -oP 'MYSQL_ROOT_PASSWORD=\K\S+' "$PROJECT_DIR/.env" 2>/dev/null || echo "")
 
-    docker exec "$MYSQL_CONTAINER" mysqldump -u"$DB_USER" -p"$DB_PASS" --no-data --skip-comments "$DB_NAME" 2>/dev/null > "$DB_DIR/schema.sql.tmp"
-    if [ $? -eq 0 ] && [ -s "$DB_DIR/schema.sql.tmp" ]; then
-        mv "$DB_DIR/schema.sql.tmp" "$DB_DIR/schema.sql"
-    else
-        rm -f "$DB_DIR/schema.sql.tmp"
+        docker exec "$MYSQL_CONTAINER" mysqldump -u"$DB_USER" -p"$DB_PASS" --no-data --skip-comments "$DB_NAME" 2>"$ERR_LOG" > "$DB_DIR/schema.sql.tmp"
+        if [ $? -eq 0 ] && [ -s "$DB_DIR/schema.sql.tmp" ]; then
+            mv "$DB_DIR/schema.sql.tmp" "$DB_DIR/schema.sql"
+        else
+            rm -f "$DB_DIR/schema.sql.tmp"
+        fi
     fi
 fi
 
@@ -1519,28 +1639,27 @@ done
 exit 0
 ```
 
-**Сделай скрипты исполняемыми:**
-```bash
-chmod +x .claude/scripts/hooks/track-agent.sh
-chmod +x .claude/scripts/hooks/session-summary.sh
-chmod +x .claude/scripts/hooks/update-schema.sh
-chmod +x .claude/scripts/hooks/maintain-memory.sh
-```
-
 #### scripts/hooks/maintain-memory.sh
 
 Скрипт поддержки системы памяти. Запускается на старте сессии. Архивирует старые decisions, валидирует facts.md.
 
 ```bash
 #!/bin/bash
+set -uo pipefail
+ERR_LOG="${CLAUDE_PROJECT_DIR:-.}/.claude/state/.hook-errors.log"
+trap 'echo "[$(date -u +%Y-%m-%dT%H:%M:%SZ)] ERROR in $(basename "$0"):$LINENO" >> "$ERR_LOG" 2>/dev/null; exit 0' ERR
 
 PROJECT_DIR="$CLAUDE_PROJECT_DIR"
 STATE_DIR="$PROJECT_DIR/.claude/state"
 FACTS_FILE="$STATE_DIR/facts.md"
 DECISIONS_DIR="$STATE_DIR/decisions"
 ARCHIVE_DIR="$DECISIONS_DIR/archive"
+MEMORY_DIR="$STATE_DIR/memory"
+SESSIONS_DIR="$STATE_DIR/sessions"
+SESSIONS_ARCHIVE="$SESSIONS_DIR/archive"
+LOG_FILE="$STATE_DIR/usage.jsonl"
 
-mkdir -p "$DECISIONS_DIR" "$ARCHIVE_DIR"
+mkdir -p "$DECISIONS_DIR" "$ARCHIVE_DIR" "$MEMORY_DIR" "$SESSIONS_ARCHIVE"
 
 if [ ! -f "$FACTS_FILE" ]; then
     cat > "$FACTS_FILE" << 'FACTSEOF'
@@ -1563,6 +1682,14 @@ if [ ! -f "$FACTS_FILE" ]; then
 FACTSEOF
 fi
 
+if [ ! -f "$MEMORY_DIR/patterns.md" ]; then
+    printf '# Code Patterns\n\n—\n' > "$MEMORY_DIR/patterns.md"
+fi
+
+if [ ! -f "$MEMORY_DIR/issues.md" ]; then
+    printf '# Known Issues\n\n| Date | Issue | Frequency | Resolution |\n|------|-------|-----------|------------|\n' > "$MEMORY_DIR/issues.md"
+fi
+
 ARCHIVE_DAYS=${MEMORY_ARCHIVE_DAYS:-30}
 find "$DECISIONS_DIR" -maxdepth 1 -name "*.md" -mtime +$ARCHIVE_DAYS -exec mv {} "$ARCHIVE_DIR/" \; 2>/dev/null
 
@@ -1574,7 +1701,185 @@ if [ "$DECISION_COUNT" -gt 20 ]; then
     done
 fi
 
+if [ -f "$LOG_FILE" ]; then
+    CUTOFF=$(date -d '90 days ago' +%Y-%m-%dT%H:%M:%S 2>/dev/null || date -v-90d +%Y-%m-%dT%H:%M:%S 2>/dev/null)
+    if [ -n "$CUTOFF" ]; then
+        jq -c "select(.timestamp > \"$CUTOFF\")" "$LOG_FILE" > "$LOG_FILE.tmp" 2>/dev/null && mv "$LOG_FILE.tmp" "$LOG_FILE"
+    fi
+fi
+
+find "$SESSIONS_DIR" -maxdepth 1 -name "*-session.md" -mtime +60 -exec mv {} "$SESSIONS_ARCHIVE/" \; 2>/dev/null
+
 exit 0
+```
+
+#### scripts/hooks/git-context.sh
+
+Скрипт сбора git-контекста. Запускается на SessionStart. Собирает branch, recent commits, uncommitted changes.
+
+```bash
+#!/bin/bash
+set -uo pipefail
+ERR_LOG="${CLAUDE_PROJECT_DIR:-.}/.claude/state/.hook-errors.log"
+trap 'echo "[$(date -u +%Y-%m-%dT%H:%M:%SZ)] ERROR in $(basename "$0"):$LINENO" >> "$ERR_LOG" 2>/dev/null; exit 0' ERR
+
+PROJECT_DIR="$CLAUDE_PROJECT_DIR"
+STATE_DIR="$PROJECT_DIR/.claude/state"
+CONTEXT_FILE="$STATE_DIR/.git-context.md"
+
+cd "$PROJECT_DIR" || exit 0
+
+if ! git rev-parse --is-inside-work-tree >/dev/null 2>&1; then
+    exit 0
+fi
+
+BRANCH=$(git branch --show-current 2>/dev/null || echo "detached")
+LAST_COMMITS=$(git log --oneline -5 2>/dev/null || echo "—")
+UNCOMMITTED=$(git diff --stat 2>/dev/null || echo "—")
+STAGED=$(git diff --cached --stat 2>/dev/null || echo "—")
+UNTRACKED=$(git ls-files --others --exclude-standard 2>/dev/null | head -10)
+
+cat > "$CONTEXT_FILE" << EOF
+# Git Context
+
+**Branch:** $BRANCH
+**Generated:** $(date -u +"%Y-%m-%dT%H:%M:%SZ")
+
+## Last 5 Commits
+
+$LAST_COMMITS
+
+## Uncommitted Changes
+
+$UNCOMMITTED
+
+## Staged
+
+$STAGED
+
+## Untracked (top 10)
+
+$UNTRACKED
+EOF
+
+exit 0
+```
+
+**Сделай скрипты исполняемыми:**
+```bash
+chmod +x .claude/scripts/hooks/track-agent.sh
+chmod +x .claude/scripts/hooks/session-summary.sh
+chmod +x .claude/scripts/hooks/update-schema.sh
+chmod +x .claude/scripts/hooks/maintain-memory.sh
+chmod +x .claude/scripts/hooks/git-context.sh
+```
+
+#### scripts/verify-bootstrap.sh
+
+Скрипт верификации сгенерированной структуры. Вызывается один раз в конце bootstrap.
+
+```bash
+#!/bin/bash
+
+PROJECT_DIR="${CLAUDE_PROJECT_DIR:-.}"
+EXIT_CODE=0
+
+echo "=== Checking .claude/ structure ==="
+for dir in agents skills pipelines scripts/hooks state state/sessions state/decisions state/decisions/archive output output/contracts output/qa input database; do
+    if [ -d "$PROJECT_DIR/.claude/$dir" ]; then
+        echo "[OK] .claude/$dir/"
+    else
+        echo "[MISS] .claude/$dir/"
+        EXIT_CODE=1
+    fi
+done
+
+echo ""
+echo "=== Checking agents ==="
+for f in "$PROJECT_DIR"/.claude/agents/*.md; do
+    [ -f "$f" ] && echo "[OK] $(basename "$f")"
+done
+
+echo ""
+echo "=== Checking skills ==="
+for f in "$PROJECT_DIR"/.claude/skills/*/SKILL.md; do
+    [ -f "$f" ] && echo "[OK] $f"
+done
+
+echo ""
+echo "=== Checking pipelines ==="
+for f in "$PROJECT_DIR"/.claude/pipelines/*.md; do
+    [ -f "$f" ] && echo "[OK] $(basename "$f")"
+done
+
+echo ""
+echo "=== Checking hooks ==="
+for f in "$PROJECT_DIR"/.claude/scripts/hooks/*.sh; do
+    if [ ! -f "$f" ]; then continue; fi
+    if [ -x "$f" ]; then
+        echo "[OK] $(basename "$f") (executable)"
+    else
+        echo "[WARN] $(basename "$f") (not executable)"
+        chmod +x "$f"
+        echo "[FIXED] $(basename "$f")"
+    fi
+    bash -n "$f" 2>/dev/null && echo "  [OK] syntax" || echo "  [ERR] syntax error"
+done
+
+echo ""
+echo "=== Checking settings ==="
+for f in "$PROJECT_DIR"/.claude/settings.json "$PROJECT_DIR"/.claude/settings.local.json; do
+    if [ -f "$f" ]; then
+        if jq empty "$f" 2>/dev/null; then
+            echo "[OK] $(basename "$f") (valid JSON)"
+        else
+            echo "[ERR] $(basename "$f") (invalid JSON)"
+            EXIT_CODE=1
+        fi
+    else
+        echo "[MISS] $(basename "$f")"
+    fi
+done
+
+echo ""
+echo "=== Checking CLAUDE.md ==="
+if [ -f "$PROJECT_DIR/CLAUDE.md" ]; then
+    echo "[OK] CLAUDE.md exists"
+    for section in "## Agents" "## Skills" "## Pipelines" "## Commands" "## Architecture"; do
+        if grep -q "$section" "$PROJECT_DIR/CLAUDE.md"; then
+            echo "  [OK] $section"
+        else
+            echo "  [WARN] Missing: $section"
+        fi
+    done
+else
+    echo "[ERR] CLAUDE.md not found"
+    EXIT_CODE=1
+fi
+
+echo ""
+echo "=== Checking memory ==="
+for f in "$PROJECT_DIR"/.claude/state/facts.md "$PROJECT_DIR"/.claude/state/memory/patterns.md "$PROJECT_DIR"/.claude/state/memory/issues.md "$PROJECT_DIR"/.claude/skills/memory/SKILL.md; do
+    if [ -f "$f" ]; then
+        echo "[OK] $(basename "$f")"
+    else
+        echo "[MISS] $(basename "$f")"
+    fi
+done
+[ -d "$PROJECT_DIR/.claude/state/decisions" ] && echo "[OK] state/decisions/" || echo "[MISS] state/decisions/"
+
+echo ""
+echo "=== Summary ==="
+echo "Agents: $(ls -1 "$PROJECT_DIR"/.claude/agents/*.md 2>/dev/null | wc -l)"
+echo "Skills: $(ls -1d "$PROJECT_DIR"/.claude/skills/*/SKILL.md 2>/dev/null | wc -l)"
+echo "Pipelines: $(ls -1 "$PROJECT_DIR"/.claude/pipelines/*.md 2>/dev/null | wc -l)"
+echo "Hooks: $(ls -1 "$PROJECT_DIR"/.claude/scripts/hooks/*.sh 2>/dev/null | wc -l)"
+
+exit $EXIT_CODE
+```
+
+```bash
+chmod +x .claude/scripts/verify-bootstrap.sh
 ```
 
 ---
@@ -1629,6 +1934,7 @@ exit 0
       "Bash(touch:*)",
       "Bash(bash -n:*)",
       "Bash(bash .claude/scripts/hooks/*)",
+      "Bash(bash .claude/scripts/verify-bootstrap.sh)",
       "Bash(curl:*)",
       "WebFetch(domain:www.anthropic.com)",
       "WebFetch(domain:claude.com)",
@@ -1663,6 +1969,10 @@ exit 0
           {
             "type": "command",
             "command": "bash $CLAUDE_PROJECT_DIR/.claude/scripts/hooks/maintain-memory.sh"
+          },
+          {
+            "type": "command",
+            "command": "bash $CLAUDE_PROJECT_DIR/.claude/scripts/hooks/git-context.sh"
           }
         ]
       }
@@ -1684,36 +1994,6 @@ exit 0
 ---
 
 ### 4.7 State
-
-#### state/session.md
-
-```markdown
-# Active Session
-
-**Task:** —
-**Type:** —
-**Branch:** —
-**Start:** —
-**Pipeline:** —
-
-## Progress
-- [ ] —
-
-## Decisions
-—
-
-## Interruption Context
-—
-```
-
-#### state/task-log.md
-
-```markdown
-# Task Log
-
-| Date | Branch | Task | Pipeline | Status |
-|------|--------|------|----------|--------|
-```
 
 #### state/facts.md
 
@@ -1741,128 +2021,131 @@ exit 0
 {DATE}
 ```
 
+#### state/memory/patterns.md
+
+```markdown
+# Code Patterns
+
+Повторяющиеся паттерны кода, выявленные при разработке.
+
+## Naming
+—
+
+## Architecture
+—
+
+## Error Handling
+—
+
+## Last Updated
+—
+```
+
+#### state/memory/issues.md
+
+```markdown
+# Known Issues
+
+Повторяющиеся проблемы, выявленные при ревью.
+
+| Date | Issue | Frequency | Resolution |
+|------|-------|-----------|------------|
+```
+
+#### input/tasks/TEMPLATE.md
+
+```markdown
+# Task: {название}
+
+## Description
+{описание задачи}
+
+## Acceptance Criteria
+- [ ] {критерий 1}
+- [ ] {критерий 2}
+
+## Priority
+{high | medium | low}
+
+## Affected Modules
+{список модулей}
+```
+
+#### input/plans/TEMPLATE.md
+
+```markdown
+# Plan: {название}
+
+## Goal
+{цель плана}
+
+## Steps
+1. {шаг 1}
+2. {шаг 2}
+
+## Dependencies
+{зависимости}
+
+## Risks
+{риски}
+```
+
+### 4.8 Version Tracking
+
+Сгенерируй файл `.claude/.bootstrap-version` для отслеживания версии и кастомизаций:
+
+```bash
+AGENTS_LIST=$(ls -1 .claude/agents/*.md 2>/dev/null | xargs -I{} basename {} | jq -R -s 'split("\n") | map(select(. != ""))')
+SKILLS_LIST=$(ls -1d .claude/skills/*/SKILL.md 2>/dev/null | sed 's|.claude/skills/||;s|/SKILL.md||' | jq -R -s 'split("\n") | map(select(. != ""))')
+HOOKS_LIST=$(ls -1 .claude/scripts/hooks/*.sh 2>/dev/null | xargs -I{} basename {} | jq -R -s 'split("\n") | map(select(. != ""))')
+
+HASHES="{}"
+for f in .claude/agents/*.md .claude/skills/*/SKILL.md .claude/pipelines/*.md .claude/scripts/hooks/*.sh .claude/scripts/verify-bootstrap.sh; do
+    [ -f "$f" ] || continue
+    REL=$(echo "$f" | sed 's|^.claude/||')
+    HASH=$(sha256sum "$f" | cut -d' ' -f1)
+    HASHES=$(echo "$HASHES" | jq --arg k "$REL" --arg v "sha256:$HASH" '. + {($k): $v}')
+done
+
+jq -n \
+    --arg version "2.0.0" \
+    --arg date "$(date +%Y-%m-%d)" \
+    --argjson langs '{LANGS_JSON_ARRAY}' \
+    --arg frontend '{FRONTEND}' \
+    --arg db '{DB}' \
+    --argjson agents "$AGENTS_LIST" \
+    --argjson skills "$SKILLS_LIST" \
+    --argjson hooks "$HOOKS_LIST" \
+    --argjson hashes "$HASHES" \
+    '{
+        version: $version,
+        date: $date,
+        stack: {langs: $langs, frontend: $frontend, db: $db},
+        generated: {agents: $agents, skills: $skills, hooks: $hooks},
+        hashes: $hashes
+    }' > .claude/.bootstrap-version
+```
+
+Замени `{LANGS_JSON_ARRAY}`, `{FRONTEND}`, `{DB}` на реальные значения из Шага 1.
+
 ---
 
 ## ШАГ 5: ВЕРИФИКАЦИЯ
 
-Проверь всё созданное:
-
-### 5.1 Файловая структура
+Запусти скрипт верификации одной командой:
 
 ```bash
-echo "=== Checking .claude/ structure ==="
-for dir in agents skills pipelines scripts/hooks state state/sessions state/decisions state/decisions/archive output output/contracts output/qa input database; do
-    if [ -d ".claude/$dir" ]; then
-        echo "[OK] .claude/$dir/"
-    else
-        echo "[MISS] .claude/$dir/"
-    fi
-done
+bash .claude/scripts/verify-bootstrap.sh
 ```
 
-### 5.2 Агенты
-
-```bash
-echo "=== Checking agents ==="
-for f in .claude/agents/*.md; do
-    echo "[OK] $f"
-done
-```
-
-### 5.3 Скиллы
-
-```bash
-echo "=== Checking skills ==="
-for f in .claude/skills/*/SKILL.md; do
-    echo "[OK] $f"
-done
-```
-
-### 5.4 Пайплайны
-
-```bash
-echo "=== Checking pipelines ==="
-for f in .claude/pipelines/*.md; do
-    echo "[OK] $f"
-done
-```
-
-### 5.5 Executable hooks
-
-```bash
-echo "=== Checking hooks ==="
-for f in .claude/scripts/hooks/*.sh; do
-    if [ -x "$f" ]; then
-        echo "[OK] $f (executable)"
-    else
-        echo "[WARN] $f (not executable)"
-        chmod +x "$f"
-        echo "[FIXED] $f"
-    fi
-done
-```
-
-### 5.6 Settings
-
-```bash
-echo "=== Checking settings ==="
-for f in .claude/settings.json .claude/settings.local.json; do
-    if [ -f "$f" ]; then
-        if jq empty "$f" 2>/dev/null; then
-            echo "[OK] $f (valid JSON)"
-        else
-            echo "[ERR] $f (invalid JSON)"
-        fi
-    else
-        echo "[MISS] $f"
-    fi
-done
-```
-
-### 5.7 CLAUDE.md
-
-```bash
-echo "=== Checking CLAUDE.md ==="
-if [ -f "CLAUDE.md" ]; then
-    echo "[OK] CLAUDE.md exists"
-    # Проверить наличие ключевых секций
-    for section in "## Agents" "## Skills" "## Pipelines" "## Commands" "## Architecture"; do
-        if grep -q "$section" CLAUDE.md; then
-            echo "[OK] Section: $section"
-        else
-            echo "[WARN] Missing section: $section"
-        fi
-    done
-else
-    echo "[ERR] CLAUDE.md not found"
-fi
-```
-
-### 5.8 Memory
-
-```bash
-echo "=== Checking memory ==="
-for f in .claude/state/facts.md .claude/skills/memory/SKILL.md; do
-    if [ -f "$f" ]; then
-        echo "[OK] $f"
-    else
-        echo "[MISS] $f"
-    fi
-done
-if [ -d ".claude/state/decisions" ]; then
-    echo "[OK] .claude/state/decisions/"
-else
-    echo "[MISS] .claude/state/decisions/"
-fi
-```
-
-### 5.9 Итоговый отчёт
+### 5.1 Итоговый отчёт
 
 Покажи:
 - Количество агентов, скиллов, пайплайнов
 - Стек проекта
 - Что было вычленено из CLAUDE.md (если было)
 - Список всех созданных файлов
+- Результат верификации (все [OK] или есть [MISS]/[ERR])
 
 ---
 
@@ -1988,12 +2271,13 @@ fi
 ║  DB: {DB}                                    ║
 ║                                              ║
 ║  Agents: {N_BASE + N_CUSTOM}                 ║
-║  Skills: {5 + N_CUSTOM_SKILLS}               ║
+║  Skills: {7 + N_CUSTOM_SKILLS}               ║
 ║  Pipelines: {8 + N_CUSTOM_PIPELINES}         ║
-║  Hooks: 4                                    ║
-║  Memory: facts + decisions + archive         ║
+║  Hooks: 5                                    ║
+║  Memory: facts + patterns + issues + decisions║
+║  Version: 2.0.0                              ║
 ║                                              ║
 ║  Quick start:                                ║
-║  {задача} by pipeline new-code               ║
+║  /pipeline new-code  или  /p new-code        ║
 ╚══════════════════════════════════════════════╝
 ```
