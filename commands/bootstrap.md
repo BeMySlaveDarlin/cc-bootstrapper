@@ -15,7 +15,7 @@
 ### Если `.bootstrap-version` существует:
 
 1. Прочитай файл, извлеки `version`
-2. Сравни с `VERSION_CURRENT` из meta-prompt (`2.1.0`)
+2. Сравни с `VERSION_CURRENT` из meta-prompt (`3.0.0`)
 3. **Если версии совпадают:**
    - Выведи `[CURRENT] Версия актуальна (v{version}). Запускаю PRE-CHECK...`
    - Перейди к PRE-CHECK
@@ -107,7 +107,18 @@
    При "Да":
    - Создать `scripts/verify-bootstrap.sh`
 
-5. Сгенерировать `.claude/.bootstrap-version` с текущим состоянием
+5. Используй AskUserQuestion:
+   - question: "Добавить интеграцию GitLab MCP?"
+   - header: "GitLab MCP"
+   - options:
+     - {label: "Да", description: "Настроить GitLab MCP — создаст .mcp.json, агент, скилл, пайплайн"}
+     - {label: "Нет", description: "Пропустить"}
+   - multiSelect: false
+   При "Да":
+   - Запустить сбор параметров (шаги 2-5 из секции 3.4.1 meta-prompt)
+   - Сгенерировать файлы (секция 4.9 meta-prompt)
+
+6. Сгенерировать `.claude/.bootstrap-version` с текущим состоянием
 
 ### Если `.claude/` не существует:
 
@@ -133,6 +144,7 @@
 12. `.claude/skills/memory/SKILL.md` — существует (скилл системы памяти)
 13. `.claude/state/decisions/` — существует (директория архитектурных решений)
 14. `.claude/.bootstrap-version` — существует, валидный JSON
+15. `.mcp.json` — если существует, валидный JSON, содержит `mcpServers` (опционально)
 
 **Если ВСЕ условия выполнены:**
 - Выведи `[SKIP] Проект уже полностью соответствует схеме bootstrap v2. Изменения не требуются.`
@@ -192,6 +204,19 @@
     - {label: "Нет, оставить", description: "Не трогать файлы"}
   - multiSelect: false
 - При «Выбрать вручную» — показать каждый файл отдельно
+
+### 3. MCP
+
+Если `.mcp.json` уже существует:
+- Покажи текущие mcpServers из файла
+- Используй AskUserQuestion:
+  - question: "Что сделать с .mcp.json?"
+  - header: "MCP"
+  - options:
+    - {label: "Оставить", description: "Не трогать существующую конфигурацию MCP"}
+    - {label: "Перезаписать", description: "Заменить конфигурацию MCP сгенерированной"}
+    - {label: "Merge", description: "Добавить новые MCP-серверы, сохранить существующие"}
+  - multiSelect: false
 
 **Если проект пустой** — пропускай INTERACTIVE, создавай всё с нуля.
 
