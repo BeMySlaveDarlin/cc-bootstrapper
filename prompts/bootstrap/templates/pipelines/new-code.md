@@ -4,6 +4,8 @@
 - Описание задачи от пользователя
 - `.claude/state/facts.md`
 
+{если ADAPTIVE_TEAMS: включи `templates/includes/capability-detect.md`}
+
 ## Phase 1: ARCHITECTURE
 
 Task(.claude/agents/{lang}-architect.md, subagent_type: "general-purpose"):
@@ -50,6 +52,23 @@ Task(.claude/agents/{lang}-test-developer.md, subagent_type: "general-purpose"):
 
 ## Phase 5: REVIEW
 
+### Режим TEAM (если EXECUTION_MODE=team)
+
+TeamCreate("review-{task}", "Code review: logic + security"):
+
+Spawn("review-{task}", "reviewer-logic", .claude/agents/{lang}-reviewer-logic.md):
+  Вход: все изменённые файлы
+  Выход: таблица замечаний (severity, файл, проблема, рекомендация)
+
+Spawn("review-{task}", "reviewer-security", .claude/agents/{lang}-reviewer-security.md):
+  Вход: все изменённые файлы
+  Выход: таблица замечаний (severity, файл, проблема, рекомендация)
+
+Жди завершения обоих тиммейтов. Собери результаты через TaskList.
+Shutdown("review-{task}").
+
+### Режим SEQUENTIAL (если EXECUTION_MODE=sequential)
+
 Запусти одновременно:
 
 Task(.claude/agents/{lang}-reviewer-logic.md, subagent_type: "general-purpose"):
@@ -60,7 +79,7 @@ Task(.claude/agents/{lang}-reviewer-security.md, subagent_type: "general-purpose
   Вход: все изменённые файлы
   Выход: таблица замечаний (severity, файл, проблема, рекомендация)
 
-### Обработка результатов
+### Обработка результатов (оба режима)
 - **BLOCK** от любого reviewer → исправить и повторить Phase 5
 - **PASS WITH WARNINGS** → исправить WARN, продолжить
 - **PASS** → продолжить

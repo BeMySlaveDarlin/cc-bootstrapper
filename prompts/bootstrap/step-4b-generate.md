@@ -112,3 +112,27 @@
 | Проблема | Действие | Откат |
 |----------|----------|-------|
 ```
+
+### 4.4.2 Adaptive Teams
+
+Если `ADAPTIVE_TEAMS=true`:
+
+Для пайплайнов **new-code**, **review**:
+1. Прочитай `templates/includes/capability-detect.md`
+2. Вставь содержимое как Phase 0: CAPABILITY DETECT перед Phase 1
+3. Добавь adaptive-секции (Режим TEAM / Режим SEQUENTIAL) в фазы с параллелизацией
+4. Удали директиву `{если ADAPTIVE_TEAMS: включи ...}` — она заменена реальным содержимым
+
+Для **full-feature**:
+- Наследует adaptive через ссылку на new-code.md (Phase 1 = "Выполни pipeline new-code.md")
+- Без собственных изменений
+
+Если `ADAPTIVE_TEAMS=false`:
+- Удали директивы `{если ADAPTIVE_TEAMS: ...}` из шаблонов
+- Оставь только SEQUENTIAL-логику (текущий формат с Task() и "Запусти одновременно:")
+
+**Валидация:**
+- Каждая adaptive-фаза содержит ОБА режима (TEAM + SEQUENTIAL)
+- TeamCreate/Spawn/SendMessage/Shutdown только в секциях "Режим TEAM"
+- Task() только в секциях "Режим SEQUENTIAL"
+- Phase 0 CAPABILITY DETECT присутствует первой фазой

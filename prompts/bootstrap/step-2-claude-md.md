@@ -145,6 +145,12 @@
 | Hotfix | `hotfix.md` | срочное исправление |
 {CUSTOM_PIPELINES_ROWS}
 
+{если ADAPTIVE_TEAMS:}
+> **Adaptive Teams:** Пайплайны new-code, review, full-feature поддерживают
+> автоматическое определение режима (Teams API / Sequential).
+> Opus 4.6 → параллельная работа агентов. Другие модели → последовательный fallback.
+{/если}
+
 ## State Management
 
 - `.claude/state/facts.md` — текущие факты проекта (стек, пути, решения, проблемы)

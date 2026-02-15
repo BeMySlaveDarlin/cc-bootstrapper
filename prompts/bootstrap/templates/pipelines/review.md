@@ -4,7 +4,26 @@
 - Файлы для ревью (diff или список путей)
 - `.claude/state/facts.md`
 
+{если ADAPTIVE_TEAMS: включи `templates/includes/capability-detect.md`}
+
 ## Phase 1: PARALLEL REVIEW
+
+### Режим TEAM (если EXECUTION_MODE=team)
+
+TeamCreate("review-{task}", "Code review: logic + security"):
+
+Spawn("review-{task}", "reviewer-logic", .claude/agents/{lang}-reviewer-logic.md):
+  Вход: файлы для ревью + `.claude/skills/code-style/SKILL.md` + `.claude/skills/architecture/SKILL.md`
+  Выход: таблица замечаний (severity, файл:строка, проблема, рекомендация)
+
+Spawn("review-{task}", "reviewer-security", .claude/agents/{lang}-reviewer-security.md):
+  Вход: файлы для ревью
+  Выход: таблица замечаний (severity, файл:строка, проблема, рекомендация)
+
+Жди завершения обоих тиммейтов. Собери результаты через TaskList.
+Shutdown("review-{task}").
+
+### Режим SEQUENTIAL (если EXECUTION_MODE=sequential)
 
 Запусти одновременно:
 

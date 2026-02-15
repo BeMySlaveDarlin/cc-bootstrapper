@@ -47,3 +47,9 @@ argument-hint: "[описание задачи]"
 
 ### Шаг 4 — Диспатч
 Прочитай `.claude/pipelines/{type}.md` и выполни ВСЕ фазы.
+
+{если ADAPTIVE_TEAMS:}
+> **Adaptive Teams:** Пайплайны new-code, review, full-feature автоматически определяют
+> режим выполнения (team/sequential) в Phase 0. Отдельная классификация НЕ нужна —
+> роутинг остаётся прежним.
+{/если}

@@ -162,6 +162,20 @@
 
 Сохрани в CUSTOM_PIPELINES.
 
+### 3.3.2 Adaptive Teams
+
+**Шаг 1.** Используй AskUserQuestion:
+- question: "Включить adaptive team mode для пайплайнов? Если доступен Opus 4.6 — ревью и разработка будут параллельными через Teams API. Иначе — автоматический fallback на последовательный режим."
+- header: "Teams"
+- options:
+  - {label: "Да (Рекомендуется)", description: "Adaptive mode: Teams на Opus 4.6, fallback на остальных моделях"}
+  - {label: "Нет", description: "Только последовательные Task() пайплайны"}
+- multiSelect: false
+
+Сохрани в `ADAPTIVE_TEAMS` (true/false).
+
+Затронутые пайплайны при `ADAPTIVE_TEAMS=true`: new-code, review, full-feature (через наследование new-code).
+
 ## 3.4 MCP-интеграции
 
 ### 3.4.1 GitLab MCP
