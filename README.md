@@ -13,9 +13,23 @@
 
 ```
 commands/
-  bootstrap.md              # /bootstrap команда — точка входа
+  bootstrap.md                          # /bootstrap slash command — точка входа
 prompts/
-  meta-prompt-bootstrap.md  # Meta-prompt v2.0 с логикой генерации
+  meta-prompt-bootstrap.md              # Оркестратор — читает шаги последовательно
+  bootstrap/
+    step-1-analyze.md                   # Анализ стека
+    step-2-claude-md.md                 # CLAUDE.md генерация/валидация
+    step-3-plan.md                      # Интерактивное планирование
+    step-4-generate.md                  # Генерация файлов с валидацией
+    step-5-verify.md                    # Верификация + отчёт
+    templates/
+      agents/                           # 11 шаблонов агентов
+      skills/                           # 7 шаблонов скиллов
+      pipelines/                        # 8 шаблонов пайплайнов
+      hooks/                            # 5 шаблонов хуков
+      settings.json.tpl                 # Шаблон shared settings
+      settings.local.json.tpl           # Шаблон local settings
+      verify-bootstrap.sh               # Скрипт верификации
 ```
 
 ## Установка
@@ -23,6 +37,7 @@ prompts/
 ```bash
 cp commands/bootstrap.md ~/.claude/commands/
 cp prompts/meta-prompt-bootstrap.md ~/.claude/prompts/
+cp -r prompts/bootstrap ~/.claude/prompts/
 ```
 
 ## Использование
@@ -37,12 +52,23 @@ claude
 > /bootstrap
 ```
 
-### Upgrade существующего проекта
+### Режимы работы
 
-Повторный `/bootstrap` на уже bootstrapped проекте запустит upgrade flow:
-- **v2 проект** (`.bootstrap-version` есть) — diff detection по SHA256, выборочное обновление
-- **v1 проект** (`.claude/` есть, `.bootstrap-version` нет) — пошаговая миграция на v2
-- **Новый проект** — полная генерация с нуля
+Режим определяется автоматически:
+
+| Условие | Режим | Поведение |
+|---------|-------|-----------|
+| `.claude/` не существует | `fresh` | Полная генерация с нуля |
+| `.claude/` существует | `validate` | Проверка каждого файла + auto-fix |
+
+В режиме `validate` каждый файл проверяется на соответствие эталону:
+- `[OK]` — файл соответствует
+- `[FIX]` — проблема найдена и исправлена автоматически
+- `[NEW]` — файл отсутствовал, создан из шаблона
+- `[REGEN]` — файл пересоздан (критичные расхождения)
+- `[WARN]` — предупреждение (устаревший файл)
+
+Ноль интерактивных вопросов при валидации (кроме settings.json).
 
 ## Что генерируется
 
@@ -59,7 +85,7 @@ claude
   database/         # Схема, миграции
   settings.json     # Общие permissions
   settings.local.json # Hooks + локальные permissions
-  .bootstrap-version  # Version tracking + SHA256 hashes
+  .bootstrap-version  # SHA256 хеши файлов
 CLAUDE.md           # Обзор проекта с индексом агентов/скиллов/пайплайнов
 ```
 
@@ -92,7 +118,7 @@ CLAUDE.md           # Обзор проекта с индексом агенто
 | `full-feature` | Полный цикл фичи |
 | `hotfix` | Срочное исправление |
 
-Auto-Pipeline Rule: CLAUDE.md содержит правило автоматического вызова `/pipeline` для релевантных запросов.
+CLAUDE.md содержит ЖЁСТКОЕ ПРАВИЛО автоматического вызова `/pipeline` для релевантных запросов.
 
 ## Memory-система
 
@@ -149,13 +175,6 @@ PHP, Node.js/TypeScript, Python, Go, Rust, Java, C#, Ruby.
 
 Скиллы — базы знаний для агентов. `pipeline` и `p` — invocable (вызываются через `/`).
 
-**Что можно менять:**
-- **code-style** — правила именования, запреты, примеры хорошего/плохого кода
-- **architecture** — структура модулей, DI-паттерны, цепочки зависимостей
-- **database** — типы столбцов, правила миграций, именование индексов
-- **testing** — шаблон теста, правила моков, именование тест-методов
-- **pipeline** — ключевые слова для автоопределения пайплайна
-
 **Добавить новый скилл:**
 1. `mkdir -p .claude/skills/{name}`
 2. Создай `SKILL.md` с секциями: Паттерны, Антипаттерны, Примеры
@@ -164,13 +183,7 @@ PHP, Node.js/TypeScript, Python, Go, Rust, Java, C#, Ruby.
 
 ### Пайплайны (`.claude/pipelines/*.md`)
 
-Пайплайн — последовательность фаз, каждая вызывает агента.
-
-**Что можно менять:**
-- **Фазы** — добавить/убрать/переупорядочить шаги
-- **Агенты** — заменить агента на другого в фазе
-- **Матрица ошибок** — изменить поведение при сбое (откат, повтор, стоп)
-- **Команды** — заменить `TEST_CMD`, `LINT_CMD` на актуальные
+Пайплайн — последовательность фаз, каждая вызывает агента через Task() pseudo-syntax.
 
 **Добавить новый пайплайн:**
 1. Создай `.claude/pipelines/{name}.md` (минимум 2 фазы)
@@ -191,24 +204,6 @@ Shell-скрипты, вызываемые автоматически через
 
 - **`settings.json`** — общие (в git), только permissions
 - **`settings.local.json`** — локальные (в .gitignore), permissions + hooks
-
-## Changelog
-
-### 2.0.0 (2026-02-13)
-- Pipeline skill-роутер (`/pipeline`, `/p`) вместо пассивного `skills/routing/`
-- Memory-система по умолчанию (`patterns.md`, `issues.md`)
-- Удалены `session.md` и `task-log.md` (заменены hooks-based tracking)
-- Починены хуки: maintain-memory.sh, update-schema.sh, session-summary.sh
-- Верификация вынесена в `scripts/verify-bootstrap.sh`
-- Auto-Pipeline Rule в CLAUDE.md
-- Upgrade mode с diff detection по SHA256
-- git-context.sh хук
-- CI Manager агент (опционально)
-- Error handling во всех хуках (trap ERR)
-- Input task/plan templates
-
-### 1.0.0
-- Базовая система: agents, skills, pipelines, hooks, state, CLAUDE.md
 
 ## Лицензия
 
