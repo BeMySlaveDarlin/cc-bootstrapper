@@ -1,6 +1,6 @@
 # cc-bootstrapper
 
-Система автоматического bootstrap для Claude Code. Анализирует любой проект и генерирует полную структуру `.claude/`: агенты, скиллы, пайплайны, hooks, state, settings, CLAUDE.md.
+Система автоматического bootstrap для Claude Code. Анализирует любой проект и генерирует полную структуру `.claude/`: агенты, скиллы, пайплайны, hooks, memory, settings, CLAUDE.md.
 
 ## Требования
 
@@ -22,7 +22,7 @@ prompts/
     step-3-plan.md                      # Интерактивное планирование (AskUserQuestion)
     step-4-generate.md                  # Генерация: директории + агенты
     step-4b-generate.md                 # Генерация: скиллы + пайплайны
-    step-4c-generate.md                 # Генерация: hooks, settings, state, MCP
+    step-4c-generate.md                 # Генерация: hooks, settings, memory, MCP
     step-5-verify.md                    # Верификация + отчёт
     templates/
       agents/                           # 11 шаблонов агентов
@@ -80,7 +80,7 @@ claude
   pipelines/        # new-code, fix-code, review, tests, api-docs, qa-docs, full-feature, hotfix
   scripts/hooks/    # track-agent, session-summary, update-schema, maintain-memory, git-context
   scripts/          # verify-bootstrap.sh
-  state/            # facts.md, memory/, sessions/, decisions/
+  memory/           # facts.md, patterns.md, issues.md, sessions/, decisions/
   output/           # contracts/, qa/
   input/            # tasks/, plans/
   database/         # Схема, миграции
@@ -130,24 +130,17 @@ CLAUDE.md содержит ЖЁСТКОЕ ПРАВИЛО автоматичес�
 
 Режим определяется автоматически в Phase 0 через проверку доступности инструмента `TeamCreate`. Включается опционально через AskUserQuestion на этапе планирования.
 
-## Интерактивное планирование
-
-На шаге 3 (step-3-plan.md) система задаёт вопросы через AskUserQuestion:
-- Кастомные агенты, скиллы, пайплайны
-- Adaptive Teams mode
-- GitLab MCP интеграция (URL, token, функции)
-
 ## Memory-система
 
 Трёхуровневая система памяти проекта:
 
 | Уровень | Файл | Назначение |
 |---------|------|------------|
-| Facts | `state/facts.md` | Текущий стек, пути, активные решения |
-| Patterns | `state/memory/patterns.md` | Повторяющиеся паттерны кода |
-| Issues | `state/memory/issues.md` | Known issues из ревью |
-| Decisions | `state/decisions/*.md` | Архитектурные решения (ADR-lite) |
-| Archive | `state/decisions/archive/` | Устаревшие решения (авторотация 30 дней) |
+| Facts | `memory/facts.md` | Текущий стек, пути, активные решения |
+| Patterns | `memory/patterns.md` | Повторяющиеся паттерны кода |
+| Issues | `memory/issues.md` | Known issues из ревью |
+| Decisions | `memory/decisions/*.md` | Архитектурные решения (ADR-lite) |
+| Archive | `memory/decisions/archive/` | Устаревшие решения (авторотация 30 дней) |
 
 Агенты пишут в memory при работе, `maintain-memory.sh` ротирует автоматически.
 
@@ -156,7 +149,7 @@ CLAUDE.md содержит ЖЁСТКОЕ ПРАВИЛО автоматичес�
 | Hook | Event | Что делает |
 |------|-------|------------|
 | `track-agent.sh` | PostToolUse (Task) | Логирует использование агентов в `usage.jsonl` |
-| `session-summary.sh` | Stop | Создаёт отчёт в `state/sessions/` |
+| `session-summary.sh` | Stop | Создаёт отчёт в `memory/sessions/` |
 | `update-schema.sh` | SessionStart + PostToolUse | Обновляет `database/schema.sql` из Docker |
 | `maintain-memory.sh` | SessionStart | Ротация decisions, usage.jsonl, сессий |
 | `git-context.sh` | SessionStart | Собирает branch, commits, changes → `.git-context.md` |
@@ -171,6 +164,13 @@ CLAUDE.md содержит ЖЁСТКОЕ ПРАВИЛО автоматичес�
 - API URL (gitlab.com или self-hosted)
 - Username, Personal Access Token
 - Функции: Issues, MR, Pipelines, Wiki, Milestones, Releases
+
+## Интерактивное планирование
+
+На шаге 3 (step-3-plan.md) система задаёт вопросы через AskUserQuestion:
+- Кастомные агенты, скиллы, пайплайны
+- Adaptive Teams mode (параллельная работа агентов на Opus 4.6)
+- GitLab MCP интеграция (URL, token, функции)
 
 ## Поддерживаемые стеки
 
@@ -229,6 +229,7 @@ Shell-скрипты, вызываемые автоматически через
 
 | Версия | Что нового |
 |--------|------------|
+| v5.1.0 | Cleanup docs, миграция state/ → memory/ |
 | v5.0.0 | Adaptive Teams — Teams API с graceful degradation |
 | v4.0.0 | Модульная архитектура, step-4 split на 3 батча |
 | v3.0.0 | Опциональная GitLab MCP интеграция |

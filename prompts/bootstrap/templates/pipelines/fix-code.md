@@ -2,14 +2,14 @@
 
 ## Вход
 - Описание бага / ошибки
-- `.claude/state/facts.md`
+- `.claude/memory/facts.md`
 
 ## Phase 1: DIAGNOSIS
 
-1. Прочитай `.claude/state/facts.md` и `.claude/state/memory/issues.md`
+1. Прочитай `.claude/memory/facts.md` и `.claude/memory/issues.md`
 2. Локализуй проблему: файл, строка, причина
 3. Определи root cause
-4. Проверь `.claude/state/decisions/` на релевантные ограничения
+4. Проверь `.claude/memory/decisions/` на релевантные ограничения
 
 ### Вывод диагностики
 ```
@@ -54,9 +54,9 @@ Task(.claude/agents/{lang}-reviewer-logic.md, subagent_type: "general-purpose"):
 
 ## Phase 5: CAPTURE
 
-1. Обнови `.claude/state/facts.md` — зафиксируй исправление
-2. Добавь в `.claude/state/memory/issues.md` описание бага и решения
-3. Обнови `.claude/state/memory/patterns.md` если выявлен антипаттерн
+1. Обнови `.claude/memory/facts.md` — зафиксируй исправление
+2. Добавь в `.claude/memory/issues.md` описание бага и решения
+3. Обнови `.claude/memory/patterns.md` если выявлен антипаттерн
 
 ### Итог
 ```

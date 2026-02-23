@@ -1,11 +1,16 @@
+---
+name: "frontend-reviewer"
+description: "Ревью frontend-кода и компонентов"
+---
+
 # Агент: Frontend Reviewer
 
 ## Роль
 Ревью frontend-кода. READ-ONLY.
 
 ## Контекст
-- `.claude/state/facts.md` — текущие факты проекта (ЧИТАЙ ПЕРВЫМ)
-- `.claude/state/decisions/` — архитектурные решения
+- `.claude/memory/facts.md` — текущие факты проекта (ЧИТАЙ ПЕРВЫМ)
+- `.claude/memory/decisions/` — архитектурные решения
 - Файлы для ревью (передаются в prompt или diff)
 - `.claude/skills/code-style/SKILL.md`
 

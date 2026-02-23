@@ -12,6 +12,13 @@
 
 ### Валидация (режим `validate`)
 
+#### Все скиллы (.claude/skills/*/SKILL.md)
+- Начинается с YAML frontmatter (`---` блок) с полями `name` и `description`
+- `description` — ОДНА строка (критичное ограничение Claude Code)
+- Для pipeline и p: `user-invocable: true`
+- Для остальных скиллов: `user-invocable: false`
+→ Нет frontmatter → добавить из шаблона → `[FIX] {path}: добавлен frontmatter`
+
 #### skills/pipeline/SKILL.md (CRITICAL)
 - Файл расположен в `skills/pipeline/` (НЕ `skills/routing/`)
 - Содержит frontmatter с `user-invocable: true`
@@ -46,6 +53,12 @@
 Для каждого скилла из CUSTOM_SKILLS сгенерируй файл `.claude/skills/{name}/SKILL.md` по шаблону:
 
 ```markdown
+---
+name: "{name}"
+description: "{DESCRIPTION — краткое описание, одна строка}"
+user-invocable: false
+---
+
 # Skill: {Name} — {DESCRIPTION}
 
 ## Паттерны

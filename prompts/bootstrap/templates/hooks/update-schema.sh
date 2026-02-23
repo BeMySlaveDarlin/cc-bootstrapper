@@ -1,6 +1,6 @@
 #!/bin/bash
 set -uo pipefail
-ERR_LOG="${CLAUDE_PROJECT_DIR:-.}/.claude/state/.hook-errors.log"
+ERR_LOG="${CLAUDE_PROJECT_DIR:-.}/.claude/memory/.hook-errors.log"
 trap 'echo "[$(date -u +%Y-%m-%dT%H:%M:%SZ)] ERROR in $(basename "$0"):$LINENO" >> "$ERR_LOG" 2>/dev/null; exit 0' ERR
 
 PROJECT_DIR="$CLAUDE_PROJECT_DIR"
@@ -28,7 +28,7 @@ if [ -z "$COMPOSE_FILE" ]; then
     exit 0
 fi
 
-ERR_LOG="$PROJECT_DIR/.claude/state/.hook-errors.log"
+ERR_LOG="$PROJECT_DIR/.claude/memory/.hook-errors.log"
 
 pg_service_name=$(awk '/^\s+\S+:/{svc=$1} /image:.*postgres/{gsub(/:$/,"",svc); print svc; exit}' "$COMPOSE_FILE" 2>/dev/null)
 mysql_service_name=$(awk '/^\s+\S+:/{svc=$1} /image:.*(mysql|mariadb)/{gsub(/:$/,"",svc); print svc; exit}' "$COMPOSE_FILE" 2>/dev/null)

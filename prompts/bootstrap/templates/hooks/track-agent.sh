@@ -1,9 +1,9 @@
 #!/bin/bash
 set -uo pipefail
-ERR_LOG="${CLAUDE_PROJECT_DIR:-.}/.claude/state/.hook-errors.log"
+ERR_LOG="${CLAUDE_PROJECT_DIR:-.}/.claude/memory/.hook-errors.log"
 trap 'echo "[$(date -u +%Y-%m-%dT%H:%M:%SZ)] ERROR in $(basename "$0"):$LINENO" >> "$ERR_LOG" 2>/dev/null; exit 0' ERR
 
-LOG_DIR="$CLAUDE_PROJECT_DIR/.claude/state"
+LOG_DIR="$CLAUDE_PROJECT_DIR/.claude/memory"
 LOG_FILE="$LOG_DIR/usage.jsonl"
 mkdir -p "$LOG_DIR"
 

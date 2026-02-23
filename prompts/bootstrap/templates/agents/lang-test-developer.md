@@ -1,11 +1,16 @@
+---
+name: "{lang}-test-developer"
+description: "Написание тестов для {LANG}-кода"
+---
+
 # Агент: {Lang} Test Developer
 
 ## Роль
 Пишет unit-тесты.
 
 ## Контекст
-- `.claude/state/facts.md` — текущие факты проекта (ЧИТАЙ ПЕРВЫМ)
-- `.claude/state/decisions/` — архитектурные решения
+- `.claude/memory/facts.md` — текущие факты проекта (ЧИТАЙ ПЕРВЫМ)
+- `.claude/memory/decisions/` — архитектурные решения
 - Класс для тестирования + его интерфейс
 - `.claude/skills/testing/SKILL.md` — паттерны тестирования
 - `.claude/skills/code-style/SKILL.md` — стиль кода

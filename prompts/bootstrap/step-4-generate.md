@@ -12,9 +12,13 @@
 2. **Файл существует** → провести ВАЛИДАЦИЮ содержимого:
 
 #### Валидация агентов (.claude/agents/*.md)
+- Начинается с YAML frontmatter (`---` блок) с полями `name` и `description`
+- `name` — kebab-case, совпадает с именем файла (без `.md`)
+- `description` — одна строка, описание роли агента
 - Содержит секцию `## Контекст` с ссылкой на `facts.md`
 - Содержит ссылки на skills (`skills/code-style/SKILL.md`, etc.)
 - НЕ содержит устаревших ссылок на `skills/routing/`
+→ Нет frontmatter → добавить из шаблона → `[FIX] {path}: добавлен frontmatter`
 → Проблемы найдены → исправить IN-PLACE → `[FIX] {path}: {что исправлено}`
 → Файл ОК → `[OK] {path}`
 
@@ -40,8 +44,8 @@
 ## 4.1 Директории
 
 ```bash
-mkdir -p .claude/{agents,skills/{code-style,architecture,database,testing,memory,pipeline,p},pipelines,scripts/hooks,state/{sessions,sessions/archive,decisions,decisions/archive,memory},output/{contracts,qa},input/{tasks,plans},database}
-touch .claude/state/decisions/.gitkeep .claude/state/decisions/archive/.gitkeep
+mkdir -p .claude/{agents,skills/{code-style,architecture,database,testing,memory,pipeline,p},pipelines,scripts/hooks,memory/{decisions,decisions/archive,sessions,sessions/archive},output/{contracts,qa},input/{tasks,plans},database}
+touch .claude/memory/decisions/.gitkeep .claude/memory/decisions/archive/.gitkeep
 ```
 
 Если CUSTOM_SKILLS не пуст — создай дополнительные директории:
@@ -60,8 +64,10 @@ mkdir -p .claude/skills/gitlab
 
 Общие агенты (DB Architect, DevOps, Frontend*, QA Engineer) — генерируются в одном экземпляре.
 
+**ВАЖНО:** Каждый шаблон агента содержит YAML frontmatter с placeholder-переменными (`{lang}`, `{LANG}`). При генерации подставляй реальные значения в frontmatter так же, как и в теле файла.
+
 Для каждого `{lang}` из LANGS:
-  Прочитай шаблон `templates/agents/lang-architect.md` → подставь переменные → запиши в `.claude/agents/{lang}-architect.md`
+  Прочитай шаблон `templates/agents/lang-architect.md` → подставь переменные (включая frontmatter) → запиши в `.claude/agents/{lang}-architect.md`
   Прочитай шаблон `templates/agents/lang-developer.md` → подставь переменные → запиши в `.claude/agents/{lang}-developer.md`
   Прочитай шаблон `templates/agents/lang-test-developer.md` → подставь переменные → запиши в `.claude/agents/{lang}-test-developer.md`
   Прочитай шаблон `templates/agents/lang-reviewer-logic.md` → подставь переменные → запиши в `.claude/agents/{lang}-reviewer-logic.md`
@@ -86,14 +92,19 @@ mkdir -p .claude/skills/gitlab
 Для каждого агента из CUSTOM_AGENTS, а также для frontend-contract и ci-manager, сгенерируй файл `.claude/agents/{name}.md` по универсальному шаблону:
 
 ```markdown
+---
+name: "{name}"
+description: "{ROLE — краткое описание роли агента, одна строка}"
+---
+
 # Агент: {Name}
 
 ## Роль
 {ROLE — из ответа пользователя или определи по стеку}
 
 ## Контекст
-- `.claude/state/facts.md` — текущие факты проекта (ЧИТАЙ ПЕРВЫМ)
-- `.claude/state/decisions/` — архитектурные решения
+- `.claude/memory/facts.md` — текущие факты проекта (ЧИТАЙ ПЕРВЫМ)
+- `.claude/memory/decisions/` — архитектурные решения
 - Код модуля: {SOURCE_DIR}
 - `.claude/skills/code-style/SKILL.md` — стиль кода
 - `.claude/skills/architecture/SKILL.md` — архитектура

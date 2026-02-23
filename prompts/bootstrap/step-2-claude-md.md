@@ -151,14 +151,14 @@
 > Opus 4.6 → параллельная работа агентов. Другие модели → последовательный fallback.
 {/если}
 
-## State Management
+## Memory
 
-- `.claude/state/facts.md` — текущие факты проекта (стек, пути, решения, проблемы)
-- `.claude/state/memory/patterns.md` — повторяющиеся паттерны кода
-- `.claude/state/memory/issues.md` — known issues из ревью
-- `.claude/state/decisions/` — архитектурные решения (ADR-lite)
-- `.claude/state/decisions/archive/` — устаревшие решения (авторотация 30 дней)
-- `.claude/state/sessions/` — архив сессий
+- `.claude/memory/facts.md` — текущие факты проекта (стек, пути, решения, проблемы)
+- `.claude/memory/patterns.md` — повторяющиеся паттерны кода
+- `.claude/memory/issues.md` — known issues из ревью
+- `.claude/memory/decisions/` — архитектурные решения (ADR-lite)
+- `.claude/memory/decisions/archive/` — устаревшие решения (авторотация 30 дней)
+- `.claude/memory/sessions/` — архив сессий
 - `.claude/output/` — API-контракты, QA-документация
 - `.claude/input/` — входные задачи, планы
 - `.claude/database/` — схема БД, миграции

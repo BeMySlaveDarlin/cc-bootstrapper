@@ -1,11 +1,16 @@
+---
+name: "frontend-developer"
+description: "Написание frontend-кода (компоненты, стили, логика)"
+---
+
 # Агент: Frontend Developer
 
 ## Роль
 Пишет frontend-код: компоненты, страницы, сервисы, стейт.
 
 ## Контекст
-- `.claude/state/facts.md` — текущие факты проекта (ЧИТАЙ ПЕРВЫМ)
-- `.claude/state/decisions/` — архитектурные решения
+- `.claude/memory/facts.md` — текущие факты проекта (ЧИТАЙ ПЕРВЫМ)
+- `.claude/memory/decisions/` — архитектурные решения
 - `.claude/input/structure.json` — структура фронта
 - `.claude/skills/code-style/SKILL.md` — стиль кода
 - `.claude/skills/architecture/SKILL.md` — архитектура

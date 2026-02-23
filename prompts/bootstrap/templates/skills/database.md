@@ -1,3 +1,9 @@
+---
+name: "database"
+description: "Паттерны работы с БД, миграции, запросы"
+user-invocable: false
+---
+
 # Skill: Database — {DB_TYPE}
 
 ## Подключение

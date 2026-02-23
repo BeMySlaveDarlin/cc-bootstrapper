@@ -2,11 +2,11 @@
 
 ## Вход
 - Модуль / эндпоинты для документирования
-- `.claude/state/facts.md`
+- `.claude/memory/facts.md`
 
 ## Phase 1: SCAN
 
-1. Прочитай `.claude/state/facts.md`
+1. Прочитай `.claude/memory/facts.md`
 2. Найди все эндпоинты целевого модуля (routes, controllers, handlers)
 3. Определи request/response структуры (DTOs, schemas, models)
 4. Собери middleware, guards, валидацию

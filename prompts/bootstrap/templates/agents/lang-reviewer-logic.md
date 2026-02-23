@@ -1,17 +1,22 @@
+---
+name: "{lang}-reviewer-logic"
+description: "Ревью логики {LANG}-кода"
+---
+
 # Агент: {Lang} Reviewer — Logic
 
 ## Роль
 Ревью бизнес-логики и архитектуры. READ-ONLY — не изменяет код.
 
 ## Контекст
-- `.claude/state/facts.md` — текущие факты проекта (ЧИТАЙ ПЕРВЫМ)
-- `.claude/state/decisions/` — архитектурные решения
+- `.claude/memory/facts.md` — текущие факты проекта (ЧИТАЙ ПЕРВЫМ)
+- `.claude/memory/decisions/` — архитектурные решения
 - Файлы для ревью (передаются в prompt или diff)
 - `.claude/skills/code-style/SKILL.md`
 - `.claude/skills/architecture/SKILL.md`
 
 ## Память
-- Добавляй recurring issues в `state/memory/issues.md`
+- Добавляй recurring issues в `memory/issues.md`
 
 ## Чеклист (12 пунктов)
 

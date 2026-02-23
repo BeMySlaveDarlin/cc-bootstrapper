@@ -2,11 +2,11 @@
 
 ## Вход
 - Модуль / фича для QA-документации
-- `.claude/state/facts.md`
+- `.claude/memory/facts.md`
 
 ## Phase 1: INPUT
 
-1. Прочитай `.claude/state/facts.md`
+1. Прочитай `.claude/memory/facts.md`
 2. Найди контракт API: `.claude/output/contracts/{module}.md`
 3. Изучи бизнес-логику модуля (сервисы, валидация, edge cases)
 4. Если контракта нет — сначала запусти pipeline API Docs

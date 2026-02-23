@@ -2,7 +2,7 @@
 
 ## Вход
 - Полное описание фичи
-- `.claude/state/facts.md`
+- `.claude/memory/facts.md`
 
 ## Phase 1: NEW CODE
 
@@ -22,9 +22,9 @@
 
 ## Phase 4: CAPTURE
 
-1. Обнови `.claude/state/facts.md` — добавь фичу в Active Features
-2. Запиши решение в `.claude/state/decisions/{date}-{slug}.md`
-3. Обнови `.claude/state/memory/patterns.md`
+1. Обнови `.claude/memory/facts.md` — добавь фичу в Active Features
+2. Запиши решение в `.claude/memory/decisions/{date}-{slug}.md`
+3. Обнови `.claude/memory/patterns.md`
 
 ## Phase 5: FINALIZATION
 

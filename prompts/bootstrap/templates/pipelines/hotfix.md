@@ -2,7 +2,7 @@
 
 ## Вход
 - Описание критичной проблемы
-- `.claude/state/facts.md`
+- `.claude/memory/facts.md`
 
 ## Phase 1: FIX
 
@@ -16,9 +16,9 @@
 
 ## Phase 3: CAPTURE
 
-1. Обнови `.claude/state/facts.md` — зафиксируй hotfix
-2. Добавь в `.claude/state/memory/issues.md`
-3. Обнови `.claude/state/memory/patterns.md` если выявлен антипаттерн
+1. Обнови `.claude/memory/facts.md` — зафиксируй hotfix
+2. Добавь в `.claude/memory/issues.md`
+3. Обнови `.claude/memory/patterns.md` если выявлен антипаттерн
 
 ## Phase 4: FINALIZATION
 

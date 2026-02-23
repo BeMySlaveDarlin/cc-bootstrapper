@@ -2,7 +2,7 @@
 
 ## Вход
 - Файлы для ревью (diff или список путей)
-- `.claude/state/facts.md`
+- `.claude/memory/facts.md`
 
 {если ADAPTIVE_TEAMS: включи `templates/includes/capability-detect.md`}
 
@@ -53,8 +53,8 @@ Task(.claude/agents/{lang}-reviewer-security.md, subagent_type: "general-purpose
 
 ## Phase 3: CAPTURE
 
-1. Добавь recurring issues в `.claude/state/memory/issues.md`
-2. Обнови `.claude/state/memory/patterns.md` если выявлены антипаттерны
+1. Добавь recurring issues в `.claude/memory/issues.md`
+2. Обнови `.claude/memory/patterns.md` если выявлены антипаттерны
 
 ### Итог
 ```

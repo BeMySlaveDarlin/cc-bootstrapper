@@ -2,11 +2,11 @@
 
 ## Вход
 - Файлы / модули для покрытия тестами
-- `.claude/state/facts.md`
+- `.claude/memory/facts.md`
 
 ## Phase 1: ANALYZE
 
-1. Прочитай `.claude/state/facts.md`
+1. Прочитай `.claude/memory/facts.md`
 2. Определи целевые файлы и их public API
 3. Проверь существующие тесты — не дублировать
 4. Составь план тестирования: класс → методы → сценарии

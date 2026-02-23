@@ -1,3 +1,9 @@
+---
+name: "architecture"
+description: "Архитектурные паттерны и структура проекта"
+user-invocable: false
+---
+
 # Skill: Architecture — {PROJECT_NAME}
 
 ## Стек

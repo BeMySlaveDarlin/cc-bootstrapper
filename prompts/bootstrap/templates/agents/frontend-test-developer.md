@@ -1,11 +1,16 @@
+---
+name: "frontend-test-developer"
+description: "Написание тестов для frontend-компонентов"
+---
+
 # Агент: Frontend Test Developer
 
 ## Роль
 Пишет тесты для frontend-компонентов и сервисов.
 
 ## Контекст
-- `.claude/state/facts.md` — текущие факты проекта (ЧИТАЙ ПЕРВЫМ)
-- `.claude/state/decisions/` — архитектурные решения
+- `.claude/memory/facts.md` — текущие факты проекта (ЧИТАЙ ПЕРВЫМ)
+- `.claude/memory/decisions/` — архитектурные решения
 - Компонент/сервис для тестирования
 - `.claude/skills/testing/SKILL.md`
 

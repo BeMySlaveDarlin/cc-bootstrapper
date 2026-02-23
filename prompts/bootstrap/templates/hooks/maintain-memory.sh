@@ -1,17 +1,16 @@
 #!/bin/bash
 set -uo pipefail
-ERR_LOG="${CLAUDE_PROJECT_DIR:-.}/.claude/state/.hook-errors.log"
+ERR_LOG="${CLAUDE_PROJECT_DIR:-.}/.claude/memory/.hook-errors.log"
 trap 'echo "[$(date -u +%Y-%m-%dT%H:%M:%SZ)] ERROR in $(basename "$0"):$LINENO" >> "$ERR_LOG" 2>/dev/null; exit 0' ERR
 
 PROJECT_DIR="$CLAUDE_PROJECT_DIR"
-STATE_DIR="$PROJECT_DIR/.claude/state"
-FACTS_FILE="$STATE_DIR/facts.md"
-DECISIONS_DIR="$STATE_DIR/decisions"
+MEMORY_DIR="$PROJECT_DIR/.claude/memory"
+FACTS_FILE="$MEMORY_DIR/facts.md"
+DECISIONS_DIR="$MEMORY_DIR/decisions"
 ARCHIVE_DIR="$DECISIONS_DIR/archive"
-MEMORY_DIR="$STATE_DIR/memory"
-SESSIONS_DIR="$STATE_DIR/sessions"
+SESSIONS_DIR="$MEMORY_DIR/sessions"
 SESSIONS_ARCHIVE="$SESSIONS_DIR/archive"
-LOG_FILE="$STATE_DIR/usage.jsonl"
+LOG_FILE="$MEMORY_DIR/usage.jsonl"
 
 mkdir -p "$DECISIONS_DIR" "$ARCHIVE_DIR" "$MEMORY_DIR" "$SESSIONS_ARCHIVE"
 

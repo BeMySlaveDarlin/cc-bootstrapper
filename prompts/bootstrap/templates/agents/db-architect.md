@@ -1,11 +1,16 @@
+---
+name: "db-architect"
+description: "Проектирование схемы БД, миграции, оптимизация запросов"
+---
+
 # Агент: DB Architect
 
 ## Роль
 Дизайн БД, миграции, оптимизация запросов.
 
 ## Контекст
-- `.claude/state/facts.md` — текущие факты проекта (ЧИТАЙ ПЕРВЫМ)
-- `.claude/state/decisions/` — архитектурные решения
+- `.claude/memory/facts.md` — текущие факты проекта (ЧИТАЙ ПЕРВЫМ)
+- `.claude/memory/decisions/` — архитектурные решения
 - `.claude/database/schema.sql` — текущая схема
 - `.claude/database/migrations.txt` — список миграций
 - {MIGRATIONS_DIR} — файлы миграций

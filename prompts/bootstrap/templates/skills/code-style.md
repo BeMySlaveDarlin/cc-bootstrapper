@@ -1,3 +1,9 @@
+---
+name: "code-style"
+description: "Стиль кода, именование, форматирование"
+user-invocable: false
+---
+
 # Skill: Code Style — {LANG}/{FRAMEWORK}
 
 ## Именование

@@ -4,7 +4,7 @@ PROJECT_DIR="${CLAUDE_PROJECT_DIR:-.}"
 EXIT_CODE=0
 
 echo "=== Checking .claude/ structure ==="
-for dir in agents skills pipelines scripts/hooks state state/sessions state/decisions state/decisions/archive output output/contracts output/qa input database; do
+for dir in agents skills pipelines scripts/hooks memory memory/sessions memory/decisions memory/decisions/archive output output/contracts output/qa input database; do
     if [ -d "$PROJECT_DIR/.claude/$dir" ]; then
         echo "[OK] .claude/$dir/"
     else
@@ -88,14 +88,14 @@ fi
 
 echo ""
 echo "=== Checking memory ==="
-for f in "$PROJECT_DIR"/.claude/state/facts.md "$PROJECT_DIR"/.claude/state/memory/patterns.md "$PROJECT_DIR"/.claude/state/memory/issues.md "$PROJECT_DIR"/.claude/skills/memory/SKILL.md; do
+for f in "$PROJECT_DIR"/.claude/memory/facts.md "$PROJECT_DIR"/.claude/memory/patterns.md "$PROJECT_DIR"/.claude/memory/issues.md "$PROJECT_DIR"/.claude/skills/memory/SKILL.md; do
     if [ -f "$f" ]; then
         echo "[OK] $(basename "$f")"
     else
         echo "[MISS] $(basename "$f")"
     fi
 done
-[ -d "$PROJECT_DIR/.claude/state/decisions" ] && echo "[OK] state/decisions/" || echo "[MISS] state/decisions/"
+[ -d "$PROJECT_DIR/.claude/memory/decisions" ] && echo "[OK] memory/decisions/" || echo "[MISS] memory/decisions/"
 
 echo ""
 echo "=== Summary ==="

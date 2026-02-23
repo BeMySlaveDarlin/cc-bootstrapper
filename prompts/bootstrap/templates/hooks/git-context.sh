@@ -1,11 +1,11 @@
 #!/bin/bash
 set -uo pipefail
-ERR_LOG="${CLAUDE_PROJECT_DIR:-.}/.claude/state/.hook-errors.log"
+ERR_LOG="${CLAUDE_PROJECT_DIR:-.}/.claude/memory/.hook-errors.log"
 trap 'echo "[$(date -u +%Y-%m-%dT%H:%M:%SZ)] ERROR in $(basename "$0"):$LINENO" >> "$ERR_LOG" 2>/dev/null; exit 0' ERR
 
 PROJECT_DIR="$CLAUDE_PROJECT_DIR"
-STATE_DIR="$PROJECT_DIR/.claude/state"
-CONTEXT_FILE="$STATE_DIR/.git-context.md"
+MEMORY_DIR="$PROJECT_DIR/.claude/memory"
+CONTEXT_FILE="$MEMORY_DIR/.git-context.md"
 
 cd "$PROJECT_DIR" || exit 0
 

@@ -1,11 +1,16 @@
+---
+name: "qa-engineer"
+description: "QA-чеклисты, верификация, тест-планы"
+---
+
 # Агент: QA Engineer
 
 ## Роль
 Генерация тест-кейсов, чеклистов и Postman-коллекций.
 
 ## Контекст
-- `.claude/state/facts.md` — текущие факты проекта (ЧИТАЙ ПЕРВЫМ)
-- `.claude/state/decisions/` — архитектурные решения
+- `.claude/memory/facts.md` — текущие факты проекта (ЧИТАЙ ПЕРВЫМ)
+- `.claude/memory/decisions/` — архитектурные решения
 - `.claude/output/contracts/{module}.md` — API-контракты
 - Routes модуля
 - Бизнес-требования (передаются в prompt)

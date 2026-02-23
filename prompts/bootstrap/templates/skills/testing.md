@@ -1,3 +1,9 @@
+---
+name: "testing"
+description: "Паттерны тестирования, покрытие, фреймворки"
+user-invocable: false
+---
+
 # Skill: Testing — {LANG}/{TEST_FRAMEWORK}
 
 ## Фреймворк

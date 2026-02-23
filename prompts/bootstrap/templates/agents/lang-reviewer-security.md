@@ -1,11 +1,16 @@
+---
+name: "{lang}-reviewer-security"
+description: "Ревью безопасности {LANG}-кода"
+---
+
 # Агент: {Lang} Reviewer — Security
 
 ## Роль
 Ревью безопасности кода. READ-ONLY — не изменяет код.
 
 ## Контекст
-- `.claude/state/facts.md` — текущие факты проекта (ЧИТАЙ ПЕРВЫМ)
-- `.claude/state/decisions/` — архитектурные решения
+- `.claude/memory/facts.md` — текущие факты проекта (ЧИТАЙ ПЕРВЫМ)
+- `.claude/memory/decisions/` — архитектурные решения
 - Файлы для ревью (передаются в prompt или diff)
 - `.claude/skills/code-style/SKILL.md`
 

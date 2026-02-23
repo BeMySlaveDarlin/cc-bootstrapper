@@ -2,7 +2,7 @@
 
 ## Вход
 - Описание задачи от пользователя
-- `.claude/state/facts.md`
+- `.claude/memory/facts.md`
 
 {если ADAPTIVE_TEAMS: включи `templates/includes/capability-detect.md`}
 
@@ -86,9 +86,9 @@ Task(.claude/agents/{lang}-reviewer-security.md, subagent_type: "general-purpose
 
 ## Phase 5.5: CAPTURE
 
-1. Обнови `.claude/state/facts.md` — новые модули, пути, зависимости
-2. Если были архитектурные решения → `.claude/state/decisions/{date}-{slug}.md`
-3. Обнови `.claude/state/memory/patterns.md` если выявлены новые паттерны
+1. Обнови `.claude/memory/facts.md` — новые модули, пути, зависимости
+2. Если были архитектурные решения → `.claude/memory/decisions/{date}-{slug}.md`
+3. Обнови `.claude/memory/patterns.md` если выявлены новые паттерны
 
 ## Phase 6: FINALIZATION
 

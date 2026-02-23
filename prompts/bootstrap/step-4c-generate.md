@@ -66,9 +66,9 @@ chmod +x .claude/scripts/verify-bootstrap.sh
 
 ---
 
-## 4.7 State
+## 4.7 Memory
 
-### state/facts.md
+### memory/facts.md
 
 ```markdown
 # Project Facts
@@ -85,7 +85,7 @@ chmod +x .claude/scripts/verify-bootstrap.sh
 - Migrations: {MIGRATIONS_DIR}
 
 ## Active Decisions
-{ссылки на файлы в state/decisions/}
+{ссылки на файлы в memory/decisions/}
 
 ## Known Issues
 —
@@ -94,7 +94,7 @@ chmod +x .claude/scripts/verify-bootstrap.sh
 {DATE}
 ```
 
-### state/memory/patterns.md
+### memory/patterns.md
 
 ```markdown
 # Code Patterns
@@ -114,7 +114,7 @@ chmod +x .claude/scripts/verify-bootstrap.sh
 —
 ```
 
-### state/memory/issues.md
+### memory/issues.md
 
 ```markdown
 # Known Issues
@@ -208,7 +208,7 @@ chmod +x .claude/scripts/verify-bootstrap.sh
 Управление GitLab через MCP: issues, merge requests, pipelines, wiki, releases.
 
 ## Контекст
-- `.claude/state/facts.md` — текущие факты проекта (ЧИТАЙ ПЕРВЫМ)
+- `.claude/memory/facts.md` — текущие факты проекта (ЧИТАЙ ПЕРВЫМ)
 - `.claude/skills/gitlab/SKILL.md` — маппинг операций → MCP tools
 - `.mcp.json` — конфигурация MCP-сервера
 

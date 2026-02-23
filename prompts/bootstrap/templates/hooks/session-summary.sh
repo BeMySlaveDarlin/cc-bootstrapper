@@ -1,9 +1,9 @@
 #!/bin/bash
 set -uo pipefail
-ERR_LOG="${CLAUDE_PROJECT_DIR:-.}/.claude/state/.hook-errors.log"
+ERR_LOG="${CLAUDE_PROJECT_DIR:-.}/.claude/memory/.hook-errors.log"
 trap 'echo "[$(date -u +%Y-%m-%dT%H:%M:%SZ)] ERROR in $(basename "$0"):$LINENO" >> "$ERR_LOG" 2>/dev/null; exit 0' ERR
 
-LOG_DIR="$CLAUDE_PROJECT_DIR/.claude/state"
+LOG_DIR="$CLAUDE_PROJECT_DIR/.claude/memory"
 LOG_FILE="$LOG_DIR/usage.jsonl"
 SESSIONS_DIR="$LOG_DIR/sessions"
 mkdir -p "$SESSIONS_DIR"
@@ -61,7 +61,7 @@ EOF
 
 echo "$AGENTS_BREAKDOWN" | jq -r '.[] | "| \(.agent) | \(.calls) | \(.input_chars) | \(.output_chars) |"' >> "$SUMMARY_FILE"
 
-DECISIONS_DIR="$CLAUDE_PROJECT_DIR/.claude/state/decisions"
+DECISIONS_DIR="$CLAUDE_PROJECT_DIR/.claude/memory/decisions"
 if [ -d "$DECISIONS_DIR" ]; then
     DECISION_FILES=$(find "$DECISIONS_DIR" -maxdepth 1 -name "*.md" 2>/dev/null)
     if [ -n "$DECISION_FILES" ]; then

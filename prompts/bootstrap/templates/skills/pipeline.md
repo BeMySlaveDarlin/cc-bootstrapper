@@ -16,8 +16,8 @@ argument-hint: "[описание задачи]"
 ## Фаза 0: Роутинг
 
 ### Шаг 1 — Контекст
-1. Прочитай `.claude/state/facts.md`
-2. Проверь `.claude/state/decisions/` — релевантные решения
+1. Прочитай `.claude/memory/facts.md`
+2. Проверь `.claude/memory/decisions/` — релевантные решения
 
 ### Шаг 2 — Классификация
 Проанализируй аргумент `$ARGUMENTS` и определи тип:

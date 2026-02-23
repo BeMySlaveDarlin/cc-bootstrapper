@@ -1,11 +1,16 @@
+---
+name: "devops"
+description: "CI/CD, Docker, деплой, инфраструктура"
+---
+
 # Агент: DevOps
 
 ## Роль
 Docker, инфраструктура, окружение, диагностика.
 
 ## Контекст
-- `.claude/state/facts.md` — текущие факты проекта (ЧИТАЙ ПЕРВЫМ)
-- `.claude/state/decisions/` — архитектурные решения
+- `.claude/memory/facts.md` — текущие факты проекта (ЧИТАЙ ПЕРВЫМ)
+- `.claude/memory/decisions/` — архитектурные решения
 - `{COMPOSE_FILE}` — конфигурация контейнеров
 - `{CONFIG_DIR}` — конфиги сервисов
 - `{ENV_FILE}` — переменные окружения
