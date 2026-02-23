@@ -11,9 +11,10 @@
 ## 4.5 Hooks
 
 ### Валидация (режим `validate`)
-- Все 5 файлов существуют
+- Все хук-файлы существуют
 - Все executable
 - `bash -n` проходит (синтаксис OK)
+- Устаревшие хуки (`git-context.sh`, `session-summary.sh`) → удалить → `[FIX] removed deprecated {path}`
 → Нет файла → создать из шаблона → `[NEW] {path}`
 → Не executable → chmod +x → `[FIX] chmod +x {path}`
 → Синтаксис broken → перегенерировать → `[REGEN] {path}`
@@ -25,10 +26,10 @@
 Для каждого хука прочитай шаблон из `templates/hooks/` → запиши в `.claude/scripts/hooks/{name}.sh`:
 
   `templates/hooks/track-agent.sh` → `.claude/scripts/hooks/track-agent.sh`
-  `templates/hooks/session-summary.sh` → `.claude/scripts/hooks/session-summary.sh`
-  `templates/hooks/update-schema.sh` → `.claude/scripts/hooks/update-schema.sh`
   `templates/hooks/maintain-memory.sh` → `.claude/scripts/hooks/maintain-memory.sh`
-  `templates/hooks/git-context.sh` → `.claude/scripts/hooks/git-context.sh`
+
+Условно (только если в проекте есть DB — `docker-compose.yml` с postgres/mysql/mariadb):
+  `templates/hooks/update-schema.sh` → `.claude/scripts/hooks/update-schema.sh`
 
 Скрипт верификации:
   `templates/verify-bootstrap.sh` → `.claude/scripts/verify-bootstrap.sh`
@@ -57,12 +58,19 @@ chmod +x .claude/scripts/verify-bootstrap.sh
 ### Генерация
 
 Прочитай шаблон `templates/settings.json.tpl` → подставь переменные → запиши в `.claude/settings.json`.
-Прочитай шаблон `templates/settings.local.json.tpl` → подставь переменные → запиши в `.claude/settings.local.json`.
 
 Адаптируй `{CONTAINER_CMD}` под стек:
 - Docker: `docker compose`, `docker exec`, `docker ps`, `docker network`
 - Podman: `podman`, `podman-compose`
 - Без контейнеров: убрать
+
+Если в проекте есть DB — добавь `update-schema.sh` в `hooks.SessionStart[0].hooks`:
+```json
+{
+  "type": "command",
+  "command": "bash $CLAUDE_PROJECT_DIR/.claude/scripts/hooks/update-schema.sh"
+}
+```
 
 ---
 
@@ -325,7 +333,7 @@ chmod +x .claude/scripts/verify-bootstrap.sh
 
 ### 4.9.5 Обновления в существующих файлах
 
-**settings.local.json** — добавить в `permissions.allow`:
+**settings.json** — добавить в `permissions.allow`:
 ```json
 "mcp__gitlab__list_issues",
 "mcp__gitlab__get_issue",
@@ -337,7 +345,7 @@ chmod +x .claude/scripts/verify-bootstrap.sh
 "mcp__gitlab__my_issues"
 ```
 
-И добавить в корень settings.local.json:
+И добавить в корень settings.json:
 ```json
 "enableAllProjectMcpServers": true
 ```

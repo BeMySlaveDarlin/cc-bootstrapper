@@ -28,10 +28,9 @@ prompts/
       agents/                           # 11 шаблонов агентов
       skills/                           # 7 шаблонов скиллов
       pipelines/                        # 8 шаблонов пайплайнов
-      hooks/                            # 5 шаблонов хуков
+      hooks/                            # 3 шаблона хуков
       includes/                         # Переиспользуемые модули (capability-detect)
-      settings.json.tpl                 # Шаблон shared settings
-      settings.local.json.tpl           # Шаблон local settings
+      settings.json.tpl                 # Шаблон settings (permissions + hooks)
       verify-bootstrap.sh               # Скрипт верификации
 ```
 
@@ -78,14 +77,13 @@ claude
   agents/           # Агенты по ролям (architect, developer, reviewer и др.)
   skills/           # code-style, architecture, database, testing, memory, pipeline, p
   pipelines/        # new-code, fix-code, review, tests, api-docs, qa-docs, full-feature, hotfix
-  scripts/hooks/    # track-agent, session-summary, update-schema, maintain-memory, git-context
+  scripts/hooks/    # track-agent, maintain-memory, update-schema (условно)
   scripts/          # verify-bootstrap.sh
   memory/           # facts.md, patterns.md, issues.md, sessions/, decisions/
   output/           # contracts/, qa/
   input/            # tasks/, plans/
   database/         # Схема, миграции
-  settings.json     # Общие permissions
-  settings.local.json # Hooks + локальные permissions
+  settings.json     # Permissions + hooks
   .bootstrap-version  # SHA256 хеши файлов
 CLAUDE.md           # Обзор проекта с индексом агентов/скиллов/пайплайнов
 .mcp.json           # MCP-конфиг (опционально, GitLab)
@@ -149,10 +147,8 @@ CLAUDE.md содержит ЖЁСТКОЕ ПРАВИЛО автоматичес�
 | Hook | Event | Что делает |
 |------|-------|------------|
 | `track-agent.sh` | PostToolUse (Task) | Логирует использование агентов в `usage.jsonl` |
-| `session-summary.sh` | Stop | Создаёт отчёт в `memory/sessions/` |
-| `update-schema.sh` | SessionStart + PostToolUse | Обновляет `database/schema.sql` из Docker |
 | `maintain-memory.sh` | SessionStart | Ротация decisions, usage.jsonl, сессий |
-| `git-context.sh` | SessionStart | Собирает branch, commits, changes → `.git-context.md` |
+| `update-schema.sh` | SessionStart, условный (если DB) | Обновляет `database/schema.sql` из Docker |
 
 Все хуки: error handling через `trap ERR` → `.hook-errors.log`.
 
@@ -213,22 +209,22 @@ PHP, Node.js/TypeScript, Python, Go, Rust, Java, C#, Ruby.
 
 ### Hooks (`.claude/scripts/hooks/*.sh`)
 
-Shell-скрипты, вызываемые автоматически через `settings.local.json`.
+Shell-скрипты, вызываемые автоматически через `settings.json`.
 
 **Добавить новый hook:**
 1. Создай `.claude/scripts/hooks/{name}.sh`
 2. `chmod +x .claude/scripts/hooks/{name}.sh`
-3. Добавь в `.claude/settings.local.json` в нужный event (`PostToolUse`, `SessionStart`, `Stop`)
+3. Добавь в `.claude/settings.json` в нужный event (`PostToolUse`, `SessionStart`)
 
 ### Настройки
 
-- **`settings.json`** — общие (в git), только permissions
-- **`settings.local.json`** — локальные (в .gitignore), permissions + hooks
+**`settings.json`** — единый файл настроек: permissions + hooks.
 
 ## Версионирование
 
 | Версия | Что нового |
 |--------|------------|
+| v5.2.0 | Рефакторинг хуков — 5→3, кросс-платформенность, credentials через docker exec |
 | v5.1.0 | Cleanup docs, миграция state/ → memory/ |
 | v5.0.0 | Adaptive Teams — Teams API с graceful degradation |
 | v4.0.0 | Модульная архитектура, step-4 split на 3 батча |

@@ -57,7 +57,7 @@ done
 
 echo ""
 echo "=== Checking settings ==="
-for f in "$PROJECT_DIR"/.claude/settings.json "$PROJECT_DIR"/.claude/settings.local.json; do
+for f in "$PROJECT_DIR"/.claude/settings.json; do
     if [ -f "$f" ]; then
         if jq empty "$f" 2>/dev/null; then
             echo "[OK] $(basename "$f") (valid JSON)"
