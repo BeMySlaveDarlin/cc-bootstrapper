@@ -1,5 +1,16 @@
 # Шаг 4c: Генерация (Hooks, Settings, State, MCP)
 
+## Вход
+- BOOTSTRAP_MODE: fresh | validate
+- DB, CONTAINER, GITLAB_MCP
+- GITLAB_USERNAME, GITLAB_TOKEN, GITLAB_API_URL (если GITLAB_MCP=true)
+
+## Выход
+Верни результат:
+- Список созданных/обновлённых хуков с статусами
+- Список созданных memory файлов
+- Статус MCP: настроен | пропущен
+
 > Продолжение шага 4. Правила записи файлов и стек-адаптации — см. `step-4-generate.md`.
 
 ## Правила записи (краткое напоминание)
@@ -44,33 +55,7 @@ chmod +x .claude/scripts/verify-bootstrap.sh
 
 ## 4.6 Settings
 
-### Валидация (режим `validate`, ИСКЛЮЧЕНИЕ: AskUserQuestion)
-- Валидный JSON
-- Содержит `permissions.allow`
-→ Файл существует → AskUserQuestion: "Что сделать с settings.json?"
-  - "Merge (Recommended)" — добавить недостающие permissions, сохранить существующие
-  - "Перезаписать" — заменить сгенерированным
-  - "Оставить" — не трогать
-→ Файл НЕ существует → создать из шаблона → `[NEW] settings.json`
-
----
-
-### Генерация
-
-Прочитай шаблон `templates/settings.json.tpl` → подставь переменные → запиши в `.claude/settings.json`.
-
-Адаптируй `{CONTAINER_CMD}` под стек:
-- Docker: `docker compose`, `docker exec`, `docker ps`, `docker network`
-- Podman: `podman`, `podman-compose`
-- Без контейнеров: убрать
-
-Если в проекте есть DB — добавь `update-schema.sh` в `hooks.SessionStart[0].hooks`:
-```json
-{
-  "type": "command",
-  "command": "bash $CLAUDE_PROJECT_DIR/.claude/scripts/hooks/update-schema.sh"
-}
-```
+**Перенесено в `step-4-settings.md`.** Генерация settings.json выполняется отдельным шагом после завершения step-4/4b/4c.
 
 ---
 

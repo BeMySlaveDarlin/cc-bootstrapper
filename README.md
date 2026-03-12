@@ -1,6 +1,6 @@
 # cc-bootstrapper
 
-Система автоматического bootstrap для Claude Code. Анализирует любой проект и генерирует полную структуру `.claude/`: агенты, скиллы, пайплайны, hooks, memory, settings, CLAUDE.md.
+Генератор системы автоматизации Claude Code. Запускаешь `/bootstrap` в любом проекте — получаешь полную `.claude/` структуру: агенты, пайплайны, скиллы, memory, hooks, settings. Дальше работаешь через `/pipeline`.
 
 ## Требования
 
@@ -8,31 +8,6 @@
 - Bash 4+
 - `jq`
 - macOS, Linux или Windows (WSL)
-
-## Структура
-
-```
-commands/
-  bootstrap.md                          # /bootstrap slash command — точка входа
-prompts/
-  meta-prompt-bootstrap.md              # Оркестратор — читает шаги последовательно
-  bootstrap/
-    step-1-analyze.md                   # Анализ стека
-    step-2-claude-md.md                 # CLAUDE.md генерация/валидация
-    step-3-plan.md                      # Интерактивное планирование (AskUserQuestion)
-    step-4-generate.md                  # Генерация: директории + агенты
-    step-4b-generate.md                 # Генерация: скиллы + пайплайны
-    step-4c-generate.md                 # Генерация: hooks, settings, memory, MCP
-    step-5-verify.md                    # Верификация + отчёт
-    templates/
-      agents/                           # 11 шаблонов агентов
-      skills/                           # 7 шаблонов скиллов
-      pipelines/                        # 8 шаблонов пайплайнов
-      hooks/                            # 3 шаблона хуков
-      includes/                         # Переиспользуемые модули (capability-detect)
-      settings.json.tpl                 # Шаблон settings (permissions + hooks)
-      verify-bootstrap.sh               # Скрипт верификации
-```
 
 ## Установка
 
@@ -42,9 +17,7 @@ cp prompts/meta-prompt-bootstrap.md ~/.claude/prompts/
 cp -r prompts/bootstrap ~/.claude/prompts/
 ```
 
-## Использование
-
-`/bootstrap` — slash-команда, запускается **внутри Claude Code**, не в обычном терминале:
+## Запуск
 
 ```bash
 cd /path/to/your-project
@@ -54,183 +27,168 @@ claude
 > /bootstrap
 ```
 
-### Режимы работы
+Автоопределение: нет `.claude/` → полная генерация, есть → валидация + auto-fix.
 
-Режим определяется автоматически:
+Поддерживаемые стеки: PHP, Node.js/TypeScript, Python, Go, Rust, Java, C#, Ruby. Мульти-язычные проекты — набор агентов для каждого языка.
 
-| Условие | Режим | Поведение |
-|---------|-------|-----------|
-| `.claude/` не существует | `fresh` | Полная генерация с нуля |
-| `.claude/` существует | `validate` | Проверка каждого файла + auto-fix |
+---
 
-В режиме `validate` каждый файл проверяется на соответствие эталону:
-- `[OK]` — файл соответствует
-- `[FIX]` — проблема найдена и исправлена автоматически
-- `[NEW]` — файл отсутствовал, создан из шаблона
-- `[REGEN]` — файл пересоздан (критичные расхождения)
-- `[WARN]` — предупреждение (устаревший файл)
+# Сгенерированная система
 
-## Что генерируется
+Всё ниже — описание того, что появляется в целевом проекте после `/bootstrap` и как с этим работать.
+
+## Routing
+
+CLAUDE.md содержит ЖЁСТКОЕ ПРАВИЛО: любой запрос связанный с кодом автоматически маршрутизируется через `/pipeline`. Свободная форма — только для вопросов и обсуждений.
 
 ```
-.claude/
-  agents/           # Агенты по ролям (architect, developer, reviewer и др.)
-  skills/           # code-style, architecture, database, testing, memory, pipeline, p
-  pipelines/        # new-code, fix-code, review, tests, api-docs, qa-docs, full-feature, hotfix
-  scripts/hooks/    # track-agent, maintain-memory, update-schema (условно)
-  scripts/          # verify-bootstrap.sh
-  memory/           # facts.md, patterns.md, issues.md, sessions/, decisions/
-  output/           # contracts/, qa/
-  input/            # tasks/, plans/
-  database/         # Схема, миграции
-  settings.json     # Permissions + hooks
-  .bootstrap-version  # SHA256 хеши файлов
-CLAUDE.md           # Обзор проекта с индексом агентов/скиллов/пайплайнов
-.mcp.json           # MCP-конфиг (опционально, GitLab)
-```
-
-## Invocable Skills
-
-| Команда | Назначение |
-|---------|------------|
-| `/pipeline [action]` | Роутер пайплайнов — классифицирует задачу и запускает pipeline |
-| `/p [action]` | Alias для `/pipeline` |
-
-Примеры:
-```
-/pipeline review          → запуск review pipeline
-/p fix баг в авторизации  → определит fix-code pipeline
+/pipeline review          → ревью кода
+/p fix баг в авторизации  → fix-code pipeline
+/p новый эндпоинт users   → new-code pipeline
 /p                        → определит тип по контексту
 ```
 
-## Pipeline-система
+Роутер классифицирует задачу по ключевым словам, затем собирает контекст через AskUserQuestion: scope/тип проблемы + затронутые модули (динамически из `facts.md`). После — запускает нужный пайплайн.
 
-8 базовых пайплайнов + кастомные при генерации:
+## Пайплайны
 
-| Pipeline | Когда |
-|----------|-------|
-| `new-code` | Новый модуль, сервис, эндпоинт |
-| `fix-code` | Баг, ошибка, regression |
-| `review` | Ревью кода |
-| `tests` | Написание тестов |
-| `api-docs` | API-контракты для фронта |
-| `qa-docs` | Чеклисты, Postman |
-| `full-feature` | Полный цикл фичи |
-| `hotfix` | Срочное исправление |
+8 базовых + кастомные (добавляются при bootstrap):
 
-CLAUDE.md содержит ЖЁСТКОЕ ПРАВИЛО автоматического вызова `/pipeline` для релевантных запросов.
+| Pipeline | Когда | Ключевые фазы |
+|----------|-------|---------------|
+| `new-code` | Новый модуль, сервис, эндпоинт | Architecture → DB → Code → Tests → Review |
+| `fix-code` | Баг, ошибка, regression | Diagnosis → Fix → Tests → Review |
+| `review` | Ревью кода | Parallel Review (logic + security) → Report |
+| `tests` | Написание тестов | Analyze → Generate → Verify → Review |
+| `api-docs` | API-контракты | Scan → Generate → Save |
+| `qa-docs` | Чеклисты, Postman | Input → Checklist → Postman → Save |
+| `full-feature` | Полный цикл фичи | new-code + api-docs + qa-docs |
+| `hotfix` | Срочное исправление | fix-code + review |
 
-### Adaptive Teams (v5.0)
+### Передача данных между фазами
 
-Пайплайны `new-code`, `review`, `full-feature` поддерживают **adaptive execution mode**:
-- **Opus 4.6** (Teams API доступен) → параллельная работа агентов через TeamCreate/Spawn/SendMessage
-- **Другие модели** → автоматический fallback на последовательный Task()
+Фазы обмениваются данными через файлы, не через контекст разговора:
 
-Режим определяется автоматически в Phase 0 через проверку доступности инструмента `TeamCreate`. Включается опционально через AskUserQuestion на этапе планирования.
+```
+Architect  → пишет план в output/plans/{task-slug}.md
+Developer  → читает план из файла, пишет код
+Tester     → читает код (git diff), пишет тесты
+Reviewers  → читают код (git diff), пишут отчёты в output/reviews/{task-slug}-{type}.md
+```
 
-## Memory-система
+В контекст пайплайна возвращается только summary (5-10 строк на фазу). Полные результаты доступны следующему агенту через чтение файла.
 
-Трёхуровневая система памяти проекта:
+### Plan mode
 
-| Уровень | Файл | Назначение |
-|---------|------|------------|
-| Facts | `memory/facts.md` | Текущий стек, пути, активные решения |
-| Patterns | `memory/patterns.md` | Повторяющиеся паттерны кода |
-| Issues | `memory/issues.md` | Known issues из ревью |
-| Decisions | `memory/decisions/*.md` | Архитектурные решения (ADR-lite) |
-| Archive | `memory/decisions/archive/` | Устаревшие решения (авторотация 30 дней) |
+- Architect работает в режиме PLAN MODE — только анализ, план показывается на утверждение, файлы проекта не трогает
+- `fix-code` и `tests` запрашивают подтверждение плана через AskUserQuestion перед выполнением
 
-Агенты пишут в memory при работе, `maintain-memory.sh` ротирует автоматически.
+### CAPTURE
+
+Каждый пайплайн завершается фазой CAPTURE — обновление memory:
+- `facts.md` обновляется посекционно (Stack, Key Paths, Active Decisions, Known Issues)
+- Новые решения → `decisions/{date}-{slug}.md`
+- Паттерны → `patterns.md`
+- Баги → `issues.md`
+
+### Adaptive Teams
+
+`new-code`, `review`, `full-feature` поддерживают параллельный режим:
+- **Opus 4.6** → reviewers работают параллельно через Teams API
+- **Другие модели** → автоматический fallback на последовательный режим
+
+## Агенты
+
+Самодостаточные markdown-файлы. Агент сам читает нужный контекст (facts.md, decisions/, skills/), от пайплайна получает только task-slug и путь к входным данным.
+
+Для каждого языка — 5 агентов:
+
+| Агент | Роль | Режим |
+|-------|------|-------|
+| `{lang}-architect` | Планирование модулей и архитектуры | PLAN MODE (read-only) |
+| `{lang}-developer` | Написание кода по плану | Пишет файлы |
+| `{lang}-test-developer` | Написание тестов | Пишет файлы |
+| `{lang}-reviewer-logic` | Ревью бизнес-логики | READ-ONLY |
+| `{lang}-reviewer-security` | Ревью безопасности | READ-ONLY |
+
+Общие агенты: `db-architect`, `devops`, `frontend-developer`, `frontend-test-developer`, `frontend-reviewer`, `qa-engineer`.
+
+Секции агента: Роль → Режим → Контекст (читай сам) → Вход → Задача → Правила → Вывод.
+
+## Скиллы
+
+Базы знаний, которые агенты читают при работе:
+
+| Скилл | Что содержит |
+|-------|-------------|
+| `code-style/` | Паттерны и антипаттерны кода проекта |
+| `architecture/` | Структура модулей, DI, маршруты |
+| `database/` | Миграции, типы данных, индексы |
+| `testing/` | Тест-фреймворк, моки, структура тестов |
+| `memory/` | Правила работы с memory-системой |
+| `pipeline/` | Роутер `/pipeline` (invocable) |
+| `p/` | Alias `/p` для быстрого вызова (invocable) |
+
+## Memory
+
+| Файл | Назначение | Лимиты |
+|------|------------|--------|
+| `facts.md` | Стек, пути, активные решения, known issues | Секционное обновление, 10 issues max |
+| `patterns.md` | Повторяющиеся паттерны кода | — |
+| `issues.md` | Known issues из ревью | 30 строк, дедупликация по Frequency |
+| `decisions/*.md` | Архитектурные решения (ADR-lite) | 20 активных max |
+| `decisions/archive/` | Устаревшие решения | Авторотация 30 дней |
+
+Агенты читают `facts.md` посекционно (Stack, Key Paths, Active Decisions) — не весь файл.
+
+Пайплайны обновляют `facts.md` по секциям с семантикой REPLACE/MERGE, не дописывая в конец. Дедупликация перед добавлением.
 
 ## Hooks
 
 | Hook | Event | Что делает |
 |------|-------|------------|
 | `track-agent.sh` | PostToolUse (Task) | Логирует использование агентов в `usage.jsonl` |
-| `maintain-memory.sh` | SessionStart | Ротация decisions, usage.jsonl, сессий |
-| `update-schema.sh` | SessionStart, условный (если DB) | Обновляет `database/schema.sql` из Docker |
+| `maintain-memory.sh` | SessionStart | Ротация decisions, компакция facts/issues, cleanup output/ старше 7 дней |
+| `update-schema.sh` | SessionStart (если DB) | Обновляет `database/schema.sql` из Docker |
 
-Все хуки: error handling через `trap ERR` → `.hook-errors.log`.
+## Output
 
-## MCP-интеграции
+| Директория | Что хранит | Жизненный цикл |
+|-----------|------------|----------------|
+| `output/plans/` | Планы архитектора | Auto-cleanup через 7 дней |
+| `output/reviews/` | Отчёты ревью | Auto-cleanup через 7 дней |
+| `output/contracts/` | API-контракты | Постоянно |
+| `output/qa/` | QA-чеклисты, Postman | Постоянно |
 
-### GitLab (опционально)
+## GitLab MCP (опционально)
 
-Генерирует `.mcp.json` с GitLab MCP server. Настраивается на шаге планирования:
-- API URL (gitlab.com или self-hosted)
-- Username, Personal Access Token
-- Функции: Issues, MR, Pipelines, Wiki, Milestones, Releases
-
-## Интерактивное планирование
-
-На шаге 3 (step-3-plan.md) система задаёт вопросы через AskUserQuestion:
-- Кастомные агенты, скиллы, пайплайны
-- Adaptive Teams mode (параллельная работа агентов на Opus 4.6)
-- GitLab MCP интеграция (URL, token, функции)
-
-## Поддерживаемые стеки
-
-PHP, Node.js/TypeScript, Python, Go, Rust, Java, C#, Ruby.
-
-Мульти-языковые проекты (PHP + Node, Go + Python и т.д.) — для каждого языка генерируется полный набор агентов: architect, developer, test-developer, reviewer-logic, reviewer-security.
+Если настроен при bootstrap — `.mcp.json` с GitLab MCP server + агент `gitlab-manager` + пайплайн `gitlab`:
+- Управление Issues, MR, Pipelines, Wiki
+- Роутер автоматически направляет запросы типа "создай MR", "задача #42"
 
 ## Кастомизация
 
-После bootstrap вся сгенерированная структура — твоя. Редактируй под проект.
+Вся структура — твоя после генерации.
 
-### Агенты (`.claude/agents/*.md`)
+**Агент:** создай `.claude/agents/{name}.md` по структуре существующих, добавь в CLAUDE.md, подключи в пайплайн.
 
-Каждый агент — markdown-файл с секциями: Роль, Контекст, Задача, Правила, Формат вывода.
+**Скилл:** `mkdir -p .claude/skills/{name}`, создай `SKILL.md`. Для invocable — frontmatter `user-invocable: true`.
 
-**Добавить нового агента:**
-1. Создай `.claude/agents/{name}.md` по структуре существующих
-2. Добавь строку в таблицу `## Agents` в `CLAUDE.md`
-3. При необходимости подключи в пайплайн
+**Пайплайн:** создай `.claude/pipelines/{name}.md` (минимум 2 фазы с Task()), добавь keywords в `skills/pipeline/SKILL.md`, добавь в CLAUDE.md.
 
-### Скиллы (`.claude/skills/{name}/SKILL.md`)
-
-Скиллы — базы знаний для агентов. `pipeline` и `p` — invocable (вызываются через `/`).
-
-**Добавить новый скилл:**
-1. `mkdir -p .claude/skills/{name}`
-2. Создай `SKILL.md` с секциями: Паттерны, Антипаттерны, Примеры
-3. Для invocable: добавь YAML frontmatter `user-invocable: true`
-4. Добавь строку в таблицу `## Skills` в `CLAUDE.md`
-
-### Пайплайны (`.claude/pipelines/*.md`)
-
-Пайплайн — последовательность фаз, каждая вызывает агента через Task() pseudo-syntax.
-
-**Добавить новый пайплайн:**
-1. Создай `.claude/pipelines/{name}.md` (минимум 2 фазы)
-2. Добавь keywords в `skills/pipeline/SKILL.md`
-3. Добавь строку в таблицу `## Pipelines` в `CLAUDE.md`
-4. Запуск: `/pipeline {name}` или `/p {name}`
-
-### Hooks (`.claude/scripts/hooks/*.sh`)
-
-Shell-скрипты, вызываемые автоматически через `settings.json`.
-
-**Добавить новый hook:**
-1. Создай `.claude/scripts/hooks/{name}.sh`
-2. `chmod +x .claude/scripts/hooks/{name}.sh`
-3. Добавь в `.claude/settings.json` в нужный event (`PostToolUse`, `SessionStart`)
-
-### Настройки
-
-**`settings.json`** — единый файл настроек: permissions + hooks.
+**Hook:** создай `.claude/scripts/hooks/{name}.sh`, `chmod +x`, добавь в `settings.json`.
 
 ## Версионирование
 
 | Версия | Что нового |
 |--------|------------|
-| v5.2.0 | Рефакторинг хуков — 5→3, кросс-платформенность, credentials через docker exec |
-| v5.1.0 | Cleanup docs, миграция state/ → memory/ |
+| v5.3.0 | File-based передача между фазами, секционный CAPTURE, структурированный контекст в роутере, plan mode |
+| v5.2.0 | Рефакторинг хуков — 5→3, кросс-платформенность |
+| v5.1.0 | Миграция state/ → memory/ |
 | v5.0.0 | Adaptive Teams — Teams API с graceful degradation |
-| v4.0.0 | Модульная архитектура, step-4 split на 3 батча |
-| v3.0.0 | Опциональная GitLab MCP интеграция |
-| v2.1.0 | AskUserQuestion для интерактивных промптов |
-| v2.0.0 | Pipeline skills, memory system, upgrade mode |
+| v4.0.0 | Модульная архитектура |
+| v3.0.0 | GitLab MCP интеграция |
+| v2.0.0 | Pipeline skills, memory system |
 
 ## Лицензия
 

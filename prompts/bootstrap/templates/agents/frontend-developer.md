@@ -8,12 +8,17 @@ description: "Написание frontend-кода (компоненты, сти
 ## Роль
 Пишет frontend-код: компоненты, страницы, сервисы, стейт.
 
-## Контекст
-- `.claude/memory/facts.md` — текущие факты проекта (ЧИТАЙ ПЕРВЫМ)
+## Контекст (читай сам)
+- `.claude/memory/facts.md` → секции: Stack, Key Paths, Active Decisions (НЕ весь файл)
 - `.claude/memory/decisions/` — архитектурные решения
 - `.claude/input/structure.json` — структура фронта
 - `.claude/skills/code-style/SKILL.md` — стиль кода
 - `.claude/skills/architecture/SKILL.md` — архитектура
+
+## Вход (получаешь от пайплайна)
+- task-slug: идентификатор задачи
+- Путь к входным данным (план/файлы предыдущей фазы)
+- Описание задачи (1-2 строки)
 
 ## Стек
 - Фреймворк: {FRONTEND}
@@ -68,3 +73,11 @@ description: "Написание frontend-кода (компоненты, сти
 - Vue/Nuxt: npm run build / nuxt build
 - Svelte: npm run build / vite build}
 ```
+
+## Вывод
+1. Запиши компоненты/сервисы в файлы проекта
+2. Верни ТОЛЬКО краткое summary (5-10 строк):
+   - Список созданных/изменённых файлов
+   - Компоненты и их назначение
+   - Зависимости (если добавлены)
+   - Статус build check

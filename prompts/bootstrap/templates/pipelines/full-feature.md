@@ -2,6 +2,7 @@
 
 ## Вход
 - Полное описание фичи
+- Структурированный контекст из роутера: scope, affected_modules
 - `.claude/memory/facts.md`
 
 ## Phase 1: NEW CODE
@@ -22,7 +23,12 @@
 
 ## Phase 4: CAPTURE
 
-1. Обнови `.claude/memory/facts.md` — добавь фичу в Active Features
+1. Обнови `.claude/memory/facts.md` по секциям:
+   - "## Stack" → ЗАМЕНИТЬ секцию целиком (только если стек изменился)
+   - "## Key Paths" → МЕРЖИТЬ: добавь новые, удали несуществующие пути
+   - "## Active Decisions" → ЗАМЕНИТЬ: только ссылки на файлы из decisions/ (НЕ archive)
+   - "## Known Issues" → максимум 10 записей, удали разрешённые
+   ПРАВИЛО: перед добавлением проверь — НЕ ДУБЛИРУЙ существующие записи
 2. Запиши решение в `.claude/memory/decisions/{date}-{slug}.md`
 3. Обнови `.claude/memory/patterns.md`
 

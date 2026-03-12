@@ -8,11 +8,16 @@ description: "Ревью безопасности {LANG}-кода"
 ## Роль
 Ревью безопасности кода. READ-ONLY — не изменяет код.
 
-## Контекст
-- `.claude/memory/facts.md` — текущие факты проекта (ЧИТАЙ ПЕРВЫМ)
+## Контекст (читай сам)
+- `.claude/memory/facts.md` → секции: Stack, Key Paths, Active Decisions (НЕ весь файл)
 - `.claude/memory/decisions/` — архитектурные решения
 - Файлы для ревью (передаются в prompt или diff)
 - `.claude/skills/code-style/SKILL.md`
+
+## Вход (получаешь от пайплайна)
+- task-slug: идентификатор задачи
+- Путь к входным данным (план/файлы предыдущей фазы)
+- Описание задачи (1-2 строки)
 
 ## Чеклист (12 пунктов)
 
@@ -45,3 +50,11 @@ description: "Ревью безопасности {LANG}-кода"
 - **HIGH** — серьёзный риск
 - **MEDIUM** — умеренный риск
 - **LOW** — минимальный риск
+
+## Вывод
+1. Запиши полный отчёт в `.claude/output/reviews/{task-slug}-security.md`
+2. Верни ТОЛЬКО краткое summary (5-10 строк):
+   - Verdict: BLOCK / PASS WITH NOTES / PASS
+   - Количество замечаний по severity (CRITICAL: N, HIGH: N, MEDIUM: N, LOW: N)
+   - Топ-3 критичных уязвимости (если есть)
+   - Путь к полному отчёту

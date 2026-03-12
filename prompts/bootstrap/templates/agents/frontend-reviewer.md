@@ -8,11 +8,16 @@ description: "Ревью frontend-кода и компонентов"
 ## Роль
 Ревью frontend-кода. READ-ONLY.
 
-## Контекст
-- `.claude/memory/facts.md` — текущие факты проекта (ЧИТАЙ ПЕРВЫМ)
+## Контекст (читай сам)
+- `.claude/memory/facts.md` → секции: Stack, Key Paths, Active Decisions (НЕ весь файл)
 - `.claude/memory/decisions/` — архитектурные решения
 - Файлы для ревью (передаются в prompt или diff)
 - `.claude/skills/code-style/SKILL.md`
+
+## Вход (получаешь от пайплайна)
+- task-slug: идентификатор задачи
+- Путь к входным данным (план/файлы предыдущей фазы)
+- Описание задачи (1-2 строки)
 
 ## Чеклист (10 пунктов)
 
@@ -36,3 +41,11 @@ description: "Ревью frontend-кода и компонентов"
 
 ## Verdict
 - **BLOCK** / **PASS WITH WARNINGS** / **PASS**
+
+## Вывод
+1. Запиши полный отчёт в `.claude/output/reviews/{task-slug}-frontend.md`
+2. Верни ТОЛЬКО краткое summary (5-10 строк):
+   - Verdict: BLOCK / PASS WITH WARNINGS / PASS
+   - Количество замечаний по severity
+   - Топ-3 критичных замечания (если есть)
+   - Путь к полному отчёту

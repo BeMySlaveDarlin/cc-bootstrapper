@@ -2,6 +2,7 @@
 
 ## Вход
 - Описание критичной проблемы
+- Структурированный контекст из роутера: type, affected_modules
 - `.claude/memory/facts.md`
 
 ## Phase 1: FIX
@@ -16,7 +17,10 @@
 
 ## Phase 3: CAPTURE
 
-1. Обнови `.claude/memory/facts.md` — зафиксируй hotfix
+1. Обнови `.claude/memory/facts.md` по секциям:
+   - "## Key Paths" → МЕРЖИТЬ: добавь новые, удали несуществующие пути
+   - "## Known Issues" → максимум 10 записей, удали разрешённые
+   ПРАВИЛО: перед добавлением проверь — НЕ ДУБЛИРУЙ существующие записи
 2. Добавь в `.claude/memory/issues.md`
 3. Обнови `.claude/memory/patterns.md` если выявлен антипаттерн
 

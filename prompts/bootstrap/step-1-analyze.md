@@ -1,5 +1,15 @@
 # Шаг 1: Анализ проекта
 
+## Вход
+- BOOTSTRAP_MODE: fresh | validate
+
+## Выход
+Верни результат:
+- LANGS, PRIMARY_LANG
+- FRAMEWORK_{lang}, TEST_FRAMEWORK_{lang}, TEST_CMD_{lang}, LINT_CMD_{lang}
+- FRONTEND, FRONTEND_TEST, DB, CONTAINER, PKG_MANAGER
+- GIT_HOSTING, GITLAB_DETECTED
+
 Проанализируй проект и запиши результаты. Используй файловую структуру, package.json/composer.json/go.mod/Cargo.toml/requirements.txt, Dockerfile, CI configs.
 
 ## Что определить

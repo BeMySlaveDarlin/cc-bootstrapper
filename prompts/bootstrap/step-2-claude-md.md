@@ -1,5 +1,15 @@
 # Шаг 2: Обработка CLAUDE.md
 
+## Вход
+- BOOTSTRAP_MODE: fresh | validate
+- LANGS, PRIMARY_LANG, FRAMEWORK, DB, FRONTEND
+- Все переменные из step-1
+
+## Выход
+Верни результат:
+- Статус CLAUDE.md: [OK] | [FIX] | [NEW]
+- Вычлененные правила (для skills)
+
 ## Режим `validate` — валидация существующего CLAUDE.md
 
 Если `BOOTSTRAP_MODE = "validate"` и `CLAUDE.md` существует:

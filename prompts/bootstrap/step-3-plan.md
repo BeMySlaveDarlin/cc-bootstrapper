@@ -1,5 +1,18 @@
 # Шаг 3: Планирование системы
 
+## Вход
+- BOOTSTRAP_MODE: fresh | validate
+- Все переменные из step-1
+- GITLAB_DETECTED
+
+## Выход
+Верни результат:
+- Реестр агентов (базовые + CUSTOM_AGENTS)
+- Реестр скиллов (базовые + CUSTOM_SKILLS)
+- Реестр пайплайнов (базовые + CUSTOM_PIPELINES)
+- ADAPTIVE_TEAMS: true | false
+- GITLAB_MCP: true | false + параметры (URL, username, token, features)
+
 На основе анализа определи полный набор агентов, скиллов, пайплайнов.
 
 ## 3.1 Реестр агентов

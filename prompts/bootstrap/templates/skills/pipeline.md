@@ -45,6 +45,53 @@ argument-hint: "[описание задачи]"
 Подтвердить? (или уточнить)
 ```
 
+### Шаг 3.5 — Контекст задачи
+
+Для NEW-CODE / FULL-FEATURE:
+
+AskUserQuestion:
+  question: "Scope задачи?"
+  options:
+    - {label: "Новый модуль", description: "Новый сервис/контроллер/модуль с нуля"}
+    - {label: "Расширение", description: "Добавить в существующий модуль"}
+    - {label: "API эндпоинт", description: "Новый эндпоинт в существующем модуле"}
+
+AskUserQuestion:
+  question: "Затронутые модули?"
+  options: {динамически из facts.md → Key Paths + "Other"}
+  multiSelect: true
+
+Для FIX-CODE / HOTFIX:
+
+AskUserQuestion:
+  question: "Тип проблемы?"
+  options:
+    - {label: "Runtime error", description: "Ошибка при выполнении"}
+    - {label: "Logic bug", description: "Неверная бизнес-логика"}
+    - {label: "Data issue", description: "Проблема с данными"}
+    - {label: "Performance", description: "Медленная работа"}
+
+AskUserQuestion:
+  question: "Где проявляется?"
+  options: {динамически из facts.md → Key Paths + "Other"}
+  multiSelect: true
+
+Для TESTS:
+
+AskUserQuestion:
+  question: "Тип тестов?"
+  options:
+    - {label: "Unit", description: "Unit-тесты для классов/функций"}
+    - {label: "Integration", description: "Интеграционные тесты"}
+    - {label: "Coverage gap", description: "Покрыть непокрытые участки"}
+
+AskUserQuestion:
+  question: "Целевые модули?"
+  options: {динамически из facts.md → Key Paths + "Other"}
+  multiSelect: true
+
+Для REVIEW / API-DOCS / QA-DOCS — без дополнительных вопросов.
+
 ### Шаг 4 — Диспатч
 Прочитай `.claude/pipelines/{type}.md` и выполни ВСЕ фазы.
 

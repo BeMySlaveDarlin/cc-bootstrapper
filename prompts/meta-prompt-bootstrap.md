@@ -18,13 +18,39 @@
 
 Найди этот файл на диске. Определи путь к подпапке `bootstrap/` рядом с ним.
 
-1. Прочитай `bootstrap/step-1-analyze.md` → выполни
-2. Прочитай `bootstrap/step-2-claude-md.md` → выполни
-3. Прочитай `bootstrap/step-3-plan.md` → выполни
-4. Прочитай `bootstrap/step-4-generate.md` → выполни (директории + агенты)
-5. Прочитай `bootstrap/step-4b-generate.md` → выполни (скиллы + пайплайны)
-6. Прочитай `bootstrap/step-4c-generate.md` → выполни (hooks, settings, state, MCP)
-7. Прочитай `bootstrap/step-5-verify.md` → выполни
+### Последовательные шаги (1-3)
 
-Выполняй шаги строго по порядку. После каждого шага выводи краткий отчёт. Если шаг не применим — пропусти с пометкой `[SKIP]`.
-Если шаг большой и можно параллельно что-то выполнять, запускай параллельных агентов.
+Task(step-1-analyze.md):
+  Выход → переменные стека (LANGS, FRAMEWORK, DB, FRONTEND, ...)
+
+Task(step-2-claude-md.md):
+  Выход → CLAUDE.md создан/валидирован
+
+Task(step-3-plan.md):
+  Выход → реестры (agents, skills, pipelines, MCP)
+
+### Параллельная генерация (4/4b/4c)
+
+Запусти параллельно:
+
+Task(step-4-generate.md):
+  Выход → отчёт по директориям и агентам
+
+Task(step-4b-generate.md):
+  Выход → отчёт по скиллам и пайплайнам
+
+Task(step-4c-generate.md):
+  Выход → отчёт по hooks, memory, MCP (БЕЗ settings.json)
+
+### Settings (после завершения 4/4b/4c)
+
+Task(step-4-settings.md):
+  Вход: отчёты из step-4, step-4b, step-4c
+  Выход → settings.json
+
+### Верификация
+
+Task(step-5-verify.md):
+  Выход → верификация + .bootstrap-version
+
+После каждого шага выводи краткий отчёт. Если шаг не применим — пропусти с пометкой `[SKIP]`.

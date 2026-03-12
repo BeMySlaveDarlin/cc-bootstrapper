@@ -1,5 +1,14 @@
 # Шаг 5: Верификация
 
+## Вход
+- BOOTSTRAP_MODE: fresh | validate
+- Все отчёты из step-4, step-4b, step-4c, step-4-settings
+
+## Выход
+Верни результат:
+- Результат верификации: все [OK] или список проблем
+- .bootstrap-version создан
+
 ## 5.1 Запуск верификации
 
 Прочитай шаблон `templates/verify-bootstrap.sh` → запиши в `.claude/scripts/verify-bootstrap.sh` (если ещё не создан на шаге 4).
