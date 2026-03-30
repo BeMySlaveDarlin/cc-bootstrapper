@@ -1,0 +1,10 @@
+{
+  "name": "cc-bootstrapper",
+  "description": "Automation bootstrap for Claude Code. Analyzes any project and generates a complete .claude/ structure with agents, pipelines, skills, memory, hooks, and settings.",
+  "version": "6.0.0",
+  "author": {
+    "name": "cc-bootstrapper contributors"
+  },
+  "license": "MIT",
+  "keywords": ["automation", "bootstrap", "agents", "pipelines", "scaffolding"]
+}

@@ -1,8 +1,12 @@
+---
+description: Генерирует полную .claude/ структуру автоматизации для любого проекта — агенты, пайплайны, скиллы, memory, hooks, settings. Автоопределение режима fresh/validate.
+argument-hint: "[meta-prompt-file]"
+---
+
 Прочитай файл `$ARGUMENTS` и выполни ВСЕ шаги из него для текущего проекта.
 
-Если аргумент не указан — ищи промпт:
-1. `.claude/prompts/meta-prompt-bootstrap.md` в текущем проекте
-2. `~/.claude/prompts/meta-prompt-bootstrap.md` (глобальная копия)
+Если аргумент не указан — читай промпт:
+`${CLAUDE_SKILL_DIR}/../../prompts/meta-prompt-bootstrap.md`
 
 Если файл не найден — сообщи пользователю.
 

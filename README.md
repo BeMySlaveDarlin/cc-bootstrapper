@@ -1,6 +1,8 @@
 # cc-bootstrapper
 
-Генератор системы автоматизации Claude Code. Запускаешь `/bootstrap` в любом проекте — получаешь полную `.claude/` структуру: агенты, пайплайны, скиллы, memory, hooks, settings. Дальше работаешь через `/pipeline`.
+[English](README.en.md)
+
+Генератор системы автоматизации Claude Code. Запускаешь `/cc-bootstrapper:bootstrap` в любом проекте — получаешь полную `.claude/` структуру: агенты, пайплайны, скиллы, memory, hooks, settings. Дальше работаешь через `/pipeline`.
 
 ## Требования
 
@@ -11,10 +13,34 @@
 
 ## Установка
 
+### Как плагин Claude Code (рекомендуется)
+
+В Claude Code CLI:
+```
+/install-plugin cc-bootstrapper
+```
+
+Плагин автоматически зарегистрирует скилл `/cc-bootstrapper:bootstrap`.
+
+### Ручная установка (legacy)
+
 ```bash
-cp commands/bootstrap.md ~/.claude/commands/
 cp prompts/meta-prompt-bootstrap.md ~/.claude/prompts/
 cp -r prompts/bootstrap ~/.claude/prompts/
+
+# Создай команду вручную
+mkdir -p ~/.claude/commands
+cat > ~/.claude/commands/bootstrap.md << 'CMDEOF'
+Прочитай и выполни все шаги из `~/.claude/prompts/meta-prompt-bootstrap.md` для текущего проекта.
+
+## Определи BOOTSTRAP_MODE
+
+- `.claude/` не существует → `BOOTSTRAP_MODE = "fresh"` → `[MODE] fresh — полная генерация`
+- `.claude/` существует → `BOOTSTRAP_MODE = "validate"` → `[MODE] validate — проверка и починка`
+
+Передай BOOTSTRAP_MODE в контексте выполнения шагов.
+Выполняй шаги строго по порядку (Шаг 1 → 2 → 3 → 4 → 5).
+CMDEOF
 ```
 
 ## Запуск
@@ -24,7 +50,8 @@ cd /path/to/your-project
 claude
 ```
 ```
-> /bootstrap
+> /cc-bootstrapper:bootstrap    # Плагин
+> /bootstrap                    # Legacy (ручная установка)
 ```
 
 Автоопределение: нет `.claude/` → полная генерация, есть → валидация + auto-fix.
@@ -184,6 +211,7 @@ Reviewers  → читают код (git diff), пишут отчёты в output
 
 | Версия | Что нового |
 |--------|------------|
+| v6.0.0 | Claude Code Plugin — публикация на маркетплейсе, command → skill, английские README/CLAUDE.md, PRIVACY.md |
 | v5.4.2 | AskUserQuestion во всём интерактиве, обновление Teams API (natural language вместо TeamCreate/Spawn) |
 | v5.4.1 | Версионирование шаблонов — version в frontmatter скиллов и HTML-комментарий в пайплайнах, авто-REGEN при устаревшей версии |
 | v5.4.0 | Агент-аналитик — Phase 1 ANALYSIS в new-code/full-feature, формализация ТЗ перед архитектурой |
