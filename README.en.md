@@ -17,7 +17,8 @@ Automation bootstrap generator for Claude Code. Run `/cc-bootstrapper:bootstrap`
 
 In Claude Code CLI:
 ```
-/install-plugin cc-bootstrapper
+/plugin marketplace add BeMySlaveDarlin/cc-bootstrapper
+/plugin install cc-bootstrapper@bemyslavedarlin-cc-bootstrapper
 ```
 
 The plugin registers the `/cc-bootstrapper:bootstrap` skill automatically.
@@ -25,16 +26,12 @@ The plugin registers the `/cc-bootstrapper:bootstrap` skill automatically.
 ### Manual Installation (legacy)
 
 ```bash
-# Copy meta-prompt and templates
-cp prompts/meta-prompt-bootstrap.md ~/.claude/prompts/
-cp -r prompts/bootstrap ~/.claude/prompts/
-
-# Create a command that invokes the meta-prompt
-mkdir -p ~/.claude/commands
-cat > ~/.claude/commands/bootstrap.md << 'EOF'
-Read and execute all steps from `~/.claude/prompts/meta-prompt-bootstrap.md` for the current project.
-EOF
+git clone https://github.com/BeMySlaveDarlin/cc-bootstrapper.git
+cd cc-bootstrapper
+bash install.sh
 ```
+
+The script copies prompts and the command to `~/.claude/`.
 
 ## Usage
 

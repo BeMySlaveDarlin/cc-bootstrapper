@@ -1,0 +1,19 @@
+{
+  "name": "bemyslavedarlin-cc-bootstrapper",
+  "description": "Claude Code automation bootstrap plugins",
+  "owner": {
+    "name": "BeMySlaveDarlin",
+    "url": "https://github.com/BeMySlaveDarlin"
+  },
+  "plugins": [
+    {
+      "name": "cc-bootstrapper",
+      "description": "Automation bootstrap for Claude Code. Analyzes any project and generates a complete .claude/ structure with agents, pipelines, skills, memory, hooks, and settings.",
+      "version": "6.0.0",
+      "source": "./",
+      "repository": "https://github.com/BeMySlaveDarlin/cc-bootstrapper",
+      "license": "MIT",
+      "keywords": ["automation", "bootstrap", "agents", "pipelines", "scaffolding"]
+    }
+  ]
+}

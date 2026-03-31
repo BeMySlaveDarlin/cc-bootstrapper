@@ -17,7 +17,8 @@
 
 В Claude Code CLI:
 ```
-/install-plugin cc-bootstrapper
+/plugin marketplace add BeMySlaveDarlin/cc-bootstrapper
+/plugin install cc-bootstrapper@bemyslavedarlin-cc-bootstrapper
 ```
 
 Плагин автоматически зарегистрирует скилл `/cc-bootstrapper:bootstrap`.
@@ -25,23 +26,12 @@
 ### Ручная установка (legacy)
 
 ```bash
-cp prompts/meta-prompt-bootstrap.md ~/.claude/prompts/
-cp -r prompts/bootstrap ~/.claude/prompts/
-
-# Создай команду вручную
-mkdir -p ~/.claude/commands
-cat > ~/.claude/commands/bootstrap.md << 'CMDEOF'
-Прочитай и выполни все шаги из `~/.claude/prompts/meta-prompt-bootstrap.md` для текущего проекта.
-
-## Определи BOOTSTRAP_MODE
-
-- `.claude/` не существует → `BOOTSTRAP_MODE = "fresh"` → `[MODE] fresh — полная генерация`
-- `.claude/` существует → `BOOTSTRAP_MODE = "validate"` → `[MODE] validate — проверка и починка`
-
-Передай BOOTSTRAP_MODE в контексте выполнения шагов.
-Выполняй шаги строго по порядку (Шаг 1 → 2 → 3 → 4 → 5).
-CMDEOF
+git clone https://github.com/BeMySlaveDarlin/cc-bootstrapper.git
+cd cc-bootstrapper
+bash install.sh
 ```
+
+Скрипт скопирует промпты и команду в `~/.claude/`.
 
 ## Запуск
 
