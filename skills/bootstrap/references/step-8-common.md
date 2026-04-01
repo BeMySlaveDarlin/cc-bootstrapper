@@ -149,7 +149,7 @@ mv .claude/agents/{deprecated-file} .claude/agents/.backup/
 ---
 name: "{name}"
 description: "{description — краткое описание, одна строка}"
-version: "7.2.0"
+version: "7.2.1"
 user-invocable: false
 ---
 
@@ -185,7 +185,7 @@ user-invocable: false
 Для api-docs, qa-docs — Task() pseudo-syntax используется.
 
 ### Версионирование
-- HTML-комментарий в первой строке: `<!-- version: 7.2.0 -->`
+- HTML-комментарий в первой строке: `<!-- version: 7.2.1 -->`
 - При `validate`: нет version или version < `7.2.0` → `[REGEN]`
 
 ### Валидация (режим `validate`)
@@ -208,7 +208,7 @@ user-invocable: false
 Для каждого пайплайна из `registries.pipelines` с `type: "custom"` сгенерируй файл `.claude/pipelines/{name}.md`:
 
 ```markdown
-<!-- version: 7.2.0 -->
+<!-- version: 7.2.1 -->
 # Pipeline: {Name}
 
 ## Фазы
