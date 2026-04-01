@@ -99,9 +99,11 @@ Agent tool (mode: "auto"):
 
 → `[2/10] Определение режима ✓`
 
-### Шаг 3 — Настройка bootstrap (collect → ask → apply)
+### Шаг 3 — Настройка bootstrap (3 фазы, НЕ ПРОПУСКАЙ)
 
-**Фаза 3A — Сбор (без интерактива):**
+**ШАГ 3 СОСТОИТ ИЗ ТРЁХ ОБЯЗАТЕЛЬНЫХ ФАЗ. Переходить к шагу 4 ТОЛЬКО после выполнения ВСЕХ трёх.**
+
+**Фаза 3A — Сбор:**
 
 Agent tool (mode: "auto"):
   prompt: "Прочитай файл ${CLAUDE_SKILL_DIR}/references/step-3-configure.md и выполни ВСЕ инструкции. По завершении верни JSON-блок с вопросами и слово done, или skip если config уже заполнен."
@@ -110,16 +112,18 @@ Agent tool (mode: "auto"):
 
 Если субагент вернул `skip` → перейди к шагу 4.
 
-**Оркестратор — вопросы пользователю:**
+**Фаза 3B — СТОП. ТЫ (оркестратор) задаёшь вопросы пользователю:**
 
-ПЕРЕД началом работы загрузи AskUserQuestion: ToolSearch(query: 'select:AskUserQuestion', max_results: 1).
+**ЭТО ТВОЯ РАБОТА, НЕ СУБАГЕНТА. НЕ ПРОПУСКАЙ. Без этой фазы config останется пустым и весь bootstrap сломается.**
 
-1. Извлеки JSON-блок из результата 3A
-2. Подставь `estimates.standard` и `estimates.deep` в описания options вопроса "Анализ"
-3. Задай `questions_main.questions` через AskUserQuestion (batch, 4 вопроса)
-4. Из ответов проверь: выбраны ли "Custom agents" / "Custom skills" / "Custom pipelines"
-5. Если выбраны — собери follow-up вопросы из `questions_followup` (только для выбранных опций) и задай через AskUserQuestion (batch, до 3 вопросов)
-6. Собери все ответы в JSON:
+1. Загрузи AskUserQuestion: ToolSearch(query: 'select:AskUserQuestion', max_results: 1)
+2. Извлеки JSON-блок из результата 3A (между ```json и ```)
+3. Подставь `estimates.standard` и `estimates.deep` в описания options вопроса "Анализ"
+4. Возьми массив `questions_main.questions` из JSON и передай его в AskUserQuestion как параметр `questions`
+5. Дождись ответов пользователя
+6. Из ответов проверь: выбраны ли "Custom agents" / "Custom skills" / "Custom pipelines"
+7. Если выбраны — собери follow-up вопросы из `questions_followup` (только для выбранных опций) и задай через AskUserQuestion (batch, до 3 вопросов)
+8. Собери ВСЕ ответы в JSON:
    ```json
    {
      "features": [...],
@@ -132,12 +136,14 @@ Agent tool (mode: "auto"):
    }
    ```
 
-**Фаза 3B — Применение (без интерактива):**
+**Фаза 3C — Применение:**
 
 Agent tool (mode: "auto"):
-  prompt: "Прочитай файл ${CLAUDE_SKILL_DIR}/references/step-3-apply.md и выполни ВСЕ инструкции. Вот ответы пользователя: {вставь собранный JSON}. По завершении верни done или error."
+  prompt: "Прочитай файл ${CLAUDE_SKILL_DIR}/references/step-3-apply.md и выполни ВСЕ инструкции. Вот ответы пользователя: {вставь собранный JSON из фазы 3B}. По завершении верни done или error."
 
 → `[3/10] Настройка bootstrap ✓`
+
+**КОНТРОЛЬНАЯ ПРОВЕРКА:** После 3C прочитай `.bootstrap-cache/state.json` и убедись что `steps.3.status == "completed"` и `config` НЕ пустой. Если пустой — шаг 3 провален, повтори.
 
 ### Шаг 4 — Settings.json
 
@@ -146,25 +152,30 @@ Agent tool (mode: "auto"):
 
 → `[4/10] Settings.json ✓`
 
-### Шаг 5 — Плагины и MCP (scan → ask → apply)
+### Шаг 5 — Плагины и MCP (3 фазы, НЕ ПРОПУСКАЙ)
 
-**Фаза 5A — Сканирование (без интерактива):**
+**ШАГ 5 СОСТОИТ ИЗ ТРЁХ ОБЯЗАТЕЛЬНЫХ ФАЗ. Переходить к шагу 6 ТОЛЬКО после выполнения ВСЕХ трёх.**
+
+**Фаза 5A — Сканирование:**
 
 Agent tool (mode: "auto"):
   prompt: "Прочитай файл ${CLAUDE_SKILL_DIR}/references/step-5-plugins.md и выполни ВСЕ инструкции. По завершении верни JSON-блок с результатами сканирования и слово done."
 
 → `[5/10] Плагины — сканирование ✓`
 
-**Оркестратор — вопросы пользователю:**
+**Фаза 5B — СТОП. ТЫ (оркестратор) задаёшь вопросы пользователю:**
 
-ПЕРЕД началом работы загрузи AskUserQuestion: ToolSearch(query: 'select:AskUserQuestion', max_results: 1).
+**ЭТО ТВОЯ РАБОТА, НЕ СУБАГЕНТА. НЕ ПРОПУСКАЙ. Без этой фазы плагины не будут настроены.**
 
-1. Извлеки JSON-блок из результата 5A
-2. `auto` — запомни: эти плагины уже установлены, их permissions нужно передать в 5B
-3. `questions` — задай пользователю пачками по 4 через AskUserQuestion
-4. Для каждого ответа проверь: если это gate-вопрос (`_type: "mcp_gate"`) и ответ = condition из `questions_conditional` — добавь conditional вопросы в следующий batch
-5. Задай conditional вопросы (если есть) через AskUserQuestion (batch, до 4)
-6. Собери все ответы в JSON для 5B:
+1. Загрузи AskUserQuestion: ToolSearch(query: 'select:AskUserQuestion', max_results: 1)
+2. Извлеки JSON-блок из результата 5A (между ```json и ```)
+3. Запомни `auto` — эти плагины уже установлены, их permissions передашь в 5C
+4. Если массив `questions` не пустой — задай пользователю пачками по 4 через AskUserQuestion
+5. Дождись ответов пользователя
+6. Для каждого ответа проверь: если это gate-вопрос (`_type: "mcp_gate"`) и ответ = condition из `questions_conditional` — добавь conditional вопросы в следующий batch
+7. Задай conditional вопросы (если есть) через AskUserQuestion (batch, до 4)
+8. Для "Из git config" (GitLab username) — выполни `git config user.name` и подставь результат
+9. Собери ВСЕ ответы в JSON:
    ```json
    {
      "plugins_installed": ["playwright"],
@@ -184,14 +195,16 @@ Agent tool (mode: "auto"):
    }
    ```
 
-Для "Из git config" (GitLab username) — выполни `git config user.name` и подставь результат.
+Если массив `questions` пустой (всё уже установлено) — собери JSON только из `auto` данных и переходи к 5C.
 
-**Фаза 5B — Применение (без интерактива):**
+**Фаза 5C — Применение:**
 
 Agent tool (mode: "auto"):
-  prompt: "Прочитай файл ${CLAUDE_SKILL_DIR}/references/step-5-apply.md и выполни ВСЕ инструкции. Вот данные: {вставь собранный JSON}. По завершении верни done или error."
+  prompt: "Прочитай файл ${CLAUDE_SKILL_DIR}/references/step-5-apply.md и выполни ВСЕ инструкции. Вот данные: {вставь собранный JSON из фазы 5B}. По завершении верни done или error."
 
 → `[5/10] Плагины и MCP ✓`
+
+**КОНТРОЛЬНАЯ ПРОВЕРКА:** После 5C прочитай `.bootstrap-cache/state.json` и убедись что `steps.5.status == "completed"`. Если нет — шаг 5 провален, повтори.
 
 ### Шаг 6 — План и превью
 
