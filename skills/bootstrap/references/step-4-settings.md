@@ -155,17 +155,18 @@
 4. Показать diff пользователю
 
 5. AskUserQuestion:
-   question: "Как применить изменения к settings.json?"
-   options:
-     - {label: "Принять все", description: "Применить все [+ADD] и [-DEL]"}
-     - {label: "Выборочно", description: "Выбрать какие изменения применить"}
-     - {label: "Пропустить", description: "Оставить без изменений"}
+   questions:
+     - question: "Как применить изменения к settings.json?\n\nЕсли выборочно — укажи через Other номера строк для [+ADD] и [-DEL]"
+       header: "Settings diff"
+       options:
+         - {label: "Принять все", description: "Применить все [+ADD] и [-DEL]"}
+         - {label: "Только ADD", description: "Добавить новые, не удалять существующие"}
+         - {label: "Пропустить", description: "Оставить без изменений"}
+       multiSelect: false
 
-6. Если "Выборочно":
-   - AskUserQuestion (multiSelect) для [+ADD]: "Какие permissions добавить?"
-   - AskUserQuestion (multiSelect) для [-DEL]: "Какие permissions убрать?"
+   Если Other → парси список номеров/названий для применения.
 
-7. Применить
+6. Применить
 
 **Примечание:** MCP permissions будут добавлены на step 5 (plugins) после установки плагинов.
 

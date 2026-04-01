@@ -88,7 +88,7 @@ AskUserQuestion:
 ### Шаг 1 — Сканирование проекта
 
 Agent tool (mode: "auto"):
-  prompt: "Прочитай файл ${CLAUDE_SKILL_DIR}/references/step-1-scan.md и выполни ВСЕ инструкции. Шаблоны: ${CLAUDE_SKILL_DIR}/../../prompts/bootstrap/templates/. ПЕРЕД началом работы загрузи AskUserQuestion: ToolSearch(query: 'select:AskUserQuestion', max_results: 1). Все вопросы пользователю — только через AskUserQuestion. По завершении верни done или error."
+  prompt: "Прочитай файл ${CLAUDE_SKILL_DIR}/references/step-1-scan.md и выполни ВСЕ инструкции. Шаблоны: ${CLAUDE_SKILL_DIR}/../../templates/. ПЕРЕД началом работы загрузи AskUserQuestion: ToolSearch(query: 'select:AskUserQuestion', max_results: 1). Все вопросы пользователю — только через AskUserQuestion. По завершении верни done или error."
 
 → `[1/10] Сканирование проекта ✓`
 
@@ -99,10 +99,43 @@ Agent tool (mode: "auto"):
 
 → `[2/10] Определение режима ✓`
 
-### Шаг 3 — Настройка bootstrap
+### Шаг 3 — Настройка bootstrap (collect → ask → apply)
+
+**Фаза 3A — Сбор (без интерактива):**
 
 Agent tool (mode: "auto"):
-  prompt: "Прочитай файл ${CLAUDE_SKILL_DIR}/references/step-3-configure.md и выполни ВСЕ инструкции. ПЕРЕД началом работы загрузи AskUserQuestion: ToolSearch(query: 'select:AskUserQuestion', max_results: 1). Все вопросы пользователю — только через AskUserQuestion. По завершении верни done или error."
+  prompt: "Прочитай файл ${CLAUDE_SKILL_DIR}/references/step-3-configure.md и выполни ВСЕ инструкции. По завершении верни JSON-блок с вопросами и слово done, или skip если config уже заполнен."
+
+→ `[3/10] Настройка — сбор ✓`
+
+Если субагент вернул `skip` → перейди к шагу 4.
+
+**Оркестратор — вопросы пользователю:**
+
+ПЕРЕД началом работы загрузи AskUserQuestion: ToolSearch(query: 'select:AskUserQuestion', max_results: 1).
+
+1. Извлеки JSON-блок из результата 3A
+2. Подставь `estimates.standard` и `estimates.deep` в описания options вопроса "Анализ"
+3. Задай `questions_main.questions` через AskUserQuestion (batch, 4 вопроса)
+4. Из ответов проверь: выбраны ли "Custom agents" / "Custom skills" / "Custom pipelines"
+5. Если выбраны — собери follow-up вопросы из `questions_followup` (только для выбранных опций) и задай через AskUserQuestion (batch, до 3 вопросов)
+6. Собери все ответы в JSON:
+   ```json
+   {
+     "features": [...],
+     "analysis_depth": "standard",
+     "permissions_level": "balanced",
+     "git_permissions": ["Read", "Write"],
+     "custom_agents": [{"name": "...", "role": "..."}],
+     "custom_skills": [{"name": "...", "description": "..."}],
+     "custom_pipelines": [{"name": "...", "trigger": "auto", "agents": "auto"}]
+   }
+   ```
+
+**Фаза 3B — Применение (без интерактива):**
+
+Agent tool (mode: "auto"):
+  prompt: "Прочитай файл ${CLAUDE_SKILL_DIR}/references/step-3-apply.md и выполни ВСЕ инструкции. Вот ответы пользователя: {вставь собранный JSON}. По завершении верни done или error."
 
 → `[3/10] Настройка bootstrap ✓`
 
@@ -113,17 +146,57 @@ Agent tool (mode: "auto"):
 
 → `[4/10] Settings.json ✓`
 
-### Шаг 5 — Плагины и MCP
+### Шаг 5 — Плагины и MCP (scan → ask → apply)
+
+**Фаза 5A — Сканирование (без интерактива):**
 
 Agent tool (mode: "auto"):
-  prompt: "Прочитай файл ${CLAUDE_SKILL_DIR}/references/step-5-plugins.md и выполни ВСЕ инструкции. ПЕРЕД началом работы загрузи AskUserQuestion: ToolSearch(query: 'select:AskUserQuestion', max_results: 1). Все вопросы пользователю — только через AskUserQuestion. По завершении верни done или error."
+  prompt: "Прочитай файл ${CLAUDE_SKILL_DIR}/references/step-5-plugins.md и выполни ВСЕ инструкции. По завершении верни JSON-блок с результатами сканирования и слово done."
+
+→ `[5/10] Плагины — сканирование ✓`
+
+**Оркестратор — вопросы пользователю:**
+
+ПЕРЕД началом работы загрузи AskUserQuestion: ToolSearch(query: 'select:AskUserQuestion', max_results: 1).
+
+1. Извлеки JSON-блок из результата 5A
+2. `auto` — запомни: эти плагины уже установлены, их permissions нужно передать в 5B
+3. `questions` — задай пользователю пачками по 4 через AskUserQuestion
+4. Для каждого ответа проверь: если это gate-вопрос (`_type: "mcp_gate"`) и ответ = condition из `questions_conditional` — добавь conditional вопросы в следующий batch
+5. Задай conditional вопросы (если есть) через AskUserQuestion (batch, до 4)
+6. Собери все ответы в JSON для 5B:
+   ```json
+   {
+     "plugins_installed": ["playwright"],
+     "plugins_skipped": ["typescript-lsp"],
+     "mcp": {
+       "gitlab": {
+         "enabled": true,
+         "api_url": "https://gitlab.com/api/v4",
+         "username": "user",
+         "token": "glpat-...",
+         "features": {"pipeline": true, "milestone": true, "wiki": true}
+       },
+       "github": {"enabled": false},
+       "docker": {"enabled": true}
+     },
+     "permissions": ["mcp__plugin_playwright_playwright__*", "mcp__gitlab__*", "mcp__docker__*"]
+   }
+   ```
+
+Для "Из git config" (GitLab username) — выполни `git config user.name` и подставь результат.
+
+**Фаза 5B — Применение (без интерактива):**
+
+Agent tool (mode: "auto"):
+  prompt: "Прочитай файл ${CLAUDE_SKILL_DIR}/references/step-5-apply.md и выполни ВСЕ инструкции. Вот данные: {вставь собранный JSON}. По завершении верни done или error."
 
 → `[5/10] Плагины и MCP ✓`
 
 ### Шаг 6 — План и превью
 
 Agent tool (mode: "auto"):
-  prompt: "Прочитай файл ${CLAUDE_SKILL_DIR}/references/step-6-preview.md и выполни ВСЕ инструкции. Шаблоны: ${CLAUDE_SKILL_DIR}/../../prompts/bootstrap/templates/. ПЕРЕД началом работы загрузи AskUserQuestion: ToolSearch(query: 'select:AskUserQuestion', max_results: 1). Все вопросы пользователю — только через AskUserQuestion. По завершении верни done или error."
+  prompt: "Прочитай файл ${CLAUDE_SKILL_DIR}/references/step-6-preview.md и выполни ВСЕ инструкции. Шаблоны: ${CLAUDE_SKILL_DIR}/../../templates/. ПЕРЕД началом работы загрузи AskUserQuestion: ToolSearch(query: 'select:AskUserQuestion', max_results: 1). Все вопросы пользователю — только через AskUserQuestion. По завершении верни done или error."
 
 **PAUSE POINT** (после субагента):
 AskUserQuestion:
@@ -152,13 +225,13 @@ Agent tool (mode: "auto"):
 **Per-lang + Common + Infra — ПАРАЛЛЕЛЬНО:**
 
 Для КАЖДОГО `{lang}` из `config.langs` — Agent tool (mode: "auto"):
-  prompt: "Прочитай файл ${CLAUDE_SKILL_DIR}/references/step-8-lang.md и выполни ВСЕ инструкции для языка {lang}. Шаблоны: ${CLAUDE_SKILL_DIR}/../../prompts/bootstrap/templates/. ПЕРЕД началом работы загрузи AskUserQuestion: ToolSearch(query: 'select:AskUserQuestion', max_results: 1). Все вопросы пользователю — только через AskUserQuestion. По завершении верни done или error."
+  prompt: "Прочитай файл ${CLAUDE_SKILL_DIR}/references/step-8-lang.md и выполни ВСЕ инструкции для языка {lang}. Шаблоны: ${CLAUDE_SKILL_DIR}/../../templates/. ПЕРЕД началом работы загрузи AskUserQuestion: ToolSearch(query: 'select:AskUserQuestion', max_results: 1). Все вопросы пользователю — только через AskUserQuestion. По завершении верни done или error."
 
 Agent tool (mode: "auto") — Общие артефакты:
-  prompt: "Прочитай файл ${CLAUDE_SKILL_DIR}/references/step-8-common.md и выполни ВСЕ инструкции. Шаблоны: ${CLAUDE_SKILL_DIR}/../../prompts/bootstrap/templates/. ПЕРЕД началом работы загрузи AskUserQuestion: ToolSearch(query: 'select:AskUserQuestion', max_results: 1). Все вопросы пользователю — только через AskUserQuestion. По завершении верни done или error."
+  prompt: "Прочитай файл ${CLAUDE_SKILL_DIR}/references/step-8-common.md и выполни ВСЕ инструкции. Шаблоны: ${CLAUDE_SKILL_DIR}/../../templates/. ПЕРЕД началом работы загрузи AskUserQuestion: ToolSearch(query: 'select:AskUserQuestion', max_results: 1). Все вопросы пользователю — только через AskUserQuestion. По завершении верни done или error."
 
 Agent tool (mode: "auto") — Инфраструктура:
-  prompt: "Прочитай файл ${CLAUDE_SKILL_DIR}/references/step-8-infra.md и выполни ВСЕ инструкции. Шаблоны: ${CLAUDE_SKILL_DIR}/../../prompts/bootstrap/templates/. ПЕРЕД началом работы загрузи AskUserQuestion: ToolSearch(query: 'select:AskUserQuestion', max_results: 1). Все вопросы пользователю — только через AskUserQuestion. По завершении верни done или error."
+  prompt: "Прочитай файл ${CLAUDE_SKILL_DIR}/references/step-8-infra.md и выполни ВСЕ инструкции. Шаблоны: ${CLAUDE_SKILL_DIR}/../../templates/. ПЕРЕД началом работы загрузи AskUserQuestion: ToolSearch(query: 'select:AskUserQuestion', max_results: 1). Все вопросы пользователю — только через AskUserQuestion. По завершении верни done или error."
 
 Дождись всех. После завершения всех трёх — обнови `.bootstrap-cache/state.json`:
 ```json

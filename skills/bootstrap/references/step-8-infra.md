@@ -233,7 +233,7 @@ description: "Управление GitLab через MCP: issues, MR, pipelines,
 ---
 name: "gitlab"
 description: "MCP-интеграция с GitLab: маппинг операций на MCP tools"
-version: "7.2.1"
+version: "7.3.0"
 user-invocable: false
 ---
 
@@ -287,7 +287,7 @@ user-invocable: false
 ### pipelines/gitlab.md
 
 ```markdown
-<!-- version: 7.2.1 -->
+<!-- version: 7.3.0 -->
 # Pipeline: GitLab
 
 ## Фазы

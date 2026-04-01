@@ -2,7 +2,7 @@
 name: "code-style"
 description: "Стиль кода, именование, форматирование"
 user-invocable: false
-version: "7.2.1"
+version: "7.3.0"
 ---
 
 # Skill: Code Style — {LANG}/{FRAMEWORK}

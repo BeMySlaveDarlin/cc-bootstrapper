@@ -29,7 +29,8 @@
     "6": {"status": "pending"},
     "7": {"status": "pending"},
     "8": {"status": "pending"},
-    "9": {"status": "pending"}
+    "9": {"status": "pending"},
+    "10": {"status": "pending"}
   },
   "config": {},
   "stack": {},

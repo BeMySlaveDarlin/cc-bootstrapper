@@ -67,7 +67,7 @@ mkdir -p .claude/{agents,skills,pipelines}
 **Мульти-язычные проекты:** При повторном вызове для второго `{lang}` — ДОПОЛНЯЙ существующие скиллы секциями для нового языка, НЕ перезаписывай целиком.
 
 ### Версионирование
-- Поле `version` в YAML frontmatter (например `version: "7.2.1"`)
+- Поле `version` в YAML frontmatter (например `version: "7.3.0"`)
 - При `validate`: нет версии или version < `7.2.0` → `[REGEN]`
 
 ### Валидация (режим `validate`)
@@ -114,7 +114,7 @@ mkdir -p .claude/{agents,skills,pipelines}
 - Phase 0 CAPABILITY DETECT проверяет env `CLAUDE_CODE_EXPERIMENTAL_AGENT_TEAMS`
 
 ### Версионирование
-- HTML-комментарий в первой строке (например `<!-- version: 7.2.1 -->`)
+- HTML-комментарий в первой строке (например `<!-- version: 7.3.0 -->`)
 - При `validate`: нет version или version < `7.2.0` → `[REGEN]`
 
 ### Валидация (режим `validate`)

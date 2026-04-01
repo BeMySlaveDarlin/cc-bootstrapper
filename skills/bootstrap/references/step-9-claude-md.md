@@ -3,7 +3,7 @@
 > **SUBAGENT ISOLATION:** Этот шаг выполняется как изолированный субагент.
 > Используй ТОЛЬКО переменные из state-файла. НЕ обращайся к результатам других шагов напрямую.
 >
-> Выполняется ПОСЛЕДНИМ в step 8 (после settings). Зависит от финальных таблиц agents/skills/pipelines.
+> Выполняется ПОСЛЕ step 8 (генерации). Зависит от финальных таблиц agents/skills/pipelines.
 
 ## Вход
 - `.bootstrap-cache/state.json` → `stack`, `config`, `registries`

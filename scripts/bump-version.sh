@@ -50,7 +50,7 @@ fi
 update_file "$ROOT_DIR/.claude-plugin/marketplace.json"
 
 # 3. Skill templates (YAML frontmatter: version: "X.Y.Z")
-for f in "$ROOT_DIR"/prompts/bootstrap/templates/skills/*.md; do
+for f in "$ROOT_DIR"/templates/skills/*.md; do
   [[ -f "$f" ]] || continue
   if [[ "$DRY_RUN" != "--dry-run" ]]; then
     sed -i "s/^version: \"[0-9]*\.[0-9]*\.[0-9]*\"/version: \"$NEW_VERSION\"/" "$f"
@@ -59,7 +59,7 @@ for f in "$ROOT_DIR"/prompts/bootstrap/templates/skills/*.md; do
 done
 
 # 4. Pipeline templates (HTML comment: <!-- version: X.Y.Z -->)
-for f in "$ROOT_DIR"/prompts/bootstrap/templates/pipelines/*.md; do
+for f in "$ROOT_DIR"/templates/pipelines/*.md; do
   [[ -f "$f" ]] || continue
   if [[ "$DRY_RUN" != "--dry-run" ]]; then
     sed -i "s/<!-- version: [0-9]*\.[0-9]*\.[0-9]* -->/<!-- version: $NEW_VERSION -->/" "$f"
@@ -68,7 +68,7 @@ for f in "$ROOT_DIR"/prompts/bootstrap/templates/pipelines/*.md; do
 done
 
 # 5. All step files + references (version strings in code/examples)
-for f in "$ROOT_DIR"/prompts/bootstrap/step-*.md "$ROOT_DIR"/skills/bootstrap/references/step-*.md; do
+for f in "$ROOT_DIR"/skills/bootstrap/references/step-*.md; do
   [[ -f "$f" ]] || continue
   if [[ "$DRY_RUN" != "--dry-run" ]]; then
     sed -i "s/--arg version \"[0-9]*\.[0-9]*\.[0-9]*\"/--arg version \"$NEW_VERSION\"/" "$f"
@@ -84,8 +84,8 @@ echo ""
 echo "=== Verification ==="
 echo -n "plugin.json: "; jq -r '.version' "$ROOT_DIR/.claude-plugin/plugin.json"
 echo -n "marketplace: "; jq -r '.plugins[0].version' "$ROOT_DIR/.claude-plugin/marketplace.json"
-echo -n "skill sample: "; grep -m1 'version:' "$ROOT_DIR/prompts/bootstrap/templates/skills/pipeline.md" 2>/dev/null || echo "n/a"
-echo -n "pipeline sample: "; head -1 "$ROOT_DIR/prompts/bootstrap/templates/pipelines/new-code.md" 2>/dev/null || echo "n/a"
+echo -n "skill sample: "; grep -m1 'version:' "$ROOT_DIR/templates/skills/pipeline.md" 2>/dev/null || echo "n/a"
+echo -n "pipeline sample: "; head -1 "$ROOT_DIR/templates/pipelines/new-code.md" 2>/dev/null || echo "n/a"
 echo ""
 echo "Done. Version bumped to $NEW_VERSION"
 [[ "$DRY_RUN" == "--dry-run" ]] && echo "(dry-run, no files changed)" || true

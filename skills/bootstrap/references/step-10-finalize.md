@@ -86,7 +86,7 @@ for f in .claude/agents/*.md .claude/skills/*/SKILL.md .claude/pipelines/*.md .c
 done
 
 jq -n \
-    --arg version "7.2.1" \
+    --arg version "7.3.0" \
     --arg generated "$(date -u +%Y-%m-%dT%H:%M:%SZ)" \
     --argjson hashes "$HASHES" \
     '{
@@ -101,7 +101,7 @@ jq -n \
 ## 10.3 Проверка stale state
 
 Проверь что в корне проекта нет устаревших артефактов:
-- `.bootstrap-cache/state.json` — будет удалён на шаге 9.5, но если на этом этапе содержит `errors[]` — сначала отобрази их
+- `.bootstrap-cache/state.json` — если содержит `errors[]` — сначала отобрази их, затем удали cache
 - `state/` — легаси директория, не должна существовать
 
 Если найден `state/` — `[WARN] Обнаружена легаси директория state/. Рекомендуется удалить.`
