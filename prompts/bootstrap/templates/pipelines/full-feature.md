@@ -1,4 +1,4 @@
-<!-- version: 5.4.2 -->
+<!-- version: 7.2.0 -->
 # Pipeline: Full Feature
 
 ## Вход

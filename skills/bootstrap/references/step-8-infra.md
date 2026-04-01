@@ -1,29 +1,39 @@
-# Шаг 4c: Генерация (Hooks, Settings, State, MCP)
+# Шаг 8: Генерация инфраструктуры
+
+> **SUBAGENT ISOLATION:** Этот шаг выполняется как изолированный субагент.
+> Используй ТОЛЬКО переменные из state-файла. НЕ обращайся к результатам других шагов напрямую.
 
 ## Вход
-- BOOTSTRAP_MODE: fresh | validate
-- DB, CONTAINER, GITLAB_MCP
-- GITLAB_USERNAME, GITLAB_TOKEN, GITLAB_API_URL (если GITLAB_MCP=true)
-
-## Выход
-Верни результат:
-- Список созданных/обновлённых хуков с статусами
-- Список созданных memory файлов
-- Статус MCP: настроен | пропущен
-
-> Продолжение шага 4. Правила записи файлов и стек-адаптации — см. `step-4-generate.md`.
-
-## Правила записи (краткое напоминание)
-- `fresh`: записывать без проверок
-- `validate`: файл есть → валидация → `[OK]`/`[FIX]`/`[REGEN]`; файла нет → `[NEW]`
+- `.bootstrap-cache/state.json` → `config` (db, container, gitlab_mcp, gitlab.*), `stack`
 
 ---
 
-## 4.5 Hooks
+## 8-infra.1 Hooks
+
+### Генерация
+
+Для каждого хука прочитай шаблон из `templates/hooks/` → запиши в `.claude/scripts/hooks/{name}.sh`:
+
+| Шаблон | Выходной файл | Условие |
+|--------|---------------|---------|
+| `templates/hooks/track-agent.sh` | `.claude/scripts/hooks/track-agent.sh` | всегда |
+| `templates/hooks/maintain-memory.sh` | `.claude/scripts/hooks/maintain-memory.sh` | всегда |
+| `templates/hooks/update-schema.sh` | `.claude/scripts/hooks/update-schema.sh` | `stack.db != none` И это реальная БД (postgres, mysql, mariadb, mongo, etc.), НЕ кеш (redis) и НЕ очередь (rabbitmq) |
+
+Скрипт верификации:
+  `templates/verify-bootstrap.sh` → `.claude/scripts/verify-bootstrap.sh`
+
+Сделай скрипты исполняемыми и проверь синтаксис:
+```bash
+chmod +x .claude/scripts/hooks/*.sh
+chmod +x .claude/scripts/verify-bootstrap.sh
+bash -n .claude/scripts/hooks/*.sh
+bash -n .claude/scripts/verify-bootstrap.sh
+```
 
 ### Валидация (режим `validate`)
 - Все хук-файлы существуют
-- Все executable
+- Все executable (`chmod +x`)
 - `bash -n` проходит (синтаксис OK)
 - Устаревшие хуки (`git-context.sh`, `session-summary.sh`) → удалить → `[FIX] removed deprecated {path}`
 → Нет файла → создать из шаблона → `[NEW] {path}`
@@ -32,34 +42,7 @@
 
 ---
 
-### Генерация
-
-Для каждого хука прочитай шаблон из `templates/hooks/` → запиши в `.claude/scripts/hooks/{name}.sh`:
-
-  `templates/hooks/track-agent.sh` → `.claude/scripts/hooks/track-agent.sh`
-  `templates/hooks/maintain-memory.sh` → `.claude/scripts/hooks/maintain-memory.sh`
-
-Условно (только если в проекте есть DB — `docker-compose.yml` с postgres/mysql/mariadb):
-  `templates/hooks/update-schema.sh` → `.claude/scripts/hooks/update-schema.sh`
-
-Скрипт верификации:
-  `templates/verify-bootstrap.sh` → `.claude/scripts/verify-bootstrap.sh`
-
-Сделай скрипты исполняемыми:
-```bash
-chmod +x .claude/scripts/hooks/*.sh
-chmod +x .claude/scripts/verify-bootstrap.sh
-```
-
----
-
-## 4.6 Settings
-
-**Перенесено в `step-4-settings.md`.** Генерация settings.json выполняется отдельным шагом после завершения step-4/4b/4c.
-
----
-
-## 4.7 Memory
+## 8-infra.2 Memory
 
 ### memory/facts.md
 
@@ -67,10 +50,10 @@ chmod +x .claude/scripts/verify-bootstrap.sh
 # Project Facts
 
 ## Stack
-- **Lang:** {LANGS}
-- **Framework:** {FRAMEWORK}
-- **DB:** {DB}
-- **Frontend:** {FRONTEND}
+- **Lang:** {stack.langs}
+- **Framework:** {stack.frameworks}
+- **DB:** {stack.db}
+- **Frontend:** {stack.frontend}
 
 ## Key Paths
 - Source: {SOURCE_DIR}
@@ -156,19 +139,18 @@ chmod +x .claude/scripts/verify-bootstrap.sh
 {риски}
 ```
 
+### Режим `validate` для memory-файлов
+- Если файл существует → `[OK]`, **НЕ перезаписывать** (пользователь мог добавить данные!)
+- Если файла нет → `[NEW]`, создать из шаблона
+- Исключение: `TEMPLATE.md` — перезаписывать всегда (это шаблон, не данные)
+
 ---
 
-## 4.8 Version Tracking
+## 8-infra.3 GitLab MCP
 
-**Пропустить.** Генерация `.bootstrap-version` выполняется на Шаге 5 (верификация).
+Генерируй ТОЛЬКО если `config.gitlab_mcp=true`.
 
----
-
-## 4.9 MCP-интеграции
-
-Генерируй ТОЛЬКО если `GITLAB_MCP=true`.
-
-### 4.9.1 `.mcp.json` (корень проекта)
+### .mcp.json (корень проекта)
 
 ```json
 {
@@ -178,23 +160,28 @@ chmod +x .claude/scripts/verify-bootstrap.sh
       "command": "npx",
       "args": ["-y", "@zereight/mcp-gitlab"],
       "env": {
-        "GITLAB_USERNAME": "{GITLAB_USERNAME}",
-        "GITLAB_PERSONAL_ACCESS_TOKEN": "{GITLAB_TOKEN}",
-        "GITLAB_API_URL": "{GITLAB_API_URL}",
-        "USE_PIPELINE": "{USE_PIPELINE}",
-        "USE_MILESTONE": "{USE_MILESTONE}",
-        "USE_GITLAB_WIKI": "{USE_GITLAB_WIKI}"
+        "GITLAB_USERNAME": "{config.gitlab.username}",
+        "GITLAB_PERSONAL_ACCESS_TOKEN": "{config.gitlab.token}",
+        "GITLAB_API_URL": "{config.gitlab.api_url}",
+        "USE_PIPELINE": "true",
+        "USE_MILESTONE": "true",
+        "USE_GITLAB_WIKI": "true"
       }
     }
   }
 }
 ```
 
-**Важно:** добавь `.mcp.json` в `.gitignore` проекта (содержит токен).
+**ВАЖНО:** добавь `.mcp.json` в `.gitignore` проекта (содержит токен).
 
-### 4.9.2 Агент: `agents/gitlab-manager.md`
+### agents/gitlab-manager.md
 
 ```markdown
+---
+name: "gitlab-manager"
+description: "Управление GitLab через MCP: issues, MR, pipelines, wiki, releases"
+---
+
 # Агент: GitLab Manager
 
 ## Роль
@@ -240,9 +227,16 @@ chmod +x .claude/scripts/verify-bootstrap.sh
 - При ошибке — показать причину и рекомендацию
 ```
 
-### 4.9.3 Скилл: `skills/gitlab/SKILL.md`
+### skills/gitlab/SKILL.md
 
 ```markdown
+---
+name: "gitlab"
+description: "MCP-интеграция с GitLab: маппинг операций на MCP tools"
+version: "7.2.0"
+user-invocable: false
+---
+
 # Skill: GitLab MCP — Маппинг операций
 
 ## Merge Requests
@@ -290,9 +284,10 @@ chmod +x .claude/scripts/verify-bootstrap.sh
 4. `mcp__gitlab__create_merge_request_note` → оставить комментарий
 ```
 
-### 4.9.4 Пайплайн: `pipelines/gitlab.md`
+### pipelines/gitlab.md
 
 ```markdown
+<!-- version: 7.2.0 -->
 # Pipeline: GitLab
 
 ## Фазы
@@ -313,36 +308,82 @@ chmod +x .claude/scripts/verify-bootstrap.sh
 
 ### Phase 4: REPORT
 - Summary с URL
-- Обнови state если релевантно
+- Обнови memory если релевантно
 ```
 
-### 4.9.5 Обновления в существующих файлах
-
-**settings.json** — добавить в `permissions.allow`:
-```json
-"mcp__gitlab__list_issues",
-"mcp__gitlab__get_issue",
-"mcp__gitlab__search_repositories",
-"mcp__gitlab__list_projects",
-"mcp__gitlab__list_merge_requests",
-"mcp__gitlab__get_merge_request",
-"mcp__gitlab__get_merge_request_diffs",
-"mcp__gitlab__my_issues"
-```
-
-И добавить в корень settings.json:
-```json
-"enableAllProjectMcpServers": true
-```
+### Обновления в существующих файлах
 
 **skills/pipeline/SKILL.md** — добавить в Keyword-таблицу:
 ```
 | gitlab, MR, merge request, issue, задача #N | `gitlab.md` |
 ```
 
-**CLAUDE.md шаблон** — добавить в таблицы Agents, Skills, Pipelines:
+---
+
+## Правила записи файлов
+
+### Режим `fresh`
+Записывать все файлы без проверок.
+
+### Режим `validate`
+- Хуки: валидация → `[OK]`/`[FIX]`/`[NEW]`/`[REGEN]`
+- Memory: НЕ перезаписывать существующие (данные пользователя!)
+- MCP: перегенерировать если структура изменилась
+
+### Паттерн "Write first"
+ОБЯЗАТЕЛЬНО Write файл ПЕРЕД возвратом результата. Не возвращай содержимое без записи на диск.
+
+---
+
+## Выход
+- `.bootstrap-cache/gen-report-8-infra.json`
+
+Формат отчёта:
+```json
+{
+  "step": "8-infra",
+  "hooks": [
+    {"name": "track-agent.sh", "path": ".claude/scripts/hooks/track-agent.sh", "status": "[NEW]"},
+    {"name": "maintain-memory.sh", "path": ".claude/scripts/hooks/maintain-memory.sh", "status": "[NEW]"}
+  ],
+  "memory": [
+    {"name": "facts.md", "path": ".claude/memory/facts.md", "status": "[NEW]"},
+    {"name": "patterns.md", "path": ".claude/memory/patterns.md", "status": "[NEW]"}
+  ],
+  "mcp": {"status": "configured|skipped", "files": []},
+  "errors": []
+}
 ```
-| GitLab Manager | `gitlab-manager.md` | Управление GitLab: issues, MR, pipelines |
-| GitLab | `gitlab/` | MCP-интеграция с GitLab |
-| GitLab | `gitlab.md` | Операции через GitLab MCP |
+
+## Лог
+
+**ОБЯЗАТЕЛЬНО** перед checkpoint запиши лог в `.bootstrap-cache/step-8-infra-log.md`:
+
+```markdown
+# Step 8: Генерация инфраструктуры — Log
+
+## Выполненные действия
+- {что конкретно было сделано, файлы созданные/изменённые}
+
+## Пропущенные действия
+- {что было пропущено и почему}
+
+## Ошибки
+- {ошибки если были, или "нет"}
 ```
+
+Записать лог ПЕРЕД checkpoint.
+
+## Checkpoint
+
+После завершения обнови state:
+```json
+{
+  "generation": {
+    "checkpoint": "8-infra_done",
+    "completed_files": ["...список созданных файлов..."]
+  }
+}
+```
+
+Запиши отчёт в `.bootstrap-cache/gen-report-8-infra.json`.

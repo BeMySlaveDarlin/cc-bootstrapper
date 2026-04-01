@@ -1,4 +1,4 @@
-<!-- version: 5.4.2 -->
+<!-- version: 7.2.0 -->
 # Pipeline: QA Docs
 
 ## Вход
@@ -25,22 +25,28 @@ Task(.claude/agents/qa-engineer.md, subagent_type: "general-purpose"):
 - Граничные случаи
 - Интеграционные проверки (зависимости между модулями)
 
-## Phase 3: POSTMAN
+## Phase 3: AUTOMATION
 
 Task(.claude/agents/qa-engineer.md, subagent_type: "general-purpose"):
   Вход: контракт API + чеклист
-  Выход: Postman-коллекция (JSON)
+  Выход: Postman-коллекция (JSON) + Playwright E2E stubs (опционально)
 
-### Содержание коллекции
+### Postman-коллекция
 - Папки по эндпоинтам
 - Pre-request scripts (auth, переменные)
 - Tests (assertions на status, body, headers)
 - Environment variables
 
+### Playwright E2E stubs (опционально, если есть UI)
+- Базовые сценарии: навигация, формы, CRUD-операции
+- Page Object заготовки
+- Файл: `{module}-e2e.spec.ts`
+
 ## Phase 4: SAVE
 
 1. Сохрани чеклист в `.claude/output/qa/{module}-checklist.md`
 2. Сохрани коллекцию в `.claude/output/qa/{module}-postman.json`
+3. Сохрани E2E stubs в `.claude/output/qa/{module}-e2e.spec.ts` (если сгенерированы)
 
 ### Итог
 ```
@@ -50,4 +56,5 @@ Task(.claude/agents/qa-engineer.md, subagent_type: "general-purpose"):
 Файлы:
   - .claude/output/qa/{module}-checklist.md
   - .claude/output/qa/{module}-postman.json
+  - .claude/output/qa/{module}-e2e.spec.ts (если есть UI)
 ```

@@ -3,7 +3,7 @@ name: pipeline
 description: "Роутер — классифицирует задачу и запускает нужный pipeline"
 user-invocable: true
 argument-hint: "[описание задачи]"
-version: "5.4.2"
+version: "7.2.0"
 ---
 
 > **CRITICAL: Имя директории `skills/pipeline/` и файл frontmatter КОПИРОВАТЬ AS-IS.
@@ -117,8 +117,3 @@ AskUserQuestion:
 ### Шаг 4 — Диспатч
 Прочитай `.claude/pipelines/{type}.md` и выполни ВСЕ фазы.
 
-{если ADAPTIVE_TEAMS:}
-> **Adaptive Teams:** Пайплайны new-code, review, full-feature автоматически определяют
-> режим выполнения (team/sequential) в Phase 0. Отдельная классификация НЕ нужна —
-> роутинг остаётся прежним.
-{/если}

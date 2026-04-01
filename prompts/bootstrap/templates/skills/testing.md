@@ -2,7 +2,7 @@
 name: "testing"
 description: "Паттерны тестирования, покрытие, фреймворки"
 user-invocable: false
-version: "5.4.2"
+version: "7.2.0"
 ---
 
 # Skill: Testing — {LANG}/{TEST_FRAMEWORK}
@@ -44,6 +44,16 @@ version: "5.4.2"
 ```
 {TEST_DIR_STRUCTURE}
 ```
+
+## E2E Testing (условная секция, если FRONTEND != none)
+
+- Фреймворк: {E2E_FRAMEWORK} (Playwright/Cypress/...)
+- Команда запуска: `{E2E_RUN_CMD}`
+- Паттерны:
+  - Page Objects для переиспользуемых компонентов
+  - Data-testid для стабильных селекторов
+  - Скриншоты ключевых состояний
+  - Smoke-тест: приложение стартует, базовый flow работает
 
 ## Антипаттерны
 

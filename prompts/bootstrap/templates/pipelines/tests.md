@@ -1,4 +1,4 @@
-<!-- version: 5.4.2 -->
+<!-- version: 7.2.0 -->
 # Pipeline: Tests
 
 ## Вход
@@ -29,10 +29,14 @@ AskUserQuestion:
     - {label: "Уточнить", description: "Скорректировать план"}
     - {label: "Отменить", description: "Не генерировать"}
 
-## Phase 2: GENERATE
+## Phase 2: GENERATE (per-lang ПАРАЛЛЕЛЬНО)
+
+Если затронуто несколько языков — запусти per-lang ПАРАЛЛЕЛЬНО.
+
+Для КАЖДОГО затронутого `{lang}`:
 
 Task(.claude/agents/{lang}-test-developer.md, subagent_type: "general-purpose"):
-  Вход: прочитай `.claude/output/plans/{task-slug}.md` + целевые файлы + `.claude/skills/testing/SKILL.md`
+  Вход: прочитай `.claude/output/plans/{task-slug}.md` + целевые файлы {lang} + `.claude/skills/testing/SKILL.md`
   Выход: файлы тестов
   Верни: summary (файлы тестов, количество кейсов)
 
@@ -50,7 +54,7 @@ Task(.claude/agents/{lang}-test-developer.md, subagent_type: "general-purpose"):
 
 ## Phase 4: REVIEW
 
-Task(.claude/agents/{lang}-reviewer-logic.md, subagent_type: "general-purpose"):
+Task(.claude/agents/{lang}-reviewer.md, subagent_type: "general-purpose"):
   Вход: файлы тестов (git diff)
   Выход: запиши в `.claude/output/reviews/{task-slug}-tests.md`
   Верни: summary (verdict, качество тестов)

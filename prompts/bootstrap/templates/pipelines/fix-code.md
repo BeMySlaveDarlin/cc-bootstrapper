@@ -1,4 +1,4 @@
-<!-- version: 5.4.2 -->
+<!-- version: 7.2.0 -->
 # Pipeline: Fix Code
 
 ## Вход
@@ -13,24 +13,26 @@
 3. Локализуй проблему: файл, строка, причина
 4. Определи root cause
 5. Проверь `.claude/memory/decisions/` на релевантные ограничения
-6. Запиши диагностику в `.claude/output/plans/{task-slug}.md`
+6. **ОБЯЗАТЕЛЬНО** запиши диагностику в `.claude/output/plans/{task-slug}.md` через Write tool ПЕРЕД возвратом
 
-### Вывод диагностики
-```
-[DIAGNOSIS]
-Файл: {path}
-Root cause: {описание}
-Затронутые модули: {список}
-```
-
-Покажи диагностику пользователю.
+**После субагента** — прочитай `.claude/output/plans/{task-slug}.md` и покажи пользователю.
 
 AskUserQuestion:
-  question: "План исправления:"
+  question: "Диагностика готова. Подтвердить план исправления?"
   options:
     - {label: "Подтвердить", description: "Приступить к исправлению"}
-    - {label: "Уточнить", description: "Скорректировать план"}
+    - {label: "Уточнить", description: "Скорректировать диагностику"}
     - {label: "Отменить", description: "Не исправлять"}
+
+→ "Уточнить":
+  AskUserQuestion:
+    question: "Что скорректировать?"
+    header: "Поправки"
+    options:
+      - {label: "Root cause", description: "Другая причина проблемы"}
+      - {label: "Scope", description: "Другие затронутые модули"}
+      - {label: "Подход", description: "Другой способ исправления"}
+  Перезапусти диагностику с поправками. Повтори AskUserQuestion.
 
 ## Phase 2: FIX
 
@@ -56,11 +58,13 @@ Task(.claude/agents/{lang}-test-developer.md, subagent_type: "general-purpose"):
 
 Если тесты fail — исправить (максимум 2 итерации).
 
-## Phase 4: REVIEW
+## Phase 4: REVIEW (per-lang ПАРАЛЛЕЛЬНО если затронуто несколько языков)
 
-Task(.claude/agents/{lang}-reviewer-logic.md, subagent_type: "general-purpose"):
-  Вход: все изменённые файлы (git diff)
-  Выход: запиши в `.claude/output/reviews/{task-slug}-logic.md`
+Для КАЖДОГО затронутого `{lang}`:
+
+Task(.claude/agents/{lang}-reviewer.md, subagent_type: "general-purpose"):
+  Вход: изменённые файлы {lang} (git diff)
+  Выход: запиши в `.claude/output/reviews/{task-slug}-{lang}.md`
   Верни: summary (verdict, замечания по severity)
 
 ### Обработка результатов

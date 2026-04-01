@@ -98,6 +98,31 @@ done
 [ -d "$PROJECT_DIR/.claude/memory/decisions" ] && echo "[OK] memory/decisions/" || echo "[MISS] memory/decisions/"
 
 echo ""
+echo "=== Checking state file ==="
+if [ -f "$PROJECT_DIR/.bootstrap-cache/state.json" ]; then
+    echo "[WARN] .bootstrap-cache/state.json exists (incomplete bootstrap?)"
+else
+    echo "[OK] No stale state file"
+fi
+if [ -d "$PROJECT_DIR/.bootstrap-cache" ]; then
+    echo "[WARN] .bootstrap-cache/ exists (incomplete bootstrap?)"
+else
+    echo "[OK] No stale cache"
+fi
+
+echo ""
+echo "=== Checking deprecated files ==="
+for f in "$PROJECT_DIR"/.claude/agents/frontend-developer.md "$PROJECT_DIR"/.claude/agents/frontend-reviewer.md "$PROJECT_DIR"/.claude/agents/frontend-test-developer.md; do
+    [ -f "$f" ] && echo "[WARN] Deprecated: $(basename "$f") — covered by {js/ts}-* agents"
+done
+for f in "$PROJECT_DIR"/.claude/agents/*-reviewer-logic.md "$PROJECT_DIR"/.claude/agents/*-reviewer-security.md; do
+    [ -f "$f" ] && echo "[WARN] Deprecated: $(basename "$f") — merged into {lang}-reviewer"
+done
+[ -f "$PROJECT_DIR/.claude/agents/db-architect.md" ] && echo "[WARN] Deprecated: db-architect.md — renamed to storage-architect.md"
+[ -d "$PROJECT_DIR/.claude/skills/routing" ] && echo "[WARN] Deprecated: skills/routing/ — renamed to skills/pipeline/"
+[ -d "$PROJECT_DIR/.claude/skills/database" ] && echo "[WARN] Deprecated: skills/database/ — renamed to skills/storage/"
+
+echo ""
 echo "=== Summary ==="
 echo "Agents: $(ls -1 "$PROJECT_DIR"/.claude/agents/*.md 2>/dev/null | wc -l)"
 echo "Skills: $(ls -1d "$PROJECT_DIR"/.claude/skills/*/SKILL.md 2>/dev/null | wc -l)"
