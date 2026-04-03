@@ -1,7 +1,7 @@
 ---
 name: "new-code"
 description: "Полный цикл создания нового кода"
-version: "8.0.0"
+version: "8.0.1"
 phases: 7
 capture: "full"
 user_prompts: true

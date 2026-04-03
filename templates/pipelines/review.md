@@ -1,7 +1,7 @@
 ---
 name: "review"
 description: "Ревью кода"
-version: "8.0.0"
+version: "8.0.1"
 phases: 3
 capture: "review"
 user_prompts: false

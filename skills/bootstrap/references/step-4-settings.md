@@ -31,6 +31,26 @@
       "Write",
       "Edit",
       "Bash(git status:*)"
+    ],
+    "deny": [
+      "Read(**/node_modules/**/SKILL.md)",
+      "Read(**/node_modules/**/CLAUDE.md)",
+      "Read(**/node_modules/**/AGENTS.md)",
+      "Read(**/node_modules/**/.cursorrules)",
+      "Read(**/vendor/**/SKILL.md)",
+      "Read(**/vendor/**/CLAUDE.md)",
+      "Read(**/site-packages/**/SKILL.md)",
+      "Read(**/site-packages/**/CLAUDE.md)",
+      "Glob(**/node_modules/**/SKILL.md)",
+      "Glob(**/node_modules/**/CLAUDE.md)",
+      "Bash(*npm install -g*)",
+      "Bash(*npm i -g*)",
+      "Bash(*yarn global add*)",
+      "Bash(*pnpm add -g*)",
+      "Bash(*curl*|*bash*)",
+      "Bash(*curl*|*sh*)",
+      "Bash(*wget*|*bash*)",
+      "Bash(*wget*|*sh*)"
     ]
   }
 }
@@ -122,7 +142,40 @@
 
 ---
 
-## 4.2 Hooks
+## 4.2 Deny rules (всегда, независимо от стека)
+
+Защита от prompt injection через supply chain (node_modules, vendor, site-packages).
+
+```json
+"deny": [
+  "Read(**/node_modules/**/SKILL.md)",
+  "Read(**/node_modules/**/CLAUDE.md)",
+  "Read(**/node_modules/**/AGENTS.md)",
+  "Read(**/node_modules/**/.cursorrules)",
+  "Read(**/vendor/**/SKILL.md)",
+  "Read(**/vendor/**/CLAUDE.md)",
+  "Read(**/site-packages/**/SKILL.md)",
+  "Read(**/site-packages/**/CLAUDE.md)",
+  "Glob(**/node_modules/**/SKILL.md)",
+  "Glob(**/node_modules/**/CLAUDE.md)",
+  "Bash(*npm install -g*)",
+  "Bash(*npm i -g*)",
+  "Bash(*yarn global add*)",
+  "Bash(*pnpm add -g*)",
+  "Bash(*curl*|*bash*)",
+  "Bash(*curl*|*sh*)",
+  "Bash(*wget*|*bash*)",
+  "Bash(*wget*|*sh*)"
+]
+```
+
+Генерировать **ВСЕГДА**, даже для non-Node проектов (vendor, site-packages покрывают PHP/Python).
+
+В validate mode: если deny отсутствует → `[+ADD]`. Если есть кастомные deny-правила пользователя → `[USER]`, сохранить.
+
+---
+
+## 4.3 Hooks
 
 Базовые hooks (всегда):
 - `track-agent.sh` → PostToolUse, matcher: "Task"
@@ -130,6 +183,21 @@
 
 Если `stack.db` != none (реальная БД, не кэш/очередь):
 - `update-schema.sh` → SessionStart
+
+### Deprecated hooks (удалять автоматически в validate mode)
+
+Если в текущем `settings.json` найдены — удалить БЕЗ подтверждения пользователя:
+
+| Hook | Event | Причина удаления |
+|------|-------|-----------------|
+| `session-summary.sh` | Stop | Удалён в v5.2 — генерировал неиспользуемые отчёты |
+| `git-context.sh` | SessionStart | Удалён в v5.2 — Claude Code имеет нативный доступ к git |
+
+Также удалить:
+- Весь блок `"Stop"` из hooks, если содержит только deprecated хуки
+- Ссылки на несуществующие скрипты (проверить `[ -f "$CLAUDE_PROJECT_DIR/.claude/scripts/hooks/{name}.sh" ]`)
+
+Лог: `[DEL] hooks.Stop.session-summary.sh (deprecated since v5.2)`
 
 ---
 

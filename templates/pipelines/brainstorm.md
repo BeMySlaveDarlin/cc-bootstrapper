@@ -1,7 +1,7 @@
 ---
 name: "brainstorm"
 description: "Мозговой штурм: анализ идеи с нескольких ракурсов"
-version: "8.0.0"
+version: "8.0.1"
 phases: 4
 capture: "partial"
 user_prompts: true

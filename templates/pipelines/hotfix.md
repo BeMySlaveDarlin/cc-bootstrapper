@@ -1,7 +1,7 @@
 ---
 name: "hotfix"
 description: "Срочное исправление критичной проблемы"
-version: "8.0.0"
+version: "8.0.1"
 phases: 4
 capture: "partial"
 user_prompts: false

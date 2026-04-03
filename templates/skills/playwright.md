@@ -1,7 +1,7 @@
 ---
 name: "playwright"
 description: "E2E тестирование и браузерная автоматизация через Playwright MCP"
-version: "8.0.0"
+version: "8.0.1"
 user-invocable: false
 condition: "plugins.playwright"
 ---

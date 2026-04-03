@@ -86,7 +86,7 @@ for f in .claude/agents/*.md .claude/skills/*/SKILL.md .claude/pipelines/*.md .c
 done
 
 jq -n \
-    --arg version "8.0.0" \
+    --arg version "8.0.1" \
     --arg generated "$(date -u +%Y-%m-%dT%H:%M:%SZ)" \
     --argjson hashes "$HASHES" \
     '{

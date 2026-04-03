@@ -3,7 +3,7 @@ name: "p"
 description: "Алиас для /pipeline"
 user-invocable: true
 argument-hint: "[описание задачи]"
-version: "8.0.0"
+version: "8.0.1"
 ---
 
 > **CRITICAL: Имя директории `skills/p/` КОПИРОВАТЬ AS-IS.**

@@ -1,7 +1,7 @@
 ---
 name: "fix-code"
 description: "Диагностика и исправление бага"
-version: "8.0.0"
+version: "8.0.1"
 phases: 5
 capture: "partial"
 user_prompts: true

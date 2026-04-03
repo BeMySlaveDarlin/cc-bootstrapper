@@ -5,6 +5,15 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [8.0.1] - 2026-04-04
+
+### Added
+- **Deny rules** in settings.json — blocks reading AI instruction files (SKILL.md, CLAUDE.md, AGENTS.md, .cursorrules) from dependency directories (node_modules, vendor, site-packages). Blocks global package installs (`npm i -g`, `yarn global add`) and pipe-to-shell (`curl|bash`, `wget|sh`). Generated always, regardless of stack.
+
+### Changed
+- step-4-settings.md: new section 4.2 Deny Rules with full deny list template
+- Validate mode: missing deny rules → `[+ADD]`, user deny rules → `[USER]` preserved
+
 ## [8.0.0] - 2026-04-03
 
 ### Breaking Changes

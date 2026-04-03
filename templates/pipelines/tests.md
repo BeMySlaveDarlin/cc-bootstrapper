@@ -1,7 +1,7 @@
 ---
 name: "tests"
 description: "Генерация тестов для существующего кода"
-version: "8.0.0"
+version: "8.0.1"
 phases: 4
 capture: "none"
 user_prompts: true
