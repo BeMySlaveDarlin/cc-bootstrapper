@@ -4,7 +4,7 @@
 - `.bootstrap-cache/state.json` (из step 1)
 
 ## Выход
-- `state.mode`: fresh | resume | validate
+- `state.mode`: empty | fresh | resume | validate
 - Информация о предыдущем bootstrap (если есть)
 - Список deprecated файлов для миграции (если validate)
 
@@ -14,16 +14,70 @@
 1. Директория `.claude/`
 2. Файл `.claude/.bootstrap-version` (предыдущий bootstrap)
 3. Файл `.bootstrap-cache/state.json` с `current_step > 1` (незавершённый bootstrap)
+4. **Стек проекта**: `state.stack.langs` из step-1
 
 ## 2.2 Определение режима
 
 ```
+state.stack.langs пустой И нет манифестов  → empty
 Нет .claude/                                → fresh
 Есть .bootstrap-cache/state.json (current_step>1) → resume
   + steps[N].status = "in_progress"         → resume с step N
 Есть .claude/ + .bootstrap-version          → validate
 Есть .claude/ без .bootstrap-version        → validate (legacy)
 ```
+
+### Режим `empty`
+
+Проект пустой — нет исходного кода, нет манифестов, стек не определён.
+
+1. Создай минимальную структуру:
+```bash
+mkdir -p .claude/input/tasks .claude/input/plans .claude/memory
+```
+
+2. Запиши шаблон спецификации `.claude/input/plans/project-spec.md`:
+```markdown
+# Спецификация проекта
+
+## Название
+{название проекта}
+
+## Описание
+{что делает проект, 2-3 предложения}
+
+## Стек
+- **Язык:** {php / typescript / python / go / ...}
+- **Фреймворк:** {laravel / nestjs / fastapi / gin / ...}
+- **БД:** {postgres / mysql / mongo / none}
+- **Frontend:** {react / vue / none}
+- **Контейнеры:** {docker / none}
+
+## Модули
+- {модуль 1 — описание}
+- {модуль 2 — описание}
+
+## API
+- {endpoint 1}
+- {endpoint 2}
+
+## Ограничения и требования
+- {требование 1}
+- {требование 2}
+```
+
+3. Покажи пользователю:
+
+```
+[EMPTY PROJECT]
+Проект пустой — нет исходного кода и манифестов.
+Создан шаблон спецификации: .claude/input/plans/project-spec.md
+
+Заполни спецификацию и запусти /cc-bootstrapper:bootstrap повторно.
+Bootstrap подхватит стек из спецификации.
+```
+
+4. Установи `state.mode = "empty"`. Переходи к checkpoint. **BOOTSTRAP ЗАВЕРШАЕТСЯ ЗДЕСЬ.**
 
 ### Режим `fresh`
 
@@ -59,7 +113,7 @@ Bootstrap прервался на шаге {N}: {название_шага}.
 
 ```
 Обнаружен предыдущий bootstrap v{version}.
-Режим: валидация + обновление до v7.3.1.
+Режим: валидация + обновление до v8.0.0.
 ```
 
 Установи `state.mode = "validate"`.

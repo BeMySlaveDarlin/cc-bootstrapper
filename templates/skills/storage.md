@@ -2,7 +2,7 @@
 name: "storage"
 description: "Паттерны работы с хранилищами данных: БД, кэш, очереди, object storage"
 user-invocable: false
-version: "7.3.1"
+version: "8.0.0"
 ---
 
 # Skill: Storage — {PROJECT_NAME}
@@ -68,8 +68,4 @@ version: "7.3.1"
 
 ## Антипаттерны
 
-{STORAGE_ANTIPATTERNS — адаптируй:
-- DB: N+1, SELECT *, отсутствие индексов, nullable без причины
-- Cache: cache stampede, missing TTL, кэш без инвалидации
-- Queue: poison messages, no dead letter, no idempotency
-- Object Storage: public buckets, no lifecycle rules}
+{STORAGE_ANTIPATTERNS}

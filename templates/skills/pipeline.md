@@ -1,9 +1,9 @@
 ---
-name: pipeline
+name: "pipeline"
 description: "Роутер — классифицирует задачу и запускает нужный pipeline"
 user-invocable: true
 argument-hint: "[описание задачи]"
-version: "7.3.1"
+version: "8.0.0"
 ---
 
 > **CRITICAL: Имя директории `skills/pipeline/` и файл frontmatter КОПИРОВАТЬ AS-IS.
@@ -38,6 +38,7 @@ version: "7.3.1"
 | **QA-DOCS** | чеклист, QA, postman |
 | **FULL-FEATURE** | полный цикл, feature, от начала до конца |
 | **HOTFIX** | срочно, hotfix, prod |
+| **BRAINSTORM** | обсудим, идея, brainstorm, брейншторм, побрейнштормим, как лучше, варианты, подход, продумать, предложи |
 | **FREE** | вопрос, обсуждение, объясни, помоги |
 {CUSTOM_PIPELINE_KEYWORDS}
 
@@ -56,6 +57,7 @@ AskUserQuestion:
     - {label: "hotfix", description: "Срочное исправление"}
     - {label: "api-docs", description: "API-контракты"}
     - {label: "qa-docs", description: "QA-чеклисты, Postman"}
+    - {label: "brainstorm", description: "Мозговой штурм, анализ вариантов"}
     {CUSTOM_PIPELINE_OPTIONS}
 
 ### Шаг 3 — Подтверждение

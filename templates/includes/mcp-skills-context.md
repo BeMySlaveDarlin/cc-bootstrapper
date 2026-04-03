@@ -1,0 +1,3 @@
+- `.claude/skills/gitlab/SKILL.md` — MCP-операции GitLab (если есть)
+- `.claude/skills/github/SKILL.md` — GitHub CLI операции (если есть)
+- `.claude/skills/playwright/SKILL.md` — Playwright MCP tools (если есть)

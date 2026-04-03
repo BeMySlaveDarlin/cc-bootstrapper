@@ -58,11 +58,11 @@ for f in "$ROOT_DIR"/templates/skills/*.md; do
   update_file "$f"
 done
 
-# 4. Pipeline templates (HTML comment: <!-- version: X.Y.Z -->)
+# 4. Pipeline templates (YAML frontmatter: version: "X.Y.Z")
 for f in "$ROOT_DIR"/templates/pipelines/*.md; do
   [[ -f "$f" ]] || continue
   if [[ "$DRY_RUN" != "--dry-run" ]]; then
-    sed -i "s/<!-- version: [0-9]*\.[0-9]*\.[0-9]* -->/<!-- version: $NEW_VERSION -->/" "$f"
+    sed -i "s/^version: \"[0-9]*\.[0-9]*\.[0-9]*\"/version: \"$NEW_VERSION\"/" "$f"
   fi
   update_file "$f"
 done
@@ -85,7 +85,7 @@ echo "=== Verification ==="
 echo -n "plugin.json: "; jq -r '.version' "$ROOT_DIR/.claude-plugin/plugin.json"
 echo -n "marketplace: "; jq -r '.plugins[0].version' "$ROOT_DIR/.claude-plugin/marketplace.json"
 echo -n "skill sample: "; grep -m1 'version:' "$ROOT_DIR/templates/skills/pipeline.md" 2>/dev/null || echo "n/a"
-echo -n "pipeline sample: "; head -1 "$ROOT_DIR/templates/pipelines/new-code.md" 2>/dev/null || echo "n/a"
+echo -n "pipeline sample: "; grep -m1 'version:' "$ROOT_DIR/templates/pipelines/new-code.md" 2>/dev/null || echo "n/a"
 echo ""
 echo "Done. Version bumped to $NEW_VERSION"
 [[ "$DRY_RUN" == "--dry-run" ]] && echo "(dry-run, no files changed)" || true

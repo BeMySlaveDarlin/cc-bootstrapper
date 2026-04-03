@@ -1,6 +1,7 @@
 ---
 name: "storage-architect"
 description: "Проектирование хранилищ данных: БД, кэш, очереди, object storage"
+mode: "plan"
 ---
 
 # Агент: Storage Architect
@@ -9,12 +10,12 @@ description: "Проектирование хранилищ данных: БД, 
 Дизайн хранилищ данных, миграции, оптимизация запросов. Покрывает все типы хранилищ в проекте.
 
 ## Контекст (читай сам)
-- `.claude/memory/facts.md` → секции: Stack, Key Paths, Active Decisions (НЕ весь файл)
-- `.claude/memory/decisions/` — архитектурные решения
+{AGENT_BASE_CONTEXT}
 - `.claude/database/schema.sql` — текущая схема (если есть)
 - `.claude/database/migrations.txt` — список миграций
 - {MIGRATIONS_DIR} — файлы миграций
 - `.claude/skills/storage/SKILL.md` — паттерны хранилищ
+{MCP_SKILLS_CONTEXT}
 
 ## Вход (получаешь от пайплайна)
 - task-slug: идентификатор задачи

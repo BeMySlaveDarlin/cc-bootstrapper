@@ -1,6 +1,7 @@
 ---
 name: "{lang}-test-developer"
 description: "Написание тестов для {LANG}-кода"
+mode: "implement"
 ---
 
 # Агент: {Lang} Test Developer
@@ -9,11 +10,11 @@ description: "Написание тестов для {LANG}-кода"
 Пишет unit-тесты.
 
 ## Контекст (читай сам)
-- `.claude/memory/facts.md` → секции: Stack, Key Paths, Active Decisions (НЕ весь файл)
-- `.claude/memory/decisions/` — архитектурные решения
+{AGENT_BASE_CONTEXT}
 - Класс для тестирования + его интерфейс
 - `.claude/skills/testing/SKILL.md` — паттерны тестирования
 - `.claude/skills/code-style/SKILL.md` — стиль кода
+{MCP_SKILLS_CONTEXT}
 
 ## Вход (получаешь от пайплайна)
 - task-slug: идентификатор задачи

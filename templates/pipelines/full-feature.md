@@ -1,4 +1,23 @@
-<!-- version: 7.3.1 -->
+---
+name: "full-feature"
+description: "Полный цикл фичи: код + API docs + QA docs"
+version: "8.0.0"
+phases: 5
+capture: "full"
+user_prompts: false
+parallel_per_lang: false
+error_matrix: true
+chains: ["new-code", "api-docs", "qa-docs"]
+triggers:
+  - полный цикл
+  - feature
+  - от начала до конца
+error_routing:
+  new_code_fail: stop_and_report
+  api_docs_fail: skip_and_continue
+  qa_docs_fail: skip_and_continue
+---
+
 # Pipeline: Full Feature
 
 ## Вход
@@ -24,14 +43,7 @@
 
 ## Phase 4: CAPTURE
 
-1. Обнови `.claude/memory/facts.md` по секциям:
-   - "## Stack" → ЗАМЕНИТЬ секцию целиком (только если стек изменился)
-   - "## Key Paths" → МЕРЖИТЬ: добавь новые, удали несуществующие пути
-   - "## Active Decisions" → ЗАМЕНИТЬ: только ссылки на файлы из decisions/ (НЕ archive)
-   - "## Known Issues" → максимум 10 записей, удали разрешённые
-   ПРАВИЛО: перед добавлением проверь — НЕ ДУБЛИРУЙ существующие записи
-2. Запиши решение в `.claude/memory/decisions/{date}-{slug}.md`
-3. Обнови `.claude/memory/patterns.md`
+{CAPTURE:full}
 
 ## Phase 5: FINALIZATION
 
@@ -43,3 +55,12 @@
 API Docs: {status}
 QA Docs: {status}
 ```
+
+## Матрица ошибок
+
+| Фаза | Ошибка | Действие |
+|------|--------|----------|
+| NEW CODE | Pipeline new-code завершился с ошибкой | Остановить, показать ошибки пользователю |
+| API DOCS | Генерация провалилась | Пропустить, продолжить (non-critical) |
+| QA DOCS | Генерация провалилась | Пропустить, продолжить (non-critical) |
+| CAPTURE | Запись в memory не удалась | Предупредить, продолжить |

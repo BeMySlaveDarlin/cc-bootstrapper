@@ -1,4 +1,22 @@
-<!-- version: 7.3.1 -->
+---
+name: "hotfix"
+description: "Срочное исправление критичной проблемы"
+version: "8.0.0"
+phases: 4
+capture: "partial"
+user_prompts: false
+parallel_per_lang: false
+error_matrix: true
+chains: ["fix-code", "review"]
+triggers:
+  - срочно
+  - hotfix
+  - prod
+error_routing:
+  fix_fail: stop_and_report
+  review_block: retry_from:1
+---
+
 # Pipeline: Hotfix
 
 ## Вход
@@ -18,12 +36,7 @@
 
 ## Phase 3: CAPTURE
 
-1. Обнови `.claude/memory/facts.md` по секциям:
-   - "## Key Paths" → МЕРЖИТЬ: добавь новые, удали несуществующие пути
-   - "## Known Issues" → максимум 10 записей, удали разрешённые
-   ПРАВИЛО: перед добавлением проверь — НЕ ДУБЛИРУЙ существующие записи
-2. Добавь в `.claude/memory/issues.md`
-3. Обнови `.claude/memory/patterns.md` если выявлен антипаттерн
+{CAPTURE:partial}
 
 ## Phase 4: FINALIZATION
 
@@ -36,3 +49,11 @@ Root cause: {причина}
 Regression test: {pass/fail}
 Review: {verdict}
 ```
+
+## Матрица ошибок
+
+| Фаза | Ошибка | Действие |
+|------|--------|----------|
+| FIX | Pipeline fix-code завершился с ошибкой | Остановить, показать ошибки пользователю |
+| REVIEW | BLOCK | Вернуться к Phase 1 для исправления |
+| CAPTURE | Запись в memory не удалась | Предупредить, продолжить |

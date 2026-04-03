@@ -78,7 +78,7 @@
 | **Тесты backend** | PHPUnit, Jest, pytest, go test, cargo test, NUnit, JUnit, RSpec |
 | **Тесты frontend** | Jest, Vitest, Cypress, Playwright, Karma/Jasmine |
 | **Инфра** | Docker/docker-compose, Makefile, CI (GitHub Actions, GitLab CI) |
-| **Git hosting** | `.gitlab-ci.yml` → GitLab; `.github/workflows/` → GitHub; `git remote -v` → по URL |
+| **Git hosting** | **ОБЯЗАТЕЛЬНО** выполни `git remote -v`: URL содержит `gitlab` → gitlab, `github.com` → github. Fallback: `.gitlab-ci.yml` → gitlab; `.github/workflows/` → github. Без remote и CI файлов → none |
 | **API стиль** | REST, GraphQL, gRPC |
 | **Auth** | JWT, Session, OAuth, API keys |
 | **Package managers** | composer, npm, yarn, pnpm, pip, cargo, go, maven, gradle, bundler |
@@ -103,7 +103,7 @@
   },
   "container": "docker",
   "pkg_managers": ["composer", "npm"],
-  "git_hosting": "github",
+  "git_hosting": "определи по git remote -v: gitlab.* → gitlab, github.com → github, иначе → none",
   "api_style": "rest",
   "auth": "jwt"
 }

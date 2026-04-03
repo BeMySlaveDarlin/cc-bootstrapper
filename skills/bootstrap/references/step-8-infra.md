@@ -174,141 +174,86 @@ bash -n .claude/scripts/verify-bootstrap.sh
 
 **ВАЖНО:** добавь `.mcp.json` в `.gitignore` проекта (содержит токен).
 
-### agents/gitlab-manager.md
+### MCP-скиллы (условные)
 
-```markdown
----
-name: "gitlab-manager"
-description: "Управление GitLab через MCP: issues, MR, pipelines, wiki, releases"
----
+Генерируются из шаблонов в `templates/skills/`. Каждый шаблон имеет поле `condition` в frontmatter — генератор проверяет условие и включает скилл только если оно выполнено.
 
-# Агент: GitLab Manager
+| Шаблон | Выходной файл | Условие |
+|--------|---------------|---------|
+| `templates/skills/gitlab.md` | `.claude/skills/gitlab/SKILL.md` | `config.gitlab_mcp = true` |
+| `templates/skills/github.md` | `.claude/skills/github/SKILL.md` | `config.github_mcp = true` |
+| `templates/skills/playwright.md` | `.claude/skills/playwright/SKILL.md` | playwright в `auto.plugins_already_installed[]` ИЛИ `mcp__plugin_playwright_playwright__*` в permissions |
 
-## Роль
-Управление GitLab через MCP: issues, merge requests, pipelines, wiki, releases.
+Проверка условий:
+- `config.gitlab_mcp` / `config.github_mcp` — из `state.json → config`
+- playwright — проверь `state.json → auto.plugins_already_installed[]` содержит `"playwright"` ИЛИ `state.json → config.permissions[]` содержит `mcp__plugin_playwright_playwright__*`. Если любое из двух true → генерировать скилл
 
-## Контекст
-- `.claude/memory/facts.md` — текущие факты проекта (ЧИТАЙ ПЕРВЫМ)
-- `.claude/skills/gitlab/SKILL.md` — маппинг операций → MCP tools
-- `.mcp.json` — конфигурация MCP-сервера
-
-## Распознавание операций
-
-| Паттерн в запросе | Операция | MCP Tool |
-|-------------------|----------|----------|
-| #N, задача N, issue N | Получить issue | mcp__gitlab__get_issue |
-| MR #N, merge request N | Получить MR | mcp__gitlab__get_merge_request |
-| создай задачу, new issue | Создать issue | mcp__gitlab__create_issue |
-| создай MR, merge request из X в Y | Создать MR | mcp__gitlab__create_merge_request |
-| мои задачи, my issues | Список issues | mcp__gitlab__list_issues |
-| одобри MR, approve | Approve MR | mcp__gitlab__approve_merge_request |
-| pipeline, CI/CD | Pipeline ops | mcp__gitlab__list_pipelines |
-
-## Порядок работы
-
-1. Распознай тип операции по запросу
-2. Определи параметры (projectId, IID)
-3. Выполни MCP-tool
-4. Проверь HTTP-статус (200-299: OK, 400+: ошибка)
-5. Верни структурированный отчёт с URL
-
-## Обработка ошибок
-
-| Код | Причина | Действие |
-|-----|---------|----------|
-| 401 | Невалидный токен | Проверить GITLAB_PERSONAL_ACCESS_TOKEN в .mcp.json |
-| 403 | Недостаточно прав | Проверить permissions пользователя |
-| 404 | Неверный projectId/IID | Проверить параметры |
-| 409 | Конфликт | MR уже существует или branch conflict |
-
-## Правила
-- Деструктивные операции (delete, merge) — требуют подтверждения пользователя
-- Не логировать токен
-- При ошибке — показать причину и рекомендацию
-```
+Скиллы подключаются к существующим агентам через `## Контекст`:
+- `devops` → читает gitlab/github скилл для CI/CD операций
+- `qa-engineer` → читает playwright скилл для E2E
+- `{lang}-developer` → читает github скилл для PR workflow
+- Любой агент может использовать скилл по необходимости
 
 ### skills/gitlab/SKILL.md
 
-```markdown
----
-name: "gitlab"
-description: "MCP-интеграция с GitLab: маппинг операций на MCP tools"
-version: "7.3.1"
-user-invocable: false
----
-
-# Skill: GitLab MCP — Маппинг операций
-
-## Merge Requests
-| Операция | Tool | Обязательные параметры |
-|----------|------|----------------------|
-| Создать MR | mcp__gitlab__create_merge_request | projectId, sourceBranch, targetBranch, title |
-| Получить MR | mcp__gitlab__get_merge_request | projectId, mergeRequestIid |
-| Список MR | mcp__gitlab__list_merge_requests | projectId |
-| Approve MR | mcp__gitlab__approve_merge_request | projectId, mergeRequestIid |
-| Merge MR | mcp__gitlab__merge_merge_request | projectId, mergeRequestIid |
-| Diff MR | mcp__gitlab__get_merge_request_diffs | projectId, mergeRequestIid |
-
-## Issues
-| Операция | Tool | Обязательные параметры |
-|----------|------|----------------------|
-| Создать issue | mcp__gitlab__create_issue | projectId, title |
-| Получить issue | mcp__gitlab__get_issue | projectId, issueIid |
-| Список issues | mcp__gitlab__list_issues | projectId |
-| Мои issues | mcp__gitlab__list_issues | scope=assigned_to_me |
-
-## Pipelines
-| Операция | Tool | Обязательные параметры |
-|----------|------|----------------------|
-| Список | mcp__gitlab__list_pipelines | projectId |
-| Retry | mcp__gitlab__retry_pipeline | projectId, pipelineId |
-| Cancel | mcp__gitlab__cancel_pipeline | projectId, pipelineId |
-
-## Wiki
-| Операция | Tool | Обязательные параметры |
-|----------|------|----------------------|
-| Список страниц | mcp__gitlab__list_wiki_pages | projectId |
-| Получить страницу | mcp__gitlab__get_wiki_page | projectId, slug |
-| Создать страницу | mcp__gitlab__create_wiki_page | projectId, title, content |
-
-## Типовые сценарии
-
-### Создание MR
-1. `mcp__gitlab__create_merge_request` (projectId, sourceBranch, targetBranch, title, description)
-2. Проверить ответ → вернуть URL
-
-### Ревью MR
-1. `mcp__gitlab__get_merge_request` → получить метаданные
-2. `mcp__gitlab__get_merge_request_diffs` → получить diff
-3. Анализ кода
-4. `mcp__gitlab__create_merge_request_note` → оставить комментарий
-```
+Генерируется из шаблона `templates/skills/gitlab.md` → `.claude/skills/gitlab/SKILL.md`.
 
 ### pipelines/gitlab.md
 
 ```markdown
-<!-- version: 7.3.1 -->
+---
+name: "gitlab"
+description: "Операции с GitLab через MCP"
+version: "8.0.0"
+phases: 4
+capture: "none"
+user_prompts: false
+parallel_per_lang: false
+error_matrix: true
+chains: []
+triggers:
+  - gitlab
+  - MR
+  - merge request
+  - issue
+  - "задача #"
+error_routing:
+  auth_fail: stop_and_report
+  not_found: stop_and_report
+  execute_fail: retry_current
+---
+
 # Pipeline: GitLab
 
-## Фазы
-
-### Phase 1: ANALYZE
+## Phase 1: ANALYZE
 1. Определи тип операции из запроса
 2. Собери параметры (projectId, IID, branch, etc.)
 3. Покажи план пользователю
 
-### Phase 2: EXECUTE
-**Агент:** Task(`gitlab-manager`)
-1. Выполни MCP-tool
-2. Проверь HTTP-статус
+## Phase 2: EXECUTE
 
-### Phase 3: VERIFY (для критичных операций)
+Task(.claude/agents/gitlab-manager.md, subagent_type: "general-purpose"):
+  Вход: параметры операции + `.claude/skills/gitlab/SKILL.md`
+  Выход: результат MCP-вызова
+  Ограничение: read-only
+  Верни: summary (операция, статус, URL)
+
+## Phase 3: VERIFY (для критичных операций)
 Только для: merge MR, delete issue, create release
 - Повторно запроси объект для подтверждения статуса
 
-### Phase 4: REPORT
+## Phase 4: REPORT
 - Summary с URL
 - Обнови memory если релевантно
+
+## Матрица ошибок
+
+| Фаза | Ошибка | Действие |
+|------|--------|----------|
+| EXECUTE | 401 Unauthorized | Проверить токен в .mcp.json |
+| EXECUTE | 403 Forbidden | Проверить permissions |
+| EXECUTE | 404 Not Found | Проверить projectId/IID |
+| EXECUTE | 409 Conflict | Сообщить пользователю (MR уже существует) |
 ```
 
 ### Обновления в существующих файлах

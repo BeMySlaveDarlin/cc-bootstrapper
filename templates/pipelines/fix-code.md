@@ -1,5 +1,34 @@
-<!-- version: 7.3.1 -->
+---
+name: "fix-code"
+description: "Диагностика и исправление бага"
+version: "8.0.0"
+phases: 5
+capture: "partial"
+user_prompts: true
+parallel_per_lang: true
+error_matrix: true
+adaptive_teams: true
+chains: []
+triggers:
+  - баг
+  - ошибка
+  - fix
+  - не работает
+  - сломалось
+  - regression
+error_routing:
+  diagnosis_rejected: retry_current
+  syntax_error: retry_current
+  test_fail: {max_retries: 2, action: stop_and_report}
+  review_block: retry_from:4
+  team_spawn_fail: fallback_sequential
+---
+
 # Pipeline: Fix Code
+
+## Phase 0: CAPABILITY DETECT
+
+{CAPABILITY_DETECT}
 
 ## Вход
 - Описание бага / ошибки
@@ -34,22 +63,74 @@ AskUserQuestion:
       - {label: "Подход", description: "Другой способ исправления"}
   Перезапусти диагностику с поправками. Повтори AskUserQuestion.
 
-## Phase 2: FIX
+## Phase 2+3+4: FIX → TESTS → REVIEW
+
+### Режим TEAM
+
+Для КАЖДОГО затронутого `{lang}`:
+
+```python
+TeamCreate(team_name="fix-code-{lang}")
+
+Agent(name="{lang}-developer", team_name="fix-code-{lang}", prompt="""
+Прочитай .claude/agents/{lang}-developer.md — выполняй workflow.
+{TEAM_AGENT_RULES}
+ЗАДАНИЕ: исправь код по диагностике `.claude/output/plans/{task-slug}.md` + `.claude/skills/code-style/SKILL.md`.
+После записи: {SYNTAX_CHECK_CMD}.
+Отчёт запиши в `.claude/output/plans/{task-slug}-fix-{lang}.md`.
+SendMessage(to="{lang}-test-developer"): done + путь к отчёту.
+""")
+
+Agent(name="{lang}-test-developer", team_name="fix-code-{lang}", prompt="""
+Прочитай .claude/agents/{lang}-test-developer.md — выполняй workflow.
+{TEAM_AGENT_RULES}
+Жди сообщение от {lang}-developer (done).
+ЗАДАНИЕ: напиши regression test по описанию бага + исправленным файлам.
+После записи: {TEST_CMD}. Если fail — исправь (макс. 2 итерации).
+Отчёт запиши в `.claude/output/plans/{task-slug}-tests-{lang}.md`.
+SendMessage(to="{lang}-reviewer"): done + путь к отчёту.
+""")
+
+Agent(name="{lang}-reviewer", team_name="fix-code-{lang}", prompt="""
+Прочитай .claude/agents/{lang}-reviewer.md — выполняй workflow.
+{TEAM_AGENT_RULES}
+Жди сообщение от {lang}-test-developer (done).
+ЗАДАНИЕ: ревью изменённых файлов (git diff).
+Запиши ревью в `.claude/output/reviews/{task-slug}-{lang}.md`.
+BLOCK → SendMessage(to="{lang}-developer"): реестр правок. Жди исправление. Макс. 2 цикла.
+PASS → SendMessage(to=lead): verdict + путь к ревью.
+""")
+```
+
+### Flow
+```
+{lang}-developer → {lang}-test-developer → {lang}-reviewer
+                                                 ↓ BLOCK
+                                           {lang}-developer (fix) → ... (макс. 2 цикла)
+                                                 ↓ PASS
+                                                lead
+```
+
+Если затронуто несколько языков — команды per-lang ПАРАЛЛЕЛЬНО (отдельный TeamCreate на каждый lang).
+
+{TEAM_SHUTDOWN}
+
+### Режим SEQUENTIAL
 
 Task(.claude/agents/{lang}-developer.md, subagent_type: "general-purpose"):
-  Вход: прочитай `.claude/output/plans/{task-slug}.md` + `.claude/skills/code-style/SKILL.md`
+  Вход: `.claude/output/plans/{task-slug}.md` + `.claude/skills/code-style/SKILL.md`
   Выход: исправленные файлы
+  Ограничение: project-write
   Верни: summary (изменённые файлы, что исправлено)
 
 ```bash
 {SYNTAX_CHECK_CMD}
 ```
 
-## Phase 3: TESTS
-
 Task(.claude/agents/{lang}-test-developer.md, subagent_type: "general-purpose"):
   Вход: исправленные файлы (из git diff или summary Phase 2) + описание бага
   Выход: regression test, подтверждающий исправление
+  Ограничение: project-write
   Верни: summary (тесты, результат)
 
 ```bash
@@ -58,34 +139,40 @@ Task(.claude/agents/{lang}-test-developer.md, subagent_type: "general-purpose"):
 
 Если тесты fail — исправить (максимум 2 итерации).
 
-## Phase 4: REVIEW (per-lang ПАРАЛЛЕЛЬНО если затронуто несколько языков)
-
-Для КАЖДОГО затронутого `{lang}`:
+{PARALLEL_PER_LANG}
 
 Task(.claude/agents/{lang}-reviewer.md, subagent_type: "general-purpose"):
   Вход: изменённые файлы {lang} (git diff)
-  Выход: запиши в `.claude/output/reviews/{task-slug}-{lang}.md`
+  Выход: `.claude/output/reviews/{task-slug}-{lang}.md`
+  Ограничение: read-only
   Верни: summary (verdict, замечания по severity)
 
-### Обработка результатов
-- **BLOCK** → исправить и повторить Phase 4
+### Обработка результатов (оба режима)
+- **BLOCK** → исправить и повторить review
 - **PASS WITH WARNINGS** → исправить WARN, продолжить
 - **PASS** → продолжить
 
 ## Phase 5: CAPTURE
 
-1. Обнови `.claude/memory/facts.md` по секциям:
-   - "## Key Paths" → МЕРЖИТЬ: добавь новые, удали несуществующие пути
-   - "## Known Issues" → максимум 10 записей, удали разрешённые
-   ПРАВИЛО: перед добавлением проверь — НЕ ДУБЛИРУЙ существующие записи
-2. Добавь в `.claude/memory/issues.md` описание бага и решения
-3. Обнови `.claude/memory/patterns.md` если выявлен антипаттерн
+{CAPTURE:partial}
 
 ### Итог
 ```
 [FIX-CODE COMPLETE]
+Режим: {TEAM | SEQUENTIAL}
 Root cause: {описание}
 Исправлено файлов: {N}
 Regression test: {pass/fail}
 Review: {verdict}
 ```
+
+## Матрица ошибок
+
+| Фаза | Ошибка | Действие |
+|------|--------|----------|
+| CAPABILITY DETECT | Teams недоступны | Fallback → SEQUENTIAL |
+| DIAGNOSIS | Диагностика отклонена | Уточнить → повторить Phase 1 |
+| FIX+TESTS (TEAM) | Spawn fail | Fallback → SEQUENTIAL |
+| FIX | Syntax error | Исправить → повторить проверку |
+| TESTS | Тесты fail (>2 итераций) | Остановить, показать ошибки пользователю |
+| REVIEW | BLOCK (>2 циклов) | Остановить, показать замечания пользователю |

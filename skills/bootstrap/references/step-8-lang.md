@@ -41,11 +41,18 @@ mkdir -p .claude/{agents,skills,pipelines}
 Подстановки в каждом шаблоне (включая YAML frontmatter):
 - `{lang}` → `php`, `node`, etc.
 - `{LANG}` → `PHP`, `Node.js`, etc.
+- `{Lang}` → `Php`, `Node`, etc. (Title case, для заголовков)
 - `{FRAMEWORK}` → из `stack.frameworks[lang]`
 - `{TEST_FRAMEWORK}` → из `stack.test_frameworks[lang]`
 - `{TEST_CMD}` → из `stack.test_cmds[lang]`
 - `{LINT_CMD}` → из `stack.lint_cmds[lang]`
 - `{SOURCE_DIR}` → определить по стеку (src/, app/, lib/)
+
+**Поле `mode` в frontmatter агентов:**
+- `lang-architect` → `mode: "plan"` (read-only, генерирует план)
+- `lang-developer` → `mode: "implement"` (пишет код в проект)
+- `lang-test-developer` → `mode: "implement"` (пишет тесты)
+- `lang-reviewer` → `mode: "plan"` (read-only, генерирует ревью)
 
 ### Стек-специфичные адаптации
 
@@ -67,7 +74,7 @@ mkdir -p .claude/{agents,skills,pipelines}
 **Мульти-язычные проекты:** При повторном вызове для второго `{lang}` — ДОПОЛНЯЙ существующие скиллы секциями для нового языка, НЕ перезаписывай целиком.
 
 ### Версионирование
-- Поле `version` в YAML frontmatter (например `version: "7.3.1"`)
+- Поле `version` в YAML frontmatter (например `version: "8.0.0"`)
 - При `validate`: нет версии или version < `7.2.0` → `[REGEN]`
 
 ### Валидация (режим `validate`)
@@ -82,7 +89,7 @@ mkdir -p .claude/{agents,skills,pipelines}
 
 ## 8-lang.3 Пайплайны (per-lang)
 
-Генерируй пайплайны, подставляя `{lang}` в Task()-вызовы агентов.
+Генерируй пайплайны, подставляя переменные в шаблоны.
 
 | Шаблон | Выходной файл |
 |--------|---------------|
@@ -91,7 +98,45 @@ mkdir -p .claude/{agents,skills,pipelines}
 | `templates/pipelines/review.md` | `.claude/pipelines/review.md` |
 | `templates/pipelines/tests.md` | `.claude/pipelines/tests.md` |
 
-**Правило выбора языка в мульти-языковых проектах:**
+### Формат пайплайнов v8
+
+Пайплайны имеют YAML frontmatter (вместо HTML-комментария `<!-- version -->`):
+```yaml
+---
+name: "new-code"
+description: "..."
+version: "8.0.0"
+phases: 7
+capture: "full"
+user_prompts: true
+parallel_per_lang: true
+error_matrix: true
+chains: []
+triggers: [...]
+error_routing: {...}
+---
+```
+
+### Include-подстановки
+
+Шаблоны содержат include-плейсхолдеры. Генератор ОБЯЗАН подставить содержимое из `templates/includes/`:
+- `{CAPTURE:full}` → содержимое `templates/includes/capture-full.md`
+- `{CAPTURE:partial}` → содержимое `templates/includes/capture-partial.md`
+- `{CAPTURE:review}` → содержимое `templates/includes/capture-review.md`
+- `{PARALLEL_PER_LANG}` → содержимое `templates/includes/parallel-per-lang.md`
+
+### Task() формат
+
+Все Task()-вызовы в пайплайнах используют стандартный формат (см. `templates/includes/task-syntax.md`):
+```
+Task(<agent-path>, subagent_type: "general-purpose"):
+  Вход: <входные данные>
+  Выход: <выходной файл>
+  Ограничение: read-only | project-write
+  Верни: summary (...)
+```
+
+### Правило выбора языка в мульти-языковых проектах
 - `{lang}` в пайплайне = язык, релевантный текущей задаче
 - Если задача затрагивает конкретный модуль — определи язык по модулю
 - Если неоднозначно — используй `stack.primary_lang`
@@ -101,32 +146,39 @@ mkdir -p .claude/{agents,skills,pipelines}
 
 ### Adaptive Teams
 
-Для пайплайнов **new-code**, **review**:
-1. Прочитай `templates/includes/capability-detect.md`
-2. Вставь содержимое как Phase 0: CAPABILITY DETECT перед Phase 1
-3. Добавь adaptive-секции (Режим TEAM / Режим SEQUENTIAL) в фазы с параллелизацией
-4. Удали директиву `{если ADAPTIVE_TEAMS: включи ...}` — она заменена реальным содержимым
+Пайплайны **new-code**, **fix-code**, **tests**, **review** содержат dual execution modes прямо в шаблонах:
+- `{CAPABILITY_DETECT}` — Phase 0, подставляется из `templates/includes/capability-detect.md`
+- "Режим TEAM" — агенты запускаются как команда, общаются через файлы в `.claude/output/`
+- "Режим SEQUENTIAL" — последовательные Task()-вызовы (fallback)
+- `adaptive_teams: true` в YAML frontmatter
 
-**Валидация adaptive:**
+Генератору **НЕ НУЖНО** добавлять adaptive-секции — они уже в шаблонах. Нужно только подставить `{CAPABILITY_DETECT}` как обычный include-плейсхолдер.
+
+**Валидация adaptive (режим `validate`):**
+- Пайплайны с `adaptive_teams: true` в frontmatter должны содержать Phase 0: CAPABILITY DETECT
 - Каждая adaptive-фаза содержит ОБА режима (TEAM + SEQUENTIAL)
 - Секции "Режим TEAM" используют Teammate-синтаксис (НЕ устаревший TeamCreate/Spawn/Shutdown)
 - Task() только в секциях "Режим SEQUENTIAL"
-- Phase 0 CAPABILITY DETECT проверяет env `CLAUDE_CODE_EXPERIMENTAL_AGENT_TEAMS`
+→ Нет Phase 0 при `adaptive_teams: true` → `[FIX] {path}: добавлен CAPABILITY DETECT`
 
 ### Версионирование
-- HTML-комментарий в первой строке (например `<!-- version: 7.3.1 -->`)
-- При `validate`: нет version или version < `7.2.0` → `[REGEN]`
+- Версия в YAML frontmatter поле `version` (например `version: "8.0.0"`)
+- При `validate`: нет version или version < `8.0.0` → `[REGEN]`
+- **МИГРАЦИЯ:** Если первая строка содержит `<!-- version: X.Y.Z -->` (старый формат) → `[REGEN]` в новый формат с frontmatter
 
 ### Валидация (режим `validate`)
 
-**Приоритет 1 — версия:**
-- Первая строка содержит `<!-- version: X.Y.Z -->` — сравнить с `7.2.0`
-- Нет version или version < `7.2.0` → `[REGEN] {path}: version outdated`
+**Приоритет 1 — формат:**
+- Содержит YAML frontmatter с полями `name`, `version`, `triggers`
+- Если старый формат (HTML-комментарий) → `[REGEN]`
 
-**Приоритет 2 — структура (только если версия совпала):**
-- Содержат Task() pseudo-syntax
-- НЕ содержат устаревших текстовых инструкций типа "Прочитай .claude/agents/X.md"
-- Параллельные агенты помечены "Запусти одновременно:"
+**Приоритет 2 — версия:**
+- `version` в frontmatter < `8.0.0` → `[REGEN] {path}: version outdated`
+
+**Приоритет 3 — структура (только если версия совпала):**
+- Содержат Task() pseudo-syntax с 4 полями (Вход, Выход, Ограничение, Верни)
+- Содержат `## Матрица ошибок`
+- НЕ содержат устаревших текстовых инструкций
 → Task()-пайплайн без Task() → `[REGEN] {path}`
 
 **Сохранение пользовательского контента:**
@@ -147,13 +199,15 @@ mkdir -p .claude/{agents,skills,pipelines}
 2. **Файл существует** → провести ВАЛИДАЦИЮ содержимого:
 
 #### Валидация агентов (.claude/agents/*.md)
-- Начинается с YAML frontmatter (`---` блок) с полями `name` и `description`
+- Начинается с YAML frontmatter (`---` блок) с полями `name`, `description`, `mode`
 - `name` — kebab-case, совпадает с именем файла (без `.md`)
 - `description` — одна строка, описание роли агента
+- `mode` — `"plan"` или `"implement"`. Только `{lang}-developer` и `{lang}-test-developer` = `"implement"`, остальные = `"plan"`
 - Содержит секцию `## Контекст` с ссылкой на `facts.md`
 - Содержит ссылки на skills (`skills/code-style/SKILL.md`, etc.)
 - НЕ содержит устаревших ссылок на `skills/routing/`, `skills/database/`
 → Нет frontmatter → добавить из шаблона → `[FIX] {path}: добавлен frontmatter`
+→ Нет `mode` → добавить → `[FIX] {path}: добавлен mode`
 → Проблемы найдены → исправить IN-PLACE → `[FIX] {path}: {что исправлено}`
 → Файл ОК → `[OK] {path}`
 

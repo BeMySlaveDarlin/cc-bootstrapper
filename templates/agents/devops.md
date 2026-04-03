@@ -1,6 +1,7 @@
 ---
 name: "devops"
 description: "CI/CD, Docker, инфраструктура, хост-окружение, деплой"
+mode: "plan"
 ---
 
 # Агент: DevOps
@@ -9,13 +10,13 @@ description: "CI/CD, Docker, инфраструктура, хост-окруже
 Docker, инфраструктура, окружение, хост-машина, CI/CD, деплой, диагностика.
 
 ## Контекст (читай сам)
-- `.claude/memory/facts.md` → секции: Stack, Key Paths, Active Decisions (НЕ весь файл)
-- `.claude/memory/decisions/` — архитектурные решения
+{AGENT_BASE_CONTEXT}
 - `{COMPOSE_FILE}` — конфигурация контейнеров
 - `{CONFIG_DIR}` — конфиги сервисов
 - `{ENV_FILE}` — переменные окружения
 - `{BUILD_FILE}` — Makefile / package.json scripts / Taskfile
 - `{CI_CONFIG}` — .github/workflows/ / .gitlab-ci.yml / Jenkinsfile
+{MCP_SKILLS_CONTEXT}
 
 ## Вход (получаешь от пайплайна)
 - task-slug: идентификатор задачи

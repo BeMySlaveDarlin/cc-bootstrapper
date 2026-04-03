@@ -1,4 +1,22 @@
-<!-- version: 7.3.1 -->
+---
+name: "api-docs"
+description: "Генерация API-контрактов"
+version: "8.0.0"
+phases: 3
+capture: "none"
+user_prompts: false
+parallel_per_lang: false
+error_matrix: true
+chains: []
+triggers:
+  - документация
+  - api docs
+  - контракт
+error_routing:
+  scan_empty: stop_and_report
+  generate_fail: retry_current
+---
+
 # Pipeline: API Docs
 
 ## Вход
@@ -23,7 +41,9 @@
 
 Task(.claude/agents/{lang}-developer.md, subagent_type: "general-purpose"):
   Вход: результаты сканирования + исходный код эндпоинтов
-  Выход: контракт API в markdown-формате
+  Выход: `.claude/output/contracts/{module}.md`
+  Ограничение: read-only
+  Верни: summary (эндпоинты, формат)
 
 ### Формат контракта
 Для каждого эндпоинта:
@@ -45,3 +65,10 @@ Task(.claude/agents/{lang}-developer.md, subagent_type: "general-purpose"):
 Эндпоинтов: {N}
 Файл: .claude/output/contracts/{module}.md
 ```
+
+## Матрица ошибок
+
+| Фаза | Ошибка | Действие |
+|------|--------|----------|
+| SCAN | Эндпоинтов не найдено | Остановить, сообщить пользователю |
+| GENERATE | Агент не вернул контракт | Повторить Phase 2 |

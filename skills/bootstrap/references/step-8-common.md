@@ -37,6 +37,12 @@ mkdir -p .claude/skills/gitlab
 
 Для каждого агента: прочитай шаблон из `templates/agents/` → подставь переменные из `state.stack` → запиши в `.claude/agents/`.
 
+**Поле `mode` в frontmatter агентов:**
+- `analyst` → `mode: "plan"`
+- `storage-architect` → `mode: "plan"`
+- `devops` → `mode: "plan"`
+- `qa-engineer` → `mode: "plan"`
+
 ### Кастомные агенты
 
 Для каждого агента из `registries.agents` с `type: "custom"` сгенерируй файл `.claude/agents/{name}.md`:
@@ -45,6 +51,7 @@ mkdir -p .claude/skills/gitlab
 ---
 name: "{name}"
 description: "{role — краткое описание роли агента, одна строка}"
+mode: "plan"
 ---
 
 # Агент: {Name}
@@ -149,7 +156,7 @@ mv .claude/agents/{deprecated-file} .claude/agents/.backup/
 ---
 name: "{name}"
 description: "{description — краткое описание, одна строка}"
-version: "7.3.1"
+version: "8.0.0"
 user-invocable: false
 ---
 
@@ -171,32 +178,51 @@ user-invocable: false
 
 ---
 
-## 8-common.3 Композитные пайплайны
+## 8-common.3 Общие пайплайны (language-agnostic)
 
-| Шаблон | Выходной файл |
-|--------|---------------|
-| `templates/pipelines/full-feature.md` | `.claude/pipelines/full-feature.md` |
-| `templates/pipelines/hotfix.md` | `.claude/pipelines/hotfix.md` |
-| `templates/pipelines/api-docs.md` | `.claude/pipelines/api-docs.md` |
-| `templates/pipelines/qa-docs.md` | `.claude/pipelines/qa-docs.md` |
+**ОБЯЗАТЕЛЬНО сгенерировать ВСЕ 5 файлов из таблицы ниже. Пропуск = баг.**
 
-Композитные пайплайны (full-feature, hotfix) ссылаются на другие пайплайны через «Выполни pipeline». Task() НЕ требуется.
+| Шаблон | Выходной файл | Тип |
+|--------|---------------|-----|
+| `templates/pipelines/full-feature.md` | `.claude/pipelines/full-feature.md` | orchestrator (chains) |
+| `templates/pipelines/hotfix.md` | `.claude/pipelines/hotfix.md` | orchestrator (chains) |
+| `templates/pipelines/api-docs.md` | `.claude/pipelines/api-docs.md` | Task() |
+| `templates/pipelines/qa-docs.md` | `.claude/pipelines/qa-docs.md` | Task() |
+| `templates/pipelines/brainstorm.md` | `.claude/pipelines/brainstorm.md` | Task() + adaptive_teams |
 
-Для api-docs, qa-docs — Task() pseudo-syntax используется.
+Orchestrator-пайплайны (full-feature, hotfix) ссылаются на другие пайплайны через «Выполни pipeline». Task() НЕ требуется.
+
+Для api-docs, qa-docs, brainstorm — Task() pseudo-syntax используется с форматом из `templates/includes/task-syntax.md`.
+
+### Формат пайплайнов v8
+
+Все пайплайны имеют YAML frontmatter с полями: `name`, `description`, `version`, `phases`, `capture`, `user_prompts`, `parallel_per_lang`, `error_matrix`, `chains`, `triggers`, `error_routing`.
+
+### Include-подстановки
+
+Генератор ОБЯЗАН подставить include-плейсхолдеры из `templates/includes/`:
+- `{CAPTURE:full}` → содержимое `templates/includes/capture-full.md`
+- `{CAPTURE:partial}` → содержимое `templates/includes/capture-partial.md`
+- `{CAPTURE:review}` → содержимое `templates/includes/capture-review.md`
+- `{PARALLEL_PER_LANG}` → содержимое `templates/includes/parallel-per-lang.md`
 
 ### Версионирование
-- HTML-комментарий в первой строке: `<!-- version: 7.3.1 -->`
-- При `validate`: нет version или version < `7.2.0` → `[REGEN]`
+- Версия в YAML frontmatter поле `version` (например `version: "8.0.0"`)
+- При `validate`: нет version или version < `8.0.0` → `[REGEN]`
+- **МИГРАЦИЯ:** Если первая строка содержит `<!-- version: X.Y.Z -->` (старый формат) → `[REGEN]`
 
 ### Валидация (режим `validate`)
 
-**Приоритет 1 — версия (проверяй ПЕРВЫМ):**
-- Первая строка содержит `<!-- version: X.Y.Z -->` — сравнить с `7.2.0`
-- Нет version или version < `7.2.0` → `[REGEN] {path}: version outdated`
+**Приоритет 1 — формат:**
+- Содержит YAML frontmatter с полями `name`, `version`
+- Если старый формат (HTML-комментарий) → `[REGEN]`
 
-**Приоритет 2 — структура (только если версия совпала):**
-- НЕ содержит устаревших текстовых инструкций типа "Прочитай .claude/agents/X.md"
-- Параллельные агенты помечены "Запусти одновременно:"
+**Приоритет 2 — версия:**
+- `version` в frontmatter < `8.0.0` → `[REGEN] {path}: version outdated`
+
+**Приоритет 3 — структура (только если версия совпала):**
+- Содержит `## Матрица ошибок`
+- НЕ содержит устаревших текстовых инструкций
 → Проблемы найдены → `[REGEN] {path}`
 
 **Сохранение пользовательского контента:**
@@ -208,18 +234,31 @@ user-invocable: false
 Для каждого пайплайна из `registries.pipelines` с `type: "custom"` сгенерируй файл `.claude/pipelines/{name}.md`:
 
 ```markdown
-<!-- version: 7.3.1 -->
+---
+name: "{name}"
+description: "{description}"
+version: "8.0.0"
+phases: {N}
+capture: "none"
+user_prompts: false
+parallel_per_lang: false
+error_matrix: true
+chains: []
+triggers: [{keywords}]
+error_routing: {}
+---
+
 # Pipeline: {Name}
 
 ## Фазы
 
 {2-5 фаз на основе описания и указанных агентов.
-Используй Task() pseudo-syntax для вызова агентов.}
+Используй Task() pseudo-syntax с 4 обязательными полями (Вход, Выход, Ограничение, Верни).}
 
 ## Матрица ошибок
 
-| Проблема | Действие | Откат |
-|----------|----------|-------|
+| Фаза | Ошибка | Действие |
+|------|--------|----------|
 ```
 
 ---

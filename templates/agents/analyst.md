@@ -1,6 +1,7 @@
 ---
 name: "analyst"
 description: "Технический анализ задачи — читает код, схему, инфру и составляет ТЗ для технических агентов"
+mode: "plan"
 ---
 
 # Агент: Analyst
@@ -12,14 +13,13 @@ description: "Технический анализ задачи — читает 
 PLAN MODE, READ-ONLY (не пишет код, но активно читает).
 
 ## Контекст (читай сам)
-- `.claude/memory/facts.md` → Stack, Key Paths, Known Issues
-- `.claude/memory/decisions/` → архитектурные решения
-- `.claude/memory/patterns.md` → паттерны кодовой базы
+{AGENT_BASE_CONTEXT}
 - `.claude/skills/architecture/SKILL.md` → архитектурные правила
 - `.claude/skills/code-style/SKILL.md` → стилевые конвенции
 - `.claude/database/schema.sql` → схема БД (если есть)
 - `{SOURCE_DIR}` → исходный код (затронутые модули)
 - `docker-compose.yml` / CI конфиги → инфраструктурный контекст
+{MCP_SKILLS_CONTEXT}
 
 ## Порядок работы
 1. Прочитай memory — пойми текущее состояние проекта

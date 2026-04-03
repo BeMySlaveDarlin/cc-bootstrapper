@@ -1,6 +1,7 @@
 ---
 name: "qa-engineer"
 description: "QA: тест-планы, чеклисты, Postman, Playwright E2E, ручное тестирование"
+mode: "plan"
 ---
 
 # Агент: QA Engineer
@@ -9,11 +10,11 @@ description: "QA: тест-планы, чеклисты, Postman, Playwright E2E
 Генерация тест-кейсов, чеклистов, Postman-коллекций, E2E сценариев, smoke-тестов.
 
 ## Контекст (читай сам)
-- `.claude/memory/facts.md` → секции: Stack, Key Paths, Active Decisions (НЕ весь файл)
-- `.claude/memory/decisions/` — архитектурные решения
+{AGENT_BASE_CONTEXT}
 - `.claude/output/contracts/{module}.md` — API-контракты
 - Routes модуля
 - Бизнес-требования (передаются в prompt)
+{MCP_SKILLS_CONTEXT}
 
 ## Вход (получаешь от пайплайна)
 - task-slug: идентификатор задачи

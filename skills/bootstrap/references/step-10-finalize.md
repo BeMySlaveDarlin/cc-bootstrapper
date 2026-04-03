@@ -66,11 +66,11 @@ done
 
 Если frontmatter отсутствует — `[WARN]`.
 
-### Версионные комментарии пайплайнов
+### Версия в пайплайнах
 
-Проверь что каждый файл `.claude/pipelines/*.md` содержит комментарий с версией (например `<!-- v7.2.0 -->`).
+Проверь что каждый файл `.claude/pipelines/*.md` содержит YAML frontmatter с полем `version`. **НЕ** HTML-комментарий `<!-- version -->` — это устаревший формат.
 
-Если отсутствует — `[WARN]`.
+Если frontmatter отсутствует или нет поля `version` — `[WARN]`.
 
 ## 10.2 Version Tracking
 
@@ -86,7 +86,7 @@ for f in .claude/agents/*.md .claude/skills/*/SKILL.md .claude/pipelines/*.md .c
 done
 
 jq -n \
-    --arg version "7.3.1" \
+    --arg version "8.0.0" \
     --arg generated "$(date -u +%Y-%m-%dT%H:%M:%SZ)" \
     --argjson hashes "$HASHES" \
     '{
@@ -162,7 +162,7 @@ done
 
 ```
 ╔══════════════════════════════════════════╗
-║  Bootstrap Complete — v7.2.0             ║
+║  Bootstrap Complete — v8.0.0             ║
 ╠══════════════════════════════════════════╣
 ║  Project: {PROJECT_NAME}                 ║
 ║  Mode: {MODE}                            ║

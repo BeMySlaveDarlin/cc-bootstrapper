@@ -1,4 +1,22 @@
-<!-- version: 7.3.1 -->
+---
+name: "qa-docs"
+description: "QA-чеклисты, Postman-коллекции, E2E stubs"
+version: "8.0.0"
+phases: 4
+capture: "none"
+user_prompts: false
+parallel_per_lang: false
+error_matrix: true
+chains: []
+triggers:
+  - чеклист
+  - QA
+  - postman
+error_routing:
+  no_contract: prerequisite:api-docs
+  generate_fail: retry_current
+---
+
 # Pipeline: QA Docs
 
 ## Вход
@@ -16,7 +34,9 @@
 
 Task(.claude/agents/qa-engineer.md, subagent_type: "general-purpose"):
   Вход: контракт API + исходный код модуля
-  Выход: чеклист тестирования
+  Выход: `.claude/output/qa/{module}-checklist.md`
+  Ограничение: read-only
+  Верни: summary (сценарии, покрытие)
 
 ### Формат чеклиста
 Для каждого эндпоинта:
@@ -29,7 +49,9 @@ Task(.claude/agents/qa-engineer.md, subagent_type: "general-purpose"):
 
 Task(.claude/agents/qa-engineer.md, subagent_type: "general-purpose"):
   Вход: контракт API + чеклист
-  Выход: Postman-коллекция (JSON) + Playwright E2E stubs (опционально)
+  Выход: `.claude/output/qa/{module}-postman.json` + `.claude/output/qa/{module}-e2e.spec.ts` (опционально)
+  Ограничение: read-only
+  Верни: summary (коллекция, E2E stubs)
 
 ### Postman-коллекция
 - Папки по эндпоинтам
@@ -58,3 +80,11 @@ Task(.claude/agents/qa-engineer.md, subagent_type: "general-purpose"):
   - .claude/output/qa/{module}-postman.json
   - .claude/output/qa/{module}-e2e.spec.ts (если есть UI)
 ```
+
+## Матрица ошибок
+
+| Фаза | Ошибка | Действие |
+|------|--------|----------|
+| INPUT | Контракт API не найден | Запустить pipeline api-docs сначала |
+| CHECKLIST | Агент не вернул чеклист | Повторить Phase 2 |
+| AUTOMATION | Генерация Postman провалилась | Повторить Phase 3 |

@@ -1,0 +1,4 @@
+- `.claude/memory/facts.md` → секции: Stack, Key Paths, Active Decisions, Known Issues (НЕ весь файл)
+- `.claude/memory/decisions/` — архитектурные решения
+- `.claude/memory/patterns.md` — паттерны кодовой базы
+- `.claude/memory/issues.md` — известные проблемы

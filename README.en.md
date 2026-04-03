@@ -21,86 +21,97 @@ In Claude Code CLI:
 /plugin install cc-bootstrapper@bemyslavedarlin-cc-bootstrapper
 ```
 
-The plugin registers the `/cc-bootstrapper:bootstrap` skill automatically.
+### Local Installation (for development)
 
-### Manual Installation (legacy)
-
-```bash
-git clone https://github.com/BeMySlaveDarlin/cc-bootstrapper.git
-cd cc-bootstrapper
-bash install.sh
 ```
-
-The script copies prompts and the command to `~/.claude/`.
+/plugin marketplace add /path/to/cc-bootstrapper
+/plugin install cc-bootstrapper@bemyslavedarlin-cc-bootstrapper
+```
 
 ## Usage
 
-```bash
-cd /path/to/your-project
-claude
 ```
-```
-> /cc-bootstrapper:bootstrap    # Plugin mode
-> /bootstrap                    # Legacy mode (manual install)
+/cc-bootstrapper:bootstrap
 ```
 
-Auto-detection: no `.claude/` → full generation, existing `.claude/` → validation + auto-fix.
+If Agent Teams are available — prompts for mode: **Team** (parallel agents, ~x2 faster) or **Sequential** (one-by-one, more stable).
+
+Auto-detection:
+- Empty project → generates spec template, stops early
+- No `.claude/` → full generation (fresh)
+- Existing `.claude/` → validation + migration (validate)
+- Existing state → resume from last step
 
 Supported stacks: PHP, Node.js/TypeScript, Python, Go, Rust, Java, C#, Ruby. Multi-language projects get agent sets for each language.
+
+## Bootstrap Process (10 steps)
+
+| Step | Name | What It Does |
+|------|------|------------|
+| 1 | Scan | Light scan: manifests, structure, stack, git remote |
+| 2 | Detect Mode | empty / fresh / validate / resume |
+| 3 | Configure | permissions, git, analysis depth, custom agents/skills/pipelines |
+| 4 | Settings.json | Base permissions + hooks |
+| 5 | Plugins & MCP | Playwright, Context7, LSP, GitLab/GitHub/Docker MCP |
+| 6 | Preview | Dry-run preview, token estimates, **pause point** |
+| 7 | Deep Analysis | Per-lang patterns, architecture, API (optional) |
+| 8 | Generation | Per-domain in parallel: per-lang + common + infra |
+| 9 | CLAUDE.md | Generation with agent/skill/pipeline tables |
+| 10 | Finalization | Verification, .bootstrap-version, cleanup |
+
+**Team mode:** phases A(scan∥) → B(config) → C(preview) → D(gen∥) → E(finalize∥). Per-lang generation in parallel via TeamCreate.
+
+Each step is an isolated subagent. Data passes through `.bootstrap-cache/state.json`. On crash — resume from last step.
 
 ---
 
 # Generated System
 
-Everything below describes what appears in the target project after `/bootstrap` and how to work with it.
+Everything below describes what appears in the target project after bootstrap and how to work with it.
 
 ## Routing
 
-CLAUDE.md contains a HARD RULE: any code-related request is automatically routed through `/pipeline`. Free-form is only for questions and discussions.
+CLAUDE.md contains a HARD RULE: any code-related request is routed through `/pipeline`.
 
 ```
 /pipeline review          → code review
 /p fix auth bug           → fix-code pipeline
 /p new users endpoint     → new-code pipeline
+/p brainstorm approach    → brainstorm pipeline
 /p                        → determines type from context
 ```
 
-The router classifies the task by keywords, then gathers context via AskUserQuestion. For `new-code`/`full-feature` it offers to run analysis (analyst creates a spec); for others — scope/problem type + affected modules. `--no-analysis` flag skips analysis.
-
 ## Pipelines
 
-8 base pipelines + custom ones (added during bootstrap):
+9 base pipelines + custom ones. Pipelines have YAML frontmatter with triggers, error_routing, adaptive_teams.
 
-| Pipeline | When | Key Phases |
-|----------|------|------------|
-| `new-code` | New module, service, endpoint | Analysis → Architecture → DB → Code → Tests → Review |
-| `fix-code` | Bug, error, regression | Diagnosis → Fix → Tests → Review |
-| `review` | Code review | Parallel Review (logic + security) → Report |
-| `tests` | Writing tests | Analyze → Generate → Verify → Review |
-| `api-docs` | API contracts | Scan → Generate → Save |
-| `qa-docs` | Checklists, Postman | Input → Checklist → Postman → Save |
-| `full-feature` | Full feature cycle | new-code + api-docs + qa-docs |
-| `hotfix` | Urgent fix | fix-code + review |
+| Pipeline | When | Key Phases | Agent Teams |
+|----------|------|------------|-------------|
+| `new-code` | New module, service, endpoint | Analysis → Architecture → Storage → Code → Tests → Review | developer + test-developer + reviewer |
+| `fix-code` | Bug, error, regression | Diagnosis → Fix → Tests → Review | developer + test-developer + reviewer |
+| `review` | Code review | Per-lang Review → Report | reviewers per-lang ∥ |
+| `tests` | Writing tests | Analyze → Generate → Verify → Review | test-developer + reviewer |
+| `brainstorm` | Discuss idea, approach | Frame → Perspectives → Capture | analyst ∥ architect ∥ storage ∥ devops |
+| `api-docs` | API contracts | Scan → Generate → Save | — |
+| `qa-docs` | Checklists, Postman, E2E | Input → Checklist → Automation → Save | — |
+| `full-feature` | Full feature cycle | new-code + api-docs + qa-docs | — (chains) |
+| `hotfix` | Urgent fix | fix-code + review | — (chains) |
+
+5 pipelines support **Agent Teams**: TeamCreate → Agent spawn → SendMessage coordination → TeamDelete. Automatic fallback to sequential.
 
 ### Data Passing Between Phases
 
 Phases exchange data through files, not conversation context:
 
 ```
-Analyst    → reads code and infra, asks questions, writes spec to output/plans/{task-slug}-spec.md
-Architect  → reads spec, writes plan to output/plans/{task-slug}.md
-Developer  → reads plan from file, writes code
-Tester     → reads code (git diff), writes tests
-Reviewers  → read code (git diff), write reports to output/reviews/{task-slug}-{type}.md
+Analyst    → spec in output/plans/{task-slug}-spec.md
+Architect  → plan in output/plans/{task-slug}.md
+Developer  → code from plan
+Tester     → tests from code (git diff)
+Reviewer   → report in output/reviews/{task-slug}-{lang}.md
 ```
 
-Only a summary (5-10 lines per phase) returns to the pipeline context. Full results are available to the next agent via file reading.
-
-### Plan Mode
-
-- Analyst works in PLAN MODE + READ-ONLY — reads code/schema/infra, asks clarifying questions, creates spec
-- Architect works in PLAN MODE — analysis only, plan shown for approval, no project file modifications
-- `fix-code` and `tests` request plan confirmation via AskUserQuestion before execution
+Agents **write artifacts to file first, then return summary**. On crash, artifacts are preserved.
 
 ### CAPTURE
 
@@ -110,43 +121,40 @@ Each pipeline ends with a CAPTURE phase — memory update:
 - Patterns → `patterns.md`
 - Bugs → `issues.md`
 
-### Adaptive Teams
-
-`new-code`, `review`, `full-feature` support parallel mode:
-- **Opus 4.6** → reviewers work in parallel via Teams API
-- **Other models** → automatic fallback to sequential mode
-
 ## Agents
 
-Self-contained markdown files. Each agent reads its own context (facts.md, decisions/, skills/); from the pipeline it only receives task-slug and input data path.
-
-For each language — 5 agents:
+For each language — 4 agents:
 
 | Agent | Role | Mode |
 |-------|------|------|
-| `{lang}-architect` | Module planning and architecture | PLAN MODE (read-only) |
-| `{lang}-developer` | Writing code from plan | Writes files |
-| `{lang}-test-developer` | Writing tests | Writes files |
-| `{lang}-reviewer-logic` | Business logic review | READ-ONLY |
-| `{lang}-reviewer-security` | Security review | READ-ONLY |
+| `{lang}-architect` | Module planning and architecture | plan (read-only) |
+| `{lang}-developer` | Writing code from plan | implement |
+| `{lang}-test-developer` | Writing tests | implement |
+| `{lang}-reviewer` | Full review: architecture, logic, security, static analysis, optimization | plan (read-only) |
 
-Shared agents: `analyst`, `db-architect`, `devops`, `frontend-developer`, `frontend-test-developer`, `frontend-reviewer`, `qa-engineer`.
+Shared agents:
 
-Agent sections: Role → Mode → Context (self-read) → Input → Task → Rules → Output.
+| Agent | Role | Condition |
+|-------|------|-----------|
+| `analyst` | Task decomposition, specs | always |
+| `storage-architect` | Storage design: SQL, NoSQL, Redis, S3, queues | if storage detected |
+| `devops` | Docker, CI/CD, host machine (WSL/Linux/macOS), deploy | always |
+| `qa-engineer` | Test plans, checklists, Postman, Playwright E2E, smoke tests | always |
 
 ## Skills
 
-Knowledge bases that agents read during work:
-
-| Skill | Contents |
-|-------|----------|
-| `code-style/` | Code patterns and anti-patterns for the project |
-| `architecture/` | Module structure, DI, routes |
-| `database/` | Migrations, data types, indexes |
-| `testing/` | Test framework, mocks, test structure |
-| `memory/` | Rules for working with the memory system |
-| `pipeline/` | `/pipeline` router (invocable) |
-| `p/` | `/p` alias for quick access (invocable) |
+| Skill | Contents | Condition |
+|-------|----------|-----------|
+| `code-style/` | Code patterns and anti-patterns | always |
+| `architecture/` | Module structure, DI, routes | always |
+| `storage/` | Storage: DB, cache, queues, object storage | always |
+| `testing/` | Test framework, mocks, E2E | always |
+| `memory/` | Memory system rules | always |
+| `pipeline/` | `/pipeline` router (invocable) | always |
+| `p/` | `/p` alias (invocable) | always |
+| `gitlab/` | GitLab MCP operations: MR, issues, pipelines, wiki | gitlab MCP |
+| `github/` | GitHub CLI: PR, issues, actions, releases | github MCP |
+| `playwright/` | Playwright MCP: navigation, forms, screenshots, E2E | playwright plugin |
 
 ## Memory
 
@@ -154,46 +162,40 @@ Knowledge bases that agents read during work:
 |------|---------|--------|
 | `facts.md` | Stack, paths, active decisions, known issues | Sectional updates, 10 issues max |
 | `patterns.md` | Recurring code patterns | — |
-| `issues.md` | Known issues from reviews | 30 lines, deduplication by Frequency |
+| `issues.md` | Known issues from reviews | 30 lines, deduplication |
 | `decisions/*.md` | Architectural decisions (ADR-lite) | 20 active max |
 | `decisions/archive/` | Outdated decisions | Auto-rotation 30 days |
-
-Agents read `facts.md` by section (Stack, Key Paths, Active Decisions) — not the entire file.
-
-Pipelines update `facts.md` by section with REPLACE/MERGE semantics, not appending. Deduplication before adding.
 
 ## Hooks
 
 | Hook | Event | What It Does |
 |------|-------|------------|
-| `track-agent.sh` | PostToolUse (Task) | Logs agent usage to `usage.jsonl` |
-| `maintain-memory.sh` | SessionStart | Rotates decisions, compacts facts/issues, cleans output/ older than 7 days |
+| `track-agent.sh` | PostToolUse (Task/Agent) | Logs agent usage to `usage.jsonl` |
+| `maintain-memory.sh` | SessionStart | Rotates decisions, compacts memory, cleans output/ |
 | `update-schema.sh` | SessionStart (if DB) | Updates `database/schema.sql` from Docker |
 
-## Output
+## Plugins & MCP (step 5)
 
-| Directory | Contents | Lifecycle |
-|-----------|----------|-----------|
-| `output/plans/` | Architect plans | Auto-cleanup after 7 days |
-| `output/reviews/` | Review reports | Auto-cleanup after 7 days |
-| `output/contracts/` | API contracts | Permanent |
-| `output/qa/` | QA checklists, Postman | Permanent |
+Bootstrap suggests relevant plugins and MCP servers:
 
-## GitLab MCP (optional)
+| Type | What | Condition |
+|------|------|-----------|
+| Plugin | Playwright | Frontend or E2E tests |
+| Plugin | Context7 | Popular framework |
+| Plugin | LSP (TypeScript, PHP, Python, Go) | Per-lang |
+| MCP | GitLab | git hosting = GitLab |
+| MCP | GitHub | git hosting = GitHub |
+| MCP | Docker | Docker in stack |
 
-If configured during bootstrap — `.mcp.json` with GitLab MCP server + `gitlab-manager` agent + `gitlab` pipeline:
-- Manage Issues, MRs, Pipelines, Wiki
-- Router automatically directs requests like "create MR", "issue #42"
+After installation, permissions are automatically added to settings.json.
 
 ## Customization
 
-The entire structure is yours after generation.
+**Agent:** create `.claude/agents/{name}.md`, add to CLAUDE.md, connect in pipeline.
 
-**Agent:** create `.claude/agents/{name}.md` following existing structure, add to CLAUDE.md, connect to pipeline.
+**Skill:** `mkdir -p .claude/skills/{name}`, create `SKILL.md`. For invocable — `user-invocable: true`.
 
-**Skill:** `mkdir -p .claude/skills/{name}`, create `SKILL.md`. For invocable — frontmatter `user-invocable: true`.
-
-**Pipeline:** create `.claude/pipelines/{name}.md` (minimum 2 phases with Task()), add keywords to `skills/pipeline/SKILL.md`, add to CLAUDE.md.
+**Pipeline:** create `.claude/pipelines/{name}.md`, add keywords to `skills/pipeline/SKILL.md`.
 
 **Hook:** create `.claude/scripts/hooks/{name}.sh`, `chmod +x`, add to `settings.json`.
 
