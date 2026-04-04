@@ -1,7 +1,7 @@
 ---
 name: "new-code"
 description: "Полный цикл создания нового кода"
-version: "8.0.1"
+version: "8.1.0"
 phases: 7
 capture: "full"
 user_prompts: true
@@ -31,6 +31,8 @@ error_routing:
 ## Phase 0: CAPABILITY DETECT
 
 {CAPABILITY_DETECT}
+
+{PIPELINE_STATE_INIT}
 
 ## Вход
 - Описание задачи от пользователя
@@ -67,6 +69,8 @@ AskUserQuestion:
   Запусти аналитика заново с поправками. Повтори AskUserQuestion.
 → "Подтвердить": передай ТЗ в Phase 2
 
+{PIPELINE_STATE_UPDATE}
+
 ## Phase 2: ARCHITECTURE
 
 Task(.claude/agents/{lang}-architect.md, subagent_type: "general-purpose"):
@@ -95,6 +99,8 @@ AskUserQuestion:
   Запусти архитектора заново с дополнительным контекстом (поправки пользователя).
   Повтори AskUserQuestion "Подтвердить?"
 
+{PIPELINE_STATE_UPDATE}
+
 ## Phase 3: STORAGE
 
 Если задача затрагивает БД:
@@ -110,6 +116,8 @@ Task(.claude/agents/storage-architect.md, subagent_type: "general-purpose"):
 ```
 
 Если БД не затронута — `[SKIP]`.
+
+{PIPELINE_STATE_UPDATE}
 
 ## Phase 4+5+6: CODE → TESTS → REVIEW
 
@@ -200,9 +208,13 @@ Task(.claude/agents/{lang}-reviewer.md, subagent_type: "general-purpose"):
 - **PASS WITH WARNINGS** → исправить WARN, продолжить
 - **PASS** → продолжить
 
+{PIPELINE_STATE_UPDATE}
+
 ## Phase 6.5: CAPTURE
 
 {CAPTURE:full}
+
+{PIPELINE_STATE_UPDATE}
 
 ## Phase 7: FINALIZATION
 

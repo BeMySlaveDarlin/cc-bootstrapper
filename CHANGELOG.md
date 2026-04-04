@@ -5,6 +5,20 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [8.1.0] - 2026-04-04
+
+### Added
+- **Pipeline state persistence** — resume interrupted pipelines from the last completed phase
+- `{PIPELINE_STATE_INIT}` include — reads or creates `.claude/output/state/{task-slug}.json` with per-phase status tracking
+- `{PIPELINE_STATE_UPDATE}` include — marks phases completed, auto-cleans state file on pipeline completion
+- **Resume detection in pipeline router** — Шаг 0 checks for unfinished state files, offers resume/restart/cancel
+- All 9 pipelines updated with state init (after Phase 0) and state update (after each working phase)
+
+### Changed
+- Pipeline templates version bump: 8.0.1 → 8.1.0
+- Pipeline router (skills/pipeline.md) version bump: 8.0.1 → 8.1.0
+- Placeholder registry updated with `{PIPELINE_STATE_INIT}` and `{PIPELINE_STATE_UPDATE}`
+
 ## [8.0.1] - 2026-04-04
 
 ### Added

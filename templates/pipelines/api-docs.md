@@ -1,7 +1,7 @@
 ---
 name: "api-docs"
 description: "Генерация API-контрактов"
-version: "8.0.1"
+version: "8.1.0"
 phases: 3
 capture: "none"
 user_prompts: false
@@ -18,6 +18,8 @@ error_routing:
 ---
 
 # Pipeline: API Docs
+
+{PIPELINE_STATE_INIT}
 
 ## Вход
 - Модуль / эндпоинты для документирования
@@ -37,6 +39,8 @@ error_routing:
 Эндпоинтов: {N}
 ```
 
+{PIPELINE_STATE_UPDATE}
+
 ## Phase 2: GENERATE
 
 Task(.claude/agents/{lang}-developer.md, subagent_type: "general-purpose"):
@@ -53,6 +57,8 @@ Task(.claude/agents/{lang}-developer.md, subagent_type: "general-purpose"):
 - Response 2xx (JSON schema)
 - Response 4xx/5xx
 - Пример запроса/ответа
+
+{PIPELINE_STATE_UPDATE}
 
 ## Phase 3: SAVE
 

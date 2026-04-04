@@ -1,7 +1,7 @@
 ---
 name: "qa-docs"
 description: "QA-чеклисты, Postman-коллекции, E2E stubs"
-version: "8.0.1"
+version: "8.1.0"
 phases: 4
 capture: "none"
 user_prompts: false
@@ -19,6 +19,8 @@ error_routing:
 
 # Pipeline: QA Docs
 
+{PIPELINE_STATE_INIT}
+
 ## Вход
 - Модуль / фича для QA-документации
 - `.claude/memory/facts.md`
@@ -29,6 +31,8 @@ error_routing:
 2. Найди контракт API: `.claude/output/contracts/{module}.md`
 3. Изучи бизнес-логику модуля (сервисы, валидация, edge cases)
 4. Если контракта нет — сначала запусти pipeline API Docs
+
+{PIPELINE_STATE_UPDATE}
 
 ## Phase 2: CHECKLIST
 
@@ -44,6 +48,8 @@ Task(.claude/agents/qa-engineer.md, subagent_type: "general-purpose"):
 - Негативные сценарии (невалидные данные, 401, 403, 404)
 - Граничные случаи
 - Интеграционные проверки (зависимости между модулями)
+
+{PIPELINE_STATE_UPDATE}
 
 ## Phase 3: AUTOMATION
 
@@ -63,6 +69,8 @@ Task(.claude/agents/qa-engineer.md, subagent_type: "general-purpose"):
 - Базовые сценарии: навигация, формы, CRUD-операции
 - Page Object заготовки
 - Файл: `{module}-e2e.spec.ts`
+
+{PIPELINE_STATE_UPDATE}
 
 ## Phase 4: SAVE
 

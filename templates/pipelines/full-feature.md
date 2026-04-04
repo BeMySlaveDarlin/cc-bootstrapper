@@ -1,7 +1,7 @@
 ---
 name: "full-feature"
 description: "Полный цикл фичи: код + API docs + QA docs"
-version: "8.0.1"
+version: "8.1.0"
 phases: 5
 capture: "full"
 user_prompts: false
@@ -20,6 +20,8 @@ error_routing:
 
 # Pipeline: Full Feature
 
+{PIPELINE_STATE_INIT}
+
 ## Вход
 - Полное описание фичи
 - Структурированный контекст из роутера: scope, affected_modules
@@ -29,11 +31,15 @@ error_routing:
 
 Выполни pipeline `.claude/pipelines/new-code.md` полностью (все 7 фаз + Phase 6.5 CAPTURE).
 
+{PIPELINE_STATE_UPDATE}
+
 ## Phase 2: API DOCS
 
 Выполни pipeline `.claude/pipelines/api-docs.md` для созданного модуля.
 
 Если фича не содержит API-эндпоинтов — `[SKIP]`.
+
+{PIPELINE_STATE_UPDATE}
 
 ## Phase 3: QA DOCS
 
@@ -41,9 +47,13 @@ error_routing:
 
 Если фича не содержит API-эндпоинтов — `[SKIP]`.
 
+{PIPELINE_STATE_UPDATE}
+
 ## Phase 4: CAPTURE
 
 {CAPTURE:full}
+
+{PIPELINE_STATE_UPDATE}
 
 ## Phase 5: FINALIZATION
 

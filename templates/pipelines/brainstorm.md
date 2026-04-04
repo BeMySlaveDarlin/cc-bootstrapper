@@ -1,7 +1,7 @@
 ---
 name: "brainstorm"
 description: "Мозговой штурм: анализ идеи с нескольких ракурсов"
-version: "8.0.1"
+version: "8.1.0"
 phases: 4
 capture: "partial"
 user_prompts: true
@@ -28,6 +28,8 @@ error_routing:
 ---
 
 # Pipeline: Brainstorm
+
+{PIPELINE_STATE_INIT}
 
 ## Вход
 - Описание идеи / проблемы / вопроса
@@ -56,6 +58,8 @@ AskUserQuestion:
 
 → "Уточнить":
   Перезапусти analyst с поправками. Повтори AskUserQuestion.
+
+{PIPELINE_STATE_UPDATE}
 
 ## Phase 2: PERSPECTIVES
 
@@ -159,6 +163,8 @@ AskUserQuestion:
   Запусти architect с инструкцией скомбинировать. Повтори AskUserQuestion.
 → "Отложить решение":
   Перейти к FINALIZATION без CAPTURE.
+
+{PIPELINE_STATE_UPDATE}
 
 ## Phase 3: CAPTURE
 

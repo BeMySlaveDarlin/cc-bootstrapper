@@ -1,7 +1,7 @@
 ---
 name: "review"
 description: "Ревью кода"
-version: "8.0.1"
+version: "8.1.0"
 phases: 3
 capture: "review"
 user_prompts: false
@@ -24,6 +24,8 @@ error_routing:
 ## Phase 0: CAPABILITY DETECT
 
 {CAPABILITY_DETECT}
+
+{PIPELINE_STATE_INIT}
 
 ## Вход
 - Файлы для ревью (diff или список путей)
@@ -65,6 +67,8 @@ Task(.claude/agents/{lang}-reviewer.md, subagent_type: "general-purpose"):
   Ограничение: read-only
   Верни: summary (verdict, замечания по severity)
 
+{PIPELINE_STATE_UPDATE}
+
 ## Phase 2: REPORT
 
 Объедини результаты всех per-lang ревью в общий отчёт.
@@ -77,6 +81,8 @@ Task(.claude/agents/{lang}-reviewer.md, subagent_type: "general-purpose"):
 - **BLOCK** — есть хотя бы один BLOCK → код требует исправлений
 - **PASS WITH WARNINGS** — только WARN/INFO → рекомендовано исправить
 - **PASS** — замечаний нет или только INFO
+
+{PIPELINE_STATE_UPDATE}
 
 ## Phase 3: CAPTURE
 

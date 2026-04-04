@@ -1,7 +1,7 @@
 ---
 name: "tests"
 description: "Генерация тестов для существующего кода"
-version: "8.0.1"
+version: "8.1.0"
 phases: 4
 capture: "none"
 user_prompts: true
@@ -26,6 +26,8 @@ error_routing:
 ## Phase 0: CAPABILITY DETECT
 
 {CAPABILITY_DETECT}
+
+{PIPELINE_STATE_INIT}
 
 ## Вход
 - Файлы / модули для покрытия тестами
@@ -54,6 +56,8 @@ AskUserQuestion:
     - {label: "Подтвердить", description: "Начать генерацию тестов"}
     - {label: "Уточнить", description: "Скорректировать план"}
     - {label: "Отменить", description: "Не генерировать"}
+
+{PIPELINE_STATE_UPDATE}
 
 ## Phase 2+3+4: GENERATE → VERIFY → REVIEW
 
@@ -127,6 +131,8 @@ Task(.claude/agents/{lang}-reviewer.md, subagent_type: "general-purpose"):
 - **BLOCK** → исправить и повторить review
 - **PASS WITH WARNINGS** → исправить WARN, продолжить
 - **PASS** → продолжить
+
+{PIPELINE_STATE_UPDATE}
 
 ### Итог
 ```

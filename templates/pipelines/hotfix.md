@@ -1,7 +1,7 @@
 ---
 name: "hotfix"
 description: "Срочное исправление критичной проблемы"
-version: "8.0.1"
+version: "8.1.0"
 phases: 4
 capture: "partial"
 user_prompts: false
@@ -19,6 +19,8 @@ error_routing:
 
 # Pipeline: Hotfix
 
+{PIPELINE_STATE_INIT}
+
 ## Вход
 - Описание критичной проблемы
 - Структурированный контекст из роутера: type, affected_modules
@@ -28,15 +30,21 @@ error_routing:
 
 Выполни pipeline `.claude/pipelines/fix-code.md` полностью (все 5 фаз).
 
+{PIPELINE_STATE_UPDATE}
+
 ## Phase 2: REVIEW
 
 Выполни pipeline `.claude/pipelines/review.md` для всех изменённых файлов.
 
 Если review вернул BLOCK — вернись к Phase 1 для исправления.
 
+{PIPELINE_STATE_UPDATE}
+
 ## Phase 3: CAPTURE
 
 {CAPTURE:partial}
+
+{PIPELINE_STATE_UPDATE}
 
 ## Phase 4: FINALIZATION
 

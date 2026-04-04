@@ -3,7 +3,7 @@ name: "pipeline"
 description: "Роутер — классифицирует задачу и запускает нужный pipeline"
 user-invocable: true
 argument-hint: "[описание задачи]"
-version: "8.0.1"
+version: "8.1.0"
 ---
 
 > **CRITICAL: Имя директории `skills/pipeline/` и файл frontmatter КОПИРОВАТЬ AS-IS.
@@ -15,6 +15,32 @@ version: "8.0.1"
 Ты — оркестратор. Единый вход для всех операций с кодом.
 
 ## Фаза 0: Роутинг
+
+### Шаг 0 — Resume detection
+
+Проверь `.claude/output/state/` — есть ли файлы `*.json`.
+
+Если найден ровно один state файл:
+```
+AskUserQuestion:
+  question: "Найден незавершённый pipeline: {pipeline} ({task-slug}). Завершено {completed}/{total} фаз."
+  options:
+    - {label: "Продолжить", description: "Возобновить с фазы {next}"}
+    - {label: "Заново", description: "Удалить state и начать с нуля"}
+    - {label: "Отменить", description: "Ничего не делать"}
+```
+→ "Продолжить": прочитай `.claude/pipelines/{pipeline}.md` и выполни с учётом state (Phase 0.5 внутри pipeline разберётся)
+→ "Заново": удали state файл, продолжай роутинг как обычно
+→ "Отменить": ОСТАНОВИСЬ
+
+Если найдено несколько state файлов:
+```
+AskUserQuestion:
+  question: "Найдено несколько незавершённых pipeline-ов:"
+  options: {динамически: список pipeline-ов из state файлов + "Начать новый" + "Отменить"}
+```
+
+Если state файлов нет — продолжай роутинг.
 
 ### Шаг 1 — Контекст
 1. Прочитай `.claude/memory/facts.md`

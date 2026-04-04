@@ -79,6 +79,8 @@
 
 | Placeholder | Файл-источник | Используется в |
 |-------------|--------------|---------------|
+| `{PIPELINE_STATE_INIT}` | `includes/pipeline-state-init.md` | все pipeline-ы (после Phase 0) |
+| `{PIPELINE_STATE_UPDATE}` | `includes/pipeline-state-update.md` | все pipeline-ы (после каждой рабочей фазы) |
 | `{CAPTURE:full}` | `includes/capture-full.md` | new-code, full-feature |
 | `{CAPTURE:partial}` | `includes/capture-partial.md` | fix-code, hotfix, brainstorm |
 | `{CAPTURE:review}` | `includes/capture-review.md` | review |

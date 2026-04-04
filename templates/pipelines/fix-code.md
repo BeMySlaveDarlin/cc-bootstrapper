@@ -1,7 +1,7 @@
 ---
 name: "fix-code"
 description: "Диагностика и исправление бага"
-version: "8.0.1"
+version: "8.1.0"
 phases: 5
 capture: "partial"
 user_prompts: true
@@ -29,6 +29,8 @@ error_routing:
 ## Phase 0: CAPABILITY DETECT
 
 {CAPABILITY_DETECT}
+
+{PIPELINE_STATE_INIT}
 
 ## Вход
 - Описание бага / ошибки
@@ -62,6 +64,8 @@ AskUserQuestion:
       - {label: "Scope", description: "Другие затронутые модули"}
       - {label: "Подход", description: "Другой способ исправления"}
   Перезапусти диагностику с поправками. Повтори AskUserQuestion.
+
+{PIPELINE_STATE_UPDATE}
 
 ## Phase 2+3+4: FIX → TESTS → REVIEW
 
@@ -151,6 +155,8 @@ Task(.claude/agents/{lang}-reviewer.md, subagent_type: "general-purpose"):
 - **BLOCK** → исправить и повторить review
 - **PASS WITH WARNINGS** → исправить WARN, продолжить
 - **PASS** → продолжить
+
+{PIPELINE_STATE_UPDATE}
 
 ## Phase 5: CAPTURE
 
