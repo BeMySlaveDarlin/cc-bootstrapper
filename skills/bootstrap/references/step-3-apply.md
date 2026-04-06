@@ -14,6 +14,7 @@
 {
   "features": ["Custom agents", "Custom skills"],
   "analysis_depth": "standard",
+  "custom_instructions": null,
   "permissions_level": "balanced",
   "git_permissions": ["Read", "Write"],
   "custom_agents": [{"name": "api-documenter", "role": "Генерация API-документации из кода"}],
@@ -31,6 +32,16 @@
 ### analysis_depth (из вопроса "Анализ")
 - `"light"` | `"standard (рекомендуется)"` → `"standard"` | `"deep"`
 - Нормализуй: убери " (рекомендуется)" из label
+- Если значение не совпадает с preset labels — fuzzy-match (fallback):
+  - "standart", "стандарт", "стандартный", "средний" → "standard"
+  - "глубокий", "полный", "full", "максимальный" → "deep"
+  - "лёгкий", "легкий", "быстрый", "fast", "lite" → "light"
+  - Не распознано → "standard"
+
+### custom_instructions (из оркестратора)
+- Строка с дополнительными пользовательскими инструкциями
+- Если не задано или `null` → `null`
+- Передаётся как есть — НЕ интерпретировать
 
 ### permissions_level (из вопроса "Permissions")
 - `"conservative"` | `"balanced (рекомендуется)"` → `"balanced"` | `"permissive"`
@@ -71,6 +82,7 @@
   "config": {
     "features": [...],
     "analysis_depth": "standard",
+    "custom_instructions": null,
     "permissions_level": "balanced",
     "git_permissions": ["read", "write"],
     "custom_agents": [{"name": "...", "role": "..."}],

@@ -260,3 +260,11 @@ Teams создано: 4 (bootstrap-scan, bootstrap-config, bootstrap-gen, bootst
 1. Сообщи: `[TEAM FALLBACK] Phase {X} — spawn fail, переключаюсь на sequential`
 2. Выполни оставшиеся шаги последовательно (основной flow из SKILL.md)
 3. НЕ перезапускай уже выполненные шаги — resume по state.json
+
+### Granular fallback для фазы D (генерация)
+
+Если на фазе D (генерация) team agent упал:
+1. Прочитай `gen-report-8-*.json` для определения УЖЕ записанных файлов
+2. Sequential fallback ТОЛЬКО для языков/файлов без successful gen-report или с непустым `failed[]`
+3. НЕ переделывай файлы из `written[]` — они уже на диске
+4. В prompt sequential-агента передай список конкретных файлов для генерации, а не весь шаг целиком

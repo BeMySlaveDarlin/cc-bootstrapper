@@ -218,6 +218,17 @@ Task(<agent-path>, subagent_type: "general-purpose"):
 ### Паттерн "Write first"
 ОБЯЗАТЕЛЬНО Write файл ПЕРЕД возвратом результата. Не возвращай содержимое без записи на диск.
 
+### Error tracking
+
+Для КАЖДОЙ операции Write:
+1. Выполни Write
+2. Если Write вернул ошибку или был отклонён пользователем:
+   - Добавь в массив failed: `{"path": "{file_path}", "error": "{error_text}", "status": "[WRITE_FAIL]"}`
+   - **ПРОДОЛЖАЙ** со следующим файлом — НЕ останавливайся
+3. Если Write успешен — добавь путь в массив written[]
+
+В финальном gen-report **обязательно** заполни `written[]` и `failed[]`.
+
 ---
 
 ## Выход
@@ -238,9 +249,13 @@ Task(<agent-path>, subagent_type: "general-purpose"):
   "pipelines": [
     {"name": "new-code", "path": ".claude/pipelines/new-code.md", "status": "[NEW]"}
   ],
+  "written": [".claude/agents/{lang}-architect.md", ".claude/agents/{lang}-developer.md", "..."],
+  "failed": [],
   "errors": []
 }
 ```
+
+**Важно:** `failed` содержит объекты `{"path", "error", "status"}`. `errors` — строки для backward compat. Если `failed` не пуст — оркестратор обработает partial failure.
 
 ## Лог
 

@@ -5,7 +5,7 @@ user-invocable: true
 argument-hint: "[meta-prompt-file]"
 ---
 
-# Bootstrap v7 — Оркестратор
+# Bootstrap v8 — Оркестратор
 
 **Все вопросы пользователю — ТОЛЬКО через AskUserQuestion.**
 
@@ -143,10 +143,25 @@ Agent tool (mode: "auto"):
 6. Из ответов проверь: выбраны ли "Custom agents" / "Custom skills" / "Custom pipelines"
 7. Если выбраны — собери follow-up вопросы из `questions_followup` (только для выбранных опций) и задай через AskUserQuestion (batch, до 3 вопросов)
 8. Собери ВСЕ ответы в JSON:
+
+   **Парсинг Other-ответа для analysis_depth:**
+   Если ответ на вопрос "Анализ" не совпадает с preset labels ("light", "standard (рекомендуется)", "deep"):
+   → Это Other-ввод. Парсинг:
+   1. Извлечь режим — первое слово, fuzzy-match:
+      - "standart", "стандарт", "стандартный", "средний" → "standard"
+      - "глубокий", "полный", "full", "максимальный" → "deep"
+      - "лёгкий", "легкий", "быстрый", "fast", "lite" → "light"
+      - Не распознано → "standard" (default)
+   2. Извлечь доп. инструкции — текст после первого разделителя (`+`, `,`, `:`, `;`):
+      - Trim whitespace с обеих сторон
+      - Если разделителя нет → `null`
+   3. Подставить: `analysis_depth` = нормализованный режим, `custom_instructions` = доп. текст или `null`
+
    ```json
    {
      "features": [...],
      "analysis_depth": "standard",
+     "custom_instructions": null,
      "permissions_level": "balanced",
      "git_permissions": ["Read", "Write"],
      "custom_agents": [{"name": "...", "role": "..."}],
@@ -265,10 +280,29 @@ Agent tool (mode: "auto") — Общие артефакты:
 Agent tool (mode: "auto") — Инфраструктура:
   prompt: "Прочитай файл ${CLAUDE_SKILL_DIR}/references/step-8-infra.md и выполни ВСЕ инструкции. Шаблоны: ${CLAUDE_SKILL_DIR}/../../templates/. ПЕРЕД началом работы загрузи AskUserQuestion: ToolSearch(query: 'select:AskUserQuestion', max_results: 1). Все вопросы пользователю — только через AskUserQuestion. По завершении верни done или error."
 
-Дождись всех. После завершения всех трёх — обнови `.bootstrap-cache/state.json`:
-```json
-{"steps": {"8": {"status": "completed"}}, "current_step": 9}
-```
+Дождись всех. Затем проверь partial failure:
+
+1. Прочитай `gen-report-8-{lang}.json` для КАЖДОГО языка + `gen-report-8-common.json` + `gen-report-8-infra.json`
+2. Собери все `failed[]` из всех отчётов
+3. Если `failed` пусты → обычный flow:
+   ```json
+   {"steps": {"8": {"status": "completed"}}, "current_step": 9}
+   ```
+4. Если есть `failed`:
+   a. Загрузи AskUserQuestion: ToolSearch(query: 'select:AskUserQuestion', max_results: 1)
+   b. Покажи пользователю:
+      question: "Не удалось записать {N} файлов: {список путей}. Что делать?"
+      options:
+        - {label: "Повторить failed", description: "Перегенерировать только упавшие файлы"}
+        - {label: "Пропустить", description: "Продолжить без этих файлов"}
+        - {label: "Остановить", description: "Остановить bootstrap"}
+   c. "Повторить failed" → запусти ОДИН Agent tool (mode: "auto", sequential) только для failed файлов.
+      В prompt передай: конкретный список файлов для повторной генерации, язык, шаблоны.
+   d. "Пропустить" → пометь failed в state, продолжай
+   e. "Остановить" → ОСТАНОВИСЬ
+5. Обнови state.json:
+   - `status`: "completed" (всё ок) или "partial" (есть skipped)
+   - `failed_files`: [...] (для resume при следующем запуске)
 
 → `[8/10] Генерация ✓`
 

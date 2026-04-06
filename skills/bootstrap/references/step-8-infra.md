@@ -278,6 +278,15 @@ Task(.claude/agents/gitlab-manager.md, subagent_type: "general-purpose"):
 ### Паттерн "Write first"
 ОБЯЗАТЕЛЬНО Write файл ПЕРЕД возвратом результата. Не возвращай содержимое без записи на диск.
 
+### Error tracking
+
+Для КАЖДОЙ операции Write:
+1. Выполни Write
+2. Если Write вернул ошибку или был отклонён пользователем:
+   - Добавь в массив failed: `{"path": "{file_path}", "error": "{error_text}", "status": "[WRITE_FAIL]"}`
+   - **ПРОДОЛЖАЙ** со следующим файлом — НЕ останавливайся
+3. Если Write успешен — добавь путь в массив written[]
+
 ---
 
 ## Выход
@@ -296,9 +305,13 @@ Task(.claude/agents/gitlab-manager.md, subagent_type: "general-purpose"):
     {"name": "patterns.md", "path": ".claude/memory/patterns.md", "status": "[NEW]"}
   ],
   "mcp": {"status": "configured|skipped", "files": []},
+  "written": [".claude/scripts/hooks/track-agent.sh", ".claude/memory/facts.md", "..."],
+  "failed": [],
   "errors": []
 }
 ```
+
+**Важно:** `failed` содержит объекты `{"path", "error", "status"}`. Если `failed` не пуст — оркестратор обработает partial failure.
 
 ## Лог
 

@@ -281,6 +281,15 @@ error_routing: {}
 ### Паттерн "Write first"
 ОБЯЗАТЕЛЬНО Write файл ПЕРЕД возвратом результата. Не возвращай содержимое без записи на диск.
 
+### Error tracking
+
+Для КАЖДОЙ операции Write:
+1. Выполни Write
+2. Если Write вернул ошибку или был отклонён пользователем:
+   - Добавь в массив failed: `{"path": "{file_path}", "error": "{error_text}", "status": "[WRITE_FAIL]"}`
+   - **ПРОДОЛЖАЙ** со следующим файлом — НЕ останавливайся
+3. Если Write успешен — добавь путь в массив written[]
+
 ---
 
 ## Выход
@@ -303,9 +312,13 @@ error_routing: {}
     {"name": "hotfix", "path": ".claude/pipelines/hotfix.md", "status": "[NEW]"}
   ],
   "directories_created": [".claude/agents/", ".claude/skills/", ".claude/memory/", "..."],
+  "written": [".claude/agents/analyst.md", ".claude/agents/devops.md", "..."],
+  "failed": [],
   "errors": []
 }
 ```
+
+**Важно:** `failed` содержит объекты `{"path", "error", "status"}`. Если `failed` не пуст — оркестратор обработает partial failure.
 
 ## Лог
 

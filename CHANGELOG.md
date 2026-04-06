@@ -5,6 +5,19 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [8.1.1] - 2026-04-06
+
+### Fixed
+- **Custom mode parsing (BUG-001)** — "Other" input in analysis_depth question now fuzzy-matches mode keywords (`standart` → `standard`, `стандарт` → `standard`, etc.) and extracts custom instructions after `+`, `,`, `:`, `;` separators into `config.custom_instructions`
+- **Subagent silent write failure (BUG-002)** — step-8 subagents now track Write results per-file with `written[]`/`failed[]` arrays in gen-report; orchestrator reads reports after step 8, offers retry for failed files only instead of redoing everything; team-flow fallback is now granular (skips already-written files)
+
+### Changed
+- gen-report schema for step-8-lang, step-8-common, step-8-infra: added `written[]` and `failed[]` fields
+- SKILL.md header: v7 → v8
+- state.json config schema: added `custom_instructions` field
+- step-7-analyze.md: passes `custom_instructions` to per-lang analysis subagent prompts
+- bootstrap-team-flow.md: granular fallback for Phase D — retries only missing/failed files
+
 ## [8.1.0] - 2026-04-04
 
 ### Added

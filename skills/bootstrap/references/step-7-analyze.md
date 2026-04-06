@@ -23,6 +23,9 @@
 
 ### Standard-анализ (standard | deep)
 
+**Custom instructions:** Если `state.config.custom_instructions` не null — добавь в конец prompt каждого субагента строку:
+`Дополнительные инструкции от пользователя: {config.custom_instructions}`
+
 Для КАЖДОГО `{lang}` из `state.stack.langs` — запусти отдельный Agent tool (mode: "auto"):
   prompt: "Проанализируй {lang}-код проекта в {PROJECT_DIR}.
   Используй Grep/Glob для поиска паттернов, Read для 10-15 репрезентативных файлов.
