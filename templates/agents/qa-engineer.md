@@ -1,6 +1,7 @@
 ---
 name: "qa-engineer"
 description: "QA: тест-планы, чеклисты, Postman, Playwright E2E, ручное тестирование"
+version: "8.2.0"
 mode: "plan"
 ---
 

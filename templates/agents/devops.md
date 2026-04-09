@@ -1,6 +1,7 @@
 ---
 name: "devops"
 description: "CI/CD, Docker, инфраструктура, хост-окружение, деплой"
+version: "8.2.0"
 mode: "plan"
 ---
 

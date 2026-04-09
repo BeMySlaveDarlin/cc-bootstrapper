@@ -15,7 +15,7 @@
 
 ```json
 {
-  "version": "7.2.0",
+  "version": "8.2.0",
   "mode": null,
   "started_at": "{ISO8601}",
   "updated_at": "{ISO8601}",

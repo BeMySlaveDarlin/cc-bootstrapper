@@ -74,7 +74,7 @@ mkdir -p .claude/{agents,skills,pipelines}
 **Мульти-язычные проекты:** При повторном вызове для второго `{lang}` — ДОПОЛНЯЙ существующие скиллы секциями для нового языка, НЕ перезаписывай целиком.
 
 ### Версионирование
-- Поле `version` в YAML frontmatter (например `version: "8.1.0"`)
+- Поле `version` в YAML frontmatter (например `version: "8.2.0"`)
 - При `validate`: нет версии или version < `7.2.0` → `[REGEN]`
 
 ### Валидация (режим `validate`)
@@ -105,7 +105,7 @@ mkdir -p .claude/{agents,skills,pipelines}
 ---
 name: "new-code"
 description: "..."
-version: "8.1.0"
+version: "8.2.0"
 phases: 7
 capture: "full"
 user_prompts: true
@@ -162,7 +162,7 @@ Task(<agent-path>, subagent_type: "general-purpose"):
 → Нет Phase 0 при `adaptive_teams: true` → `[FIX] {path}: добавлен CAPABILITY DETECT`
 
 ### Версионирование
-- Версия в YAML frontmatter поле `version` (например `version: "8.1.0"`)
+- Версия в YAML frontmatter поле `version` (например `version: "8.2.0"`)
 - При `validate`: нет version или version < `8.0.0` → `[REGEN]`
 - **МИГРАЦИЯ:** Если первая строка содержит `<!-- version: X.Y.Z -->` (старый формат) → `[REGEN]` в новый формат с frontmatter
 

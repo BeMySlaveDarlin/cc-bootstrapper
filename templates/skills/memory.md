@@ -2,7 +2,7 @@
 name: "memory"
 description: "Трёхуровневая система памяти проекта"
 user-invocable: false
-version: "8.1.0"
+version: "8.2.0"
 ---
 
 # Skill: Memory — Трёхуровневая система памяти проекта

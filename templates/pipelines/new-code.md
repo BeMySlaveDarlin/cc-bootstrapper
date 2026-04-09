@@ -1,7 +1,7 @@
 ---
 name: "new-code"
 description: "Полный цикл создания нового кода"
-version: "8.1.0"
+version: "8.2.0"
 phases: 7
 capture: "full"
 user_prompts: true
@@ -16,6 +16,17 @@ triggers:
   - фича
   - модуль
   - эндпоинт
+peer_validation:
+  - phase: 1
+    author: analyst
+    validator: "{lang}-architect"
+    artifact: "plans/{task-slug}-spec.md"
+    max_iterations: 2
+  - phase: 2
+    author: "{lang}-architect"
+    validator: "{lang}-reviewer"
+    artifact: "plans/{task-slug}.md"
+    max_iterations: 2
 error_routing:
   analysis_rejected: retry_current
   architecture_rejected: retry_current
@@ -24,6 +35,7 @@ error_routing:
   test_fail: {max_retries: 2, action: stop_and_report}
   review_block: retry_from:6
   team_spawn_fail: fallback_sequential
+  peer_review_stuck: show_with_warnings
 ---
 
 # Pipeline: New Code
@@ -49,7 +61,9 @@ Task(.claude/agents/analyst.md, subagent_type: "general-purpose"):
   Ограничение: read-only
   Верни: summary (scope + затронутые модули + acceptance criteria)
 
-**После субагента** — прочитай `.claude/output/plans/{task-slug}-spec.md` и покажи пользователю.
+{PEER_REVIEW}
+
+**После peer review** — прочитай `.claude/output/plans/{task-slug}-spec.md` и покажи пользователю.
 
 AskUserQuestion:
   question: "ТЗ готово. Подтвердить?"
@@ -79,7 +93,9 @@ Task(.claude/agents/{lang}-architect.md, subagent_type: "general-purpose"):
   Ограничение: read-only
   Верни: summary (модули, ключевые решения, путь к плану)
 
-**После субагента** — прочитай `.claude/output/plans/{task-slug}.md` и покажи пользователю.
+{PEER_REVIEW}
+
+**После peer review** — прочитай `.claude/output/plans/{task-slug}.md` и покажи пользователю.
 
 AskUserQuestion:
   question: "Архитектурный план готов. Подтвердить?"

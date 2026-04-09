@@ -1,7 +1,7 @@
 ---
 name: "api-docs"
 description: "Генерация API-контрактов"
-version: "8.1.0"
+version: "8.2.0"
 phases: 3
 capture: "none"
 user_prompts: false

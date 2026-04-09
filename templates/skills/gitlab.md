@@ -1,7 +1,7 @@
 ---
 name: "gitlab"
 description: "MCP-интеграция с GitLab: маппинг операций на MCP tools"
-version: "8.1.0"
+version: "8.2.0"
 user-invocable: false
 condition: "config.gitlab_mcp"
 ---

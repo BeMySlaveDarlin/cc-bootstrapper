@@ -1,7 +1,7 @@
 ---
 name: "brainstorm"
 description: "Мозговой штурм: анализ идеи с нескольких ракурсов"
-version: "8.1.0"
+version: "8.2.0"
 phases: 4
 capture: "partial"
 user_prompts: true
@@ -21,10 +21,18 @@ triggers:
   - архитектурно
   - продумать
   - предложи
+peer_validation:
+  - phase: 2
+    author: "{lang}-architect"
+    validator: analyst
+    artifact: "plans/{task-slug}-options.md"
+    max_iterations: 2
+    mode: sequential_only
 error_routing:
   frame_rejected: retry_current
   no_decision: skip_capture
   team_spawn_fail: fallback_sequential
+  peer_review_stuck: show_with_warnings
 ---
 
 # Pipeline: Brainstorm
@@ -134,6 +142,10 @@ Task(.claude/agents/storage-architect.md, subagent_type: "general-purpose"):
   Выход: дополни `.claude/output/plans/{task-slug}-options.md` секцией "Storage perspective"
   Ограничение: read-only
   Верни: summary (оценка вариантов с позиции хранилищ)
+
+### Peer Review (только SEQUENTIAL)
+
+{PEER_REVIEW}
 
 ### После Phase 2 (оба режима)
 

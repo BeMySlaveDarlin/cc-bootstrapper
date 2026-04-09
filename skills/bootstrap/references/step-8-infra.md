@@ -204,7 +204,7 @@ bash -n .claude/scripts/verify-bootstrap.sh
 ---
 name: "gitlab"
 description: "Операции с GitLab через MCP"
-version: "8.1.0"
+version: "8.2.0"
 phases: 4
 capture: "none"
 user_prompts: false

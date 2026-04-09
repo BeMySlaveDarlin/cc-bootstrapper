@@ -99,6 +99,20 @@ CLAUDE.md contains a HARD RULE: any code-related request is routed through `/pip
 
 5 pipelines support **Agent Teams**: TeamCreate → Agent spawn → SendMessage coordination → TeamDelete. Automatic fallback to sequential.
 
+### Peer Validation (v8.2.0)
+
+Before each user approval gate — internal peer review: a validator agent (existing agent in read-only mode) reviews the author's output, sends remarks back, author fixes. Max 2-3 iterations. User sees an already reviewed plan.
+
+| Gate | Author | Validator |
+|------|--------|-----------|
+| new-code Phase 1 (spec) | analyst | {lang}-architect |
+| new-code Phase 2 (architecture) | {lang}-architect | {lang}-reviewer |
+| fix-code Phase 1 (diagnosis) | analyst | {lang}-developer |
+| tests Phase 1 (test plan) | analyst | qa-engineer |
+| brainstorm Phase 2 (options) | {lang}-architect | analyst |
+
+Configured via `peer_validation` section in pipeline frontmatter.
+
 ### Data Passing Between Phases
 
 Phases exchange data through files, not conversation context:
@@ -109,6 +123,7 @@ Architect  → plan in output/plans/{task-slug}.md
 Developer  → code from plan
 Tester     → tests from code (git diff)
 Reviewer   → report in output/reviews/{task-slug}-{lang}.md
+Validator  → remarks in output/reviews/{task-slug}-peer-{phase}.md
 ```
 
 Agents **write artifacts to file first, then return summary**. On crash, artifacts are preserved.

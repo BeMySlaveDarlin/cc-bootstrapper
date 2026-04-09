@@ -3,7 +3,7 @@ name: "pipeline"
 description: "Роутер — классифицирует задачу и запускает нужный pipeline"
 user-invocable: true
 argument-hint: "[описание задачи]"
-version: "8.1.0"
+version: "8.2.0"
 ---
 
 > **CRITICAL: Имя директории `skills/pipeline/` и файл frontmatter КОПИРОВАТЬ AS-IS.

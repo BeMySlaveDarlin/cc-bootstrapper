@@ -1,6 +1,7 @@
 ---
 name: "storage-architect"
 description: "Проектирование хранилищ данных: БД, кэш, очереди, object storage"
+version: "8.2.0"
 mode: "plan"
 ---
 

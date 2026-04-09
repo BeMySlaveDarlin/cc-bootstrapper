@@ -1,7 +1,7 @@
 ---
 name: "fix-code"
 description: "Диагностика и исправление бага"
-version: "8.1.0"
+version: "8.2.0"
 phases: 5
 capture: "partial"
 user_prompts: true
@@ -16,12 +16,19 @@ triggers:
   - не работает
   - сломалось
   - regression
+peer_validation:
+  - phase: 1
+    author: analyst
+    validator: "{lang}-developer"
+    artifact: "plans/{task-slug}.md"
+    max_iterations: 2
 error_routing:
   diagnosis_rejected: retry_current
   syntax_error: retry_current
   test_fail: {max_retries: 2, action: stop_and_report}
   review_block: retry_from:4
   team_spawn_fail: fallback_sequential
+  peer_review_stuck: show_with_warnings
 ---
 
 # Pipeline: Fix Code
@@ -39,14 +46,22 @@ error_routing:
 
 ## Phase 1: DIAGNOSIS
 
-1. Прочитай `.claude/memory/facts.md` → секции: Stack, Key Paths
-2. Прочитай `.claude/memory/issues.md`
-3. Локализуй проблему: файл, строка, причина
-4. Определи root cause
-5. Проверь `.claude/memory/decisions/` на релевантные ограничения
-6. **ОБЯЗАТЕЛЬНО** запиши диагностику в `.claude/output/plans/{task-slug}.md` через Write tool ПЕРЕД возвратом
+Task(.claude/agents/analyst.md, subagent_type: "general-purpose"):
+  Вход: описание бага, `.claude/memory/facts.md`, `.claude/memory/issues.md`, `.claude/memory/decisions/`
+  Выход: `.claude/output/plans/{task-slug}.md`
+  Ограничение: read-only
+  Инструкция:
+    1. Прочитай `.claude/memory/facts.md` → секции: Stack, Key Paths
+    2. Прочитай `.claude/memory/issues.md`
+    3. Локализуй проблему: файл, строка, причина
+    4. Определи root cause
+    5. Проверь `.claude/memory/decisions/` на релевантные ограничения
+    6. Запиши диагностику в `.claude/output/plans/{task-slug}.md`
+  Верни: summary (root cause, затронутые модули, план исправления)
 
-**После субагента** — прочитай `.claude/output/plans/{task-slug}.md` и покажи пользователю.
+{PEER_REVIEW}
+
+**После peer review** — прочитай `.claude/output/plans/{task-slug}.md` и покажи пользователю.
 
 AskUserQuestion:
   question: "Диагностика готова. Подтвердить план исправления?"

@@ -90,6 +90,19 @@
 | `{TEAM_SHUTDOWN}` | `includes/team-shutdown.md` | все adaptive пайплайны (после team flow) |
 | `{AGENT_BASE_CONTEXT}` | `includes/agent-base-context.md` | все агенты (memory ссылки) |
 | `{MCP_SKILLS_CONTEXT}` | `includes/mcp-skills-context.md` | все агенты (MCP skills ссылки) |
+| `{PEER_REVIEW}` | `includes/peer-review.md` (параметризованный) | new-code, fix-code, brainstorm, tests |
+
+### Параметры `{PEER_REVIEW}`
+
+Генератор step-8 подставляет значения из `peer_validation` секции frontmatter пайплайна:
+
+| Параметр | Описание | Пример |
+|----------|----------|--------|
+| `{PEER_AUTHOR}` | Агент-автор результата | `analyst`, `{lang}-architect` |
+| `{PEER_VALIDATOR}` | Агент-валидатор | `{lang}-architect`, `{lang}-reviewer` |
+| `{PEER_ARTIFACT}` | Путь к артефакту (относительно `.claude/output/`) | `plans/{task-slug}-spec.md` |
+| `{PEER_PHASE}` | ID фазы (для имени review-файла) | `spec`, `arch`, `diagnosis` |
+| `{PEER_MAX_ITERATIONS}` | Макс. итераций автор↔валидатор | `2`, `3` |
 
 ## Кастомные плейсхолдеры (pipeline router)
 

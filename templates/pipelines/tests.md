@@ -1,7 +1,7 @@
 ---
 name: "tests"
 description: "Генерация тестов для существующего кода"
-version: "8.1.0"
+version: "8.2.0"
 phases: 4
 capture: "none"
 user_prompts: true
@@ -14,11 +14,18 @@ triggers:
   - покрытие
   - unit test
   - coverage
+peer_validation:
+  - phase: 1
+    author: analyst
+    validator: qa-engineer
+    artifact: "plans/{task-slug}.md"
+    max_iterations: 2
 error_routing:
   plan_rejected: retry_current
   test_fail: {max_retries: 2, action: stop_and_report}
   review_block: retry_from:4
   team_spawn_fail: fallback_sequential
+  peer_review_stuck: show_with_warnings
 ---
 
 # Pipeline: Tests
@@ -36,11 +43,21 @@ error_routing:
 
 ## Phase 1: ANALYZE
 
-1. Прочитай `.claude/memory/facts.md` → секции: Stack, Key Paths
-2. Определи целевые файлы и их public API
-3. Проверь существующие тесты — не дублировать
-4. Составь план тестирования: класс → методы → сценарии
-5. Запиши план в `.claude/output/plans/{task-slug}.md`
+Task(.claude/agents/analyst.md, subagent_type: "general-purpose"):
+  Вход: целевые файлы / модули, `.claude/memory/facts.md`
+  Выход: `.claude/output/plans/{task-slug}.md`
+  Ограничение: read-only
+  Инструкция:
+    1. Прочитай `.claude/memory/facts.md` → секции: Stack, Key Paths
+    2. Определи целевые файлы и их public API
+    3. Проверь существующие тесты — не дублировать
+    4. Составь план тестирования: класс → методы → сценарии
+    5. Запиши план в `.claude/output/plans/{task-slug}.md`
+  Верни: summary (целевые файлы, сценариев, существующих тестов)
+
+{PEER_REVIEW}
+
+**После peer review** — прочитай `.claude/output/plans/{task-slug}.md` и покажи пользователю.
 
 ### Вывод
 ```

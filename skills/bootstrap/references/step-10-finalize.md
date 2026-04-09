@@ -86,7 +86,7 @@ for f in .claude/agents/*.md .claude/skills/*/SKILL.md .claude/pipelines/*.md .c
 done
 
 jq -n \
-    --arg version "8.1.0" \
+    --arg version "8.2.0" \
     --arg generated "$(date -u +%Y-%m-%dT%H:%M:%SZ)" \
     --argjson hashes "$HASHES" \
     '{
@@ -162,7 +162,7 @@ done
 
 ```
 ╔══════════════════════════════════════════╗
-║  Bootstrap Complete — v8.0.0             ║
+║  Bootstrap Complete — v8.2.0             ║
 ╠══════════════════════════════════════════╣
 ║  Project: {PROJECT_NAME}                 ║
 ║  Mode: {MODE}                            ║

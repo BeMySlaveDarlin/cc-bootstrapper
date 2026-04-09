@@ -5,6 +5,23 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [8.2.0] - 2026-04-09
+
+### Added
+- **Peer Validation** — validator agent reviews author's output before user approval gate. Author receives remarks, fixes, validator re-checks (max 2-3 iterations). User sees already reviewed plan.
+- New include: `peer-review.md` — parameterized author↔validator cycle template with `{PEER_AUTHOR}`, `{PEER_VALIDATOR}`, `{PEER_ARTIFACT}`, `{PEER_PHASE}`, `{PEER_MAX_ITERATIONS}` placeholders
+- `peer_validation` section in pipeline frontmatter — declarative author/validator pairs per phase
+- `peer_review_stuck: show_with_warnings` error routing — shows unresolved remarks to user after max iterations
+- **REUSE FIRST rule** in all agents — mandatory search for existing code before creating new helpers/utilities/services. Applied to: analyst, lang-architect, lang-developer, lang-test-developer, lang-reviewer
+- `version` field in all agent frontmatter (was missing)
+
+### Changed
+- Peer review applied to 5 gates: new-code Phase 1 (analyst→architect), new-code Phase 2 (architect→reviewer), fix-code Phase 1 (analyst→developer), tests Phase 1 (analyst→qa-engineer), brainstorm Phase 2 SEQUENTIAL (architect→analyst)
+- fix-code Phase 1: refactored from inline steps to Task(analyst) for consistency with peer review pattern
+- tests Phase 1: refactored from inline steps to Task(analyst) for consistency with peer review pattern
+- Placeholder registry: added `{PEER_REVIEW}` with parameterized include documentation
+- Version bump: all pipelines, agents, skills, references, plugin.json → 8.2.0
+
 ## [8.1.1] - 2026-04-06
 
 ### Fixed

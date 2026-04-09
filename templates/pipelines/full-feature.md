@@ -1,7 +1,7 @@
 ---
 name: "full-feature"
 description: "Полный цикл фичи: код + API docs + QA docs"
-version: "8.1.0"
+version: "8.2.0"
 phases: 5
 capture: "full"
 user_prompts: false
