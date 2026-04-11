@@ -1,10 +1,12 @@
 # Шаг 8: Генерация инфраструктуры
 
+> Modes: fresh, upgrade
+
 > **SUBAGENT ISOLATION:** Этот шаг выполняется как изолированный субагент.
 > Используй ТОЛЬКО переменные из state-файла. НЕ обращайся к результатам других шагов напрямую.
 
 ## Вход
-- `.bootstrap-cache/state.json` → `config` (db, container, gitlab_mcp, gitlab.*), `stack`
+- `.claude/.cache/state.json` → `config` (db, container, gitlab_mcp, gitlab.*), `stack`
 
 ---
 
@@ -31,7 +33,7 @@ bash -n .claude/scripts/hooks/*.sh
 bash -n .claude/scripts/verify-bootstrap.sh
 ```
 
-### Валидация (режим `validate`)
+### Валидация (режим `patch`)
 - Все хук-файлы существуют
 - Все executable (`chmod +x`)
 - `bash -n` проходит (синтаксис OK)
@@ -139,7 +141,7 @@ bash -n .claude/scripts/verify-bootstrap.sh
 {риски}
 ```
 
-### Режим `validate` для memory-файлов
+### Режим `patch` для memory-файлов
 - Если файл существует → `[OK]`, **НЕ перезаписывать** (пользователь мог добавить данные!)
 - Если файла нет → `[NEW]`, создать из шаблона
 - Исключение: `TEMPLATE.md` — перезаписывать всегда (это шаблон, не данные)
@@ -172,7 +174,7 @@ bash -n .claude/scripts/verify-bootstrap.sh
 }
 ```
 
-**ВАЖНО:** добавь `.mcp.json` в `.gitignore` проекта (содержит токен).
+Важно: `.mcp.json` может содержать токены. Пользователь сам решает добавлять ли его в `.gitignore`.
 
 ### MCP-скиллы (условные)
 
@@ -182,11 +184,11 @@ bash -n .claude/scripts/verify-bootstrap.sh
 |--------|---------------|---------|
 | `templates/skills/gitlab.md` | `.claude/skills/gitlab/SKILL.md` | `config.gitlab_mcp = true` |
 | `templates/skills/github.md` | `.claude/skills/github/SKILL.md` | `config.github_mcp = true` |
-| `templates/skills/playwright.md` | `.claude/skills/playwright/SKILL.md` | playwright в `auto.plugins_already_installed[]` ИЛИ `mcp__plugin_playwright_playwright__*` в permissions |
+| `templates/skills/playwright.md` | `.claude/skills/playwright/SKILL.md` | playwright MCP доступен (см. проверку ниже) |
 
 Проверка условий:
 - `config.gitlab_mcp` / `config.github_mcp` — из `state.json → config`
-- playwright — проверь `state.json → auto.plugins_already_installed[]` содержит `"playwright"` ИЛИ `state.json → config.permissions[]` содержит `mcp__plugin_playwright_playwright__*`. Если любое из двух true → генерировать скилл
+- playwright — проверь `.claude/settings.json → permissions.allow[]` содержит `mcp__plugin_playwright_playwright__*` ИЛИ `.mcp.json` содержит playwright-сервер. Если любое true → генерировать скилл
 
 Скиллы подключаются к существующим агентам через `## Контекст`:
 - `devops` → читает gitlab/github скилл для CI/CD операций
@@ -200,68 +202,61 @@ bash -n .claude/scripts/verify-bootstrap.sh
 
 ### pipelines/gitlab.md
 
-```markdown
----
-name: "gitlab"
-description: "Операции с GitLab через MCP"
-version: "8.2.0"
-phases: 4
-capture: "none"
-user_prompts: false
-parallel_per_lang: false
-error_matrix: true
-chains: []
-triggers:
-  - gitlab
-  - MR
-  - merge request
-  - issue
-  - "задача #"
-error_routing:
-  auth_fail: stop_and_report
-  not_found: stop_and_report
-  execute_fail: retry_current
----
+Генерируется из шаблона `templates/pipelines/gitlab.md` → `.claude/pipelines/gitlab.md`.
+Условие: `config.gitlab_mcp = true`.
 
-# Pipeline: GitLab
+### skills/github/SKILL.md
 
-## Phase 1: ANALYZE
-1. Определи тип операции из запроса
-2. Собери параметры (projectId, IID, branch, etc.)
-3. Покажи план пользователю
+Генерируется из шаблона `templates/skills/github.md` → `.claude/skills/github/SKILL.md`.
 
-## Phase 2: EXECUTE
+### pipelines/github.md
 
-Task(.claude/agents/gitlab-manager.md, subagent_type: "general-purpose"):
-  Вход: параметры операции + `.claude/skills/gitlab/SKILL.md`
-  Выход: результат MCP-вызова
-  Ограничение: read-only
-  Верни: summary (операция, статус, URL)
-
-## Phase 3: VERIFY (для критичных операций)
-Только для: merge MR, delete issue, create release
-- Повторно запроси объект для подтверждения статуса
-
-## Phase 4: REPORT
-- Summary с URL
-- Обнови memory если релевантно
-
-## Матрица ошибок
-
-| Фаза | Ошибка | Действие |
-|------|--------|----------|
-| EXECUTE | 401 Unauthorized | Проверить токен в .mcp.json |
-| EXECUTE | 403 Forbidden | Проверить permissions |
-| EXECUTE | 404 Not Found | Проверить projectId/IID |
-| EXECUTE | 409 Conflict | Сообщить пользователю (MR уже существует) |
-```
+Генерируется из шаблона `templates/pipelines/github.md` → `.claude/pipelines/github.md`.
+Условие: `config.github_mcp = true`.
 
 ### Обновления в существующих файлах
 
-**skills/pipeline/SKILL.md** — добавить в Keyword-таблицу:
+**skills/pipeline/SKILL.md** — добавить через placeholder-подстановку:
+
+Если `config.gitlab_mcp = true`, в `{CUSTOM_PIPELINE_KEYWORDS}` добавить:
 ```
-| gitlab, MR, merge request, issue, задача #N | `gitlab.md` |
+| **GITLAB** | gitlab, MR, merge request, issue, задача #N |
 ```
+В `{CUSTOM_PIPELINE_OPTIONS}` добавить:
+```
+    - {label: "gitlab", description: "Операции с GitLab (MR, issues)"}
+```
+
+Если `config.github_mcp = true`, в `{CUSTOM_PIPELINE_KEYWORDS}` добавить:
+```
+| **GITHUB** | github, PR, pull request, issue, issue #N |
+```
+В `{CUSTOM_PIPELINE_OPTIONS}` добавить:
+```
+    - {label: "github", description: "Операции с GitHub (PR, issues)"}
+```
+
+---
+
+## 8-infra.4 Include-подстановки
+
+При генерации файлов на этом шаге подставлять ТОЛЬКО актуальные includes:
+- `{CAPTURE:full}` → `templates/includes/capture-full.md`
+- `{CAPTURE:partial}` → `templates/includes/capture-partial.md`
+- `{CAPTURE:review}` → `templates/includes/capture-review.md`
+- `{TEAM_AGENT_RULES}` → `templates/includes/team-agent-rules.md`
+- `{AGENT_BASE_CONTEXT}` → `templates/includes/agent-base-context.md`
+- `{MCP_SKILLS_CONTEXT}` → `templates/includes/mcp-skills-context.md`
+- `{STACK_ADAPTATIONS}` → `templates/includes/stack-adaptations.md`
+- `{TASK_SYNTAX}` → `templates/includes/task-syntax.md`
+
+**УДАЛЁННЫЕ includes (НЕ подставлять, если встречаются в legacy файлах — удалить строку):**
+- ~~`{CAPABILITY_DETECT}`~~ — удалён
+- ~~`{PIPELINE_STATE_INIT}`~~ — удалён
+- ~~`{PIPELINE_STATE_UPDATE}`~~ — удалён
+- ~~`{PEER_REVIEW}`~~ — удалён
+- ~~`{PARALLEL_PER_LANG}`~~ — удалён
+- ~~`{TEAM_SHUTDOWN}`~~ — удалён
 
 ---
 
@@ -270,13 +265,13 @@ Task(.claude/agents/gitlab-manager.md, subagent_type: "general-purpose"):
 ### Режим `fresh`
 Записывать все файлы без проверок.
 
-### Режим `validate`
+### Режим `patch`
 - Хуки: валидация → `[OK]`/`[FIX]`/`[NEW]`/`[REGEN]`
 - Memory: НЕ перезаписывать существующие (данные пользователя!)
 - MCP: перегенерировать если структура изменилась
 
 ### Паттерн "Write first"
-ОБЯЗАТЕЛЬНО Write файл ПЕРЕД возвратом результата. Не возвращай содержимое без записи на диск.
+Записывай файл перед возвратом результата.
 
 ### Error tracking
 
@@ -290,32 +285,34 @@ Task(.claude/agents/gitlab-manager.md, subagent_type: "general-purpose"):
 ---
 
 ## Выход
-- `.bootstrap-cache/gen-report-8-infra.json`
+- `.claude/.cache/gen-report-8-infra.json`
 
-Формат отчёта:
+Единый формат gen-report:
 ```json
 {
   "step": "8-infra",
-  "hooks": [
-    {"name": "track-agent.sh", "path": ".claude/scripts/hooks/track-agent.sh", "status": "[NEW]"},
-    {"name": "maintain-memory.sh", "path": ".claude/scripts/hooks/maintain-memory.sh", "status": "[NEW]"}
+  "generated_at": "ISO8601",
+  "files": [
+    {"path": "scripts/hooks/track-agent.sh", "type": "hook", "status": "created", "source": "template"},
+    {"path": "memory/facts.md", "type": "memory", "status": "created", "source": "template"},
+    {"path": "scripts/verify-bootstrap.sh", "type": "script", "status": "created", "source": "template"}
   ],
-  "memory": [
-    {"name": "facts.md", "path": ".claude/memory/facts.md", "status": "[NEW]"},
-    {"name": "patterns.md", "path": ".claude/memory/patterns.md", "status": "[NEW]"}
-  ],
-  "mcp": {"status": "configured|skipped", "files": []},
-  "written": [".claude/scripts/hooks/track-agent.sh", ".claude/memory/facts.md", "..."],
-  "failed": [],
   "errors": []
 }
 ```
 
-**Важно:** `failed` содержит объекты `{"path", "error", "status"}`. Если `failed` не пуст — оркестратор обработает partial failure.
+| Поле files[] | Описание |
+|--------------|----------|
+| path | Относительно .claude/ |
+| type | agent, skill, pipeline, hook, script, memory, config |
+| status | created, skipped, error, user_exists |
+| source | template, custom |
+
+`errors[]` — объекты `{"path", "error"}`. Если не пуст — оркестратор обработает partial failure.
 
 ## Лог
 
-**ОБЯЗАТЕЛЬНО** перед checkpoint запиши лог в `.bootstrap-cache/step-8-infra-log.md`:
+Перед checkpoint запиши лог в `.claude/.cache/step-8-infra-log.md`:
 
 ```markdown
 # Step 8: Генерация инфраструктуры — Log
@@ -334,14 +331,7 @@ Task(.claude/agents/gitlab-manager.md, subagent_type: "general-purpose"):
 
 ## Checkpoint
 
-После завершения обнови state:
-```json
-{
-  "generation": {
-    "checkpoint": "8-infra_done",
-    "completed_files": ["...список созданных файлов..."]
-  }
-}
-```
+> **НЕ пиши в state.json** — при параллельном выполнении это вызывает race condition.
+> Оркестратор обновит state после сбора всех gen-reports.
 
-Запиши отчёт в `.bootstrap-cache/gen-report-8-infra.json`.
+Запиши отчёт в `.claude/.cache/gen-report-8-infra.json`.

@@ -2,7 +2,6 @@
 name: "testing"
 description: "Паттерны тестирования, покрытие, фреймворки"
 user-invocable: false
-version: "8.2.0"
 ---
 
 # Skill: Testing — {LANG}/{TEST_FRAMEWORK}

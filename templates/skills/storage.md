@@ -2,7 +2,6 @@
 name: "storage"
 description: "Паттерны работы с хранилищами данных: БД, кэш, очереди, object storage"
 user-invocable: false
-version: "8.2.0"
 ---
 
 # Skill: Storage — {PROJECT_NAME}

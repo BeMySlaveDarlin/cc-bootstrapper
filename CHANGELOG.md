@@ -5,6 +5,40 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [9.0.0] - 2026-04-12
+
+### Breaking
+- Pipeline frontmatter v9: `phases[]` array of objects, `agents{}` section, `modes[]`, structured `error_routing`
+- SKILL.md = чистый router (определяет mode → читает flow файл). Sequential и team flow в отдельных references/
+- `.bootstrap-cache/` → `.claude/.cache/`, бэкапы → `.claude/.cache/backups/`
+- Permissions: `Read` + `Edit` (не Write). `Edit(.claude/**)` для .claude/ директории
+- Version убран из frontmatter шаблонов — версионирование через manifest
+
+### Added
+- **Router architecture** — SKILL.md (30 строк) → flow-sequential.md / flow-team.md. LLM видит только один flow
+- **Agent Teams** — обязательный режим если TeamCreate доступен. Team flow с TeamCreate → Agent(name, team_name) → SendMessage
+- **known-templates.json** — кумулятивный реестр template-файлов всех версий для upgrade classification
+- **Two-level upgrade classification** — known template + v9 template exists. DELETE только если оба true
+- **Upgrade safety** — бэкап с --exclude, safety check перед удалением, hooks protected
+- **Patch mode** — cleanup deprecated + frontmatter v8→v9 + router regen
+- **Upgrade mode** — backup → classify → configure → generate → restore
+- Pipeline templates: gitlab.md, github.md (ранее inline)
+- Dual-mode pipeline router (sequential/team), condition resolution, on-block retry, autonomous mode
+- `.bootstrap-manifest.json` replaces `.bootstrap-version`
+
+### Changed
+- .gitignore проекта не трогаем вообще
+- Settings/plugins не запускаются при patch/upgrade
+- Sequential generation: lang → common → infra последовательно (не параллельно)
+- mkdir директорий перед генерацией (оркестратор/lead, не субагенты)
+- bump-version.sh не трогает template файлы
+
+### Removed
+- **Peer validation**, **hotfix pipeline**
+- 6 deprecated includes, `.bootstrap-version`
+- step-10-finalize.md (мёртвый файл)
+- bootstrap-team-flow.md (заменён flow-team.md)
+
 ## [8.2.0] - 2026-04-09
 
 ### Added

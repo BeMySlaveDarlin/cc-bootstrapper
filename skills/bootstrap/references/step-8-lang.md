@@ -1,14 +1,16 @@
 # Шаг 8: Генерация per-language ({lang})
 
+> Modes: fresh, upgrade
+
 > **SUBAGENT ISOLATION:** Этот шаг выполняется как изолированный субагент.
 > Используй ТОЛЬКО переменные из state-файла. НЕ обращайся к результатам других шагов напрямую.
 
 **Вызывается ОДИН РАЗ НА КАЖДЫЙ ЯЗЫК.** Оркестратор передаёт `{lang}` как параметр.
 
 ## Вход
-- `.bootstrap-cache/state.json` → `config`, `stack`, `registries.agents`, `registries.skills`, `registries.pipelines`
+- `.claude/.cache/state.json` → `config`, `stack`, `registries.agents`, `registries.skills`, `registries.pipelines`
 - `{lang}` — текущий язык (например `php`, `node`, `go`)
-- `.bootstrap-cache/deep/{lang}-patterns.md` — паттерны кода (если есть, из step 7)
+- `.claude/.cache/deep/{lang}-patterns.md` — паттерны кода (если есть, из step 7)
 
 ## Директории
 
@@ -24,7 +26,7 @@ mkdir -p .claude/{agents,skills,pipelines}
 
 ### Источники данных
 1. **State:** `stack.langs`, `stack.frameworks`, `stack.test_frameworks`, `stack.test_cmds`, `stack.lint_cmds`
-2. **Cache:** `.bootstrap-cache/deep/{lang}-patterns.md` → naming conventions, error handling → вставить в секцию `## Правила` агента
+2. **Cache:** `.claude/.cache/deep/{lang}-patterns.md` → naming conventions, error handling → вставить в секцию `## Правила` агента
 3. **Registry:** `registries.agents[]` — для проверки [USER] файлов
 
 ### Генерация
@@ -60,30 +62,24 @@ mkdir -p .claude/{agents,skills,pipelines}
 
 ---
 
-## 8-lang.2 Скиллы (per-lang)
+## 8-lang.2 Скиллы (per-lang фрагменты)
 
-Генерируй code-style и testing, адаптированные под `{lang}`.
+Генерируй per-lang фрагменты для code-style и testing. Финальная сборка — в step-8-common.
 
-| Шаблон | Выходной файл |
-|--------|---------------|
-| `templates/skills/code-style.md` | `.claude/skills/code-style/SKILL.md` |
-| `templates/skills/testing.md` | `.claude/skills/testing/SKILL.md` |
+| Что | Выходной файл |
+|-----|---------------|
+| Code-style фрагмент для `{lang}` | `.claude/.cache/skills/code-style-{lang}.md` |
+| Testing фрагмент для `{lang}` | `.claude/.cache/skills/testing-{lang}.md` |
 
-Если есть `.bootstrap-cache/deep/{lang}-patterns.md` → обогатить code-style паттернами из проекта (naming conventions, error handling, структура).
+Если есть `.claude/.cache/deep/{lang}-patterns.md` → обогатить code-style фрагмент паттернами из проекта (naming conventions, error handling, структура).
 
-**Мульти-язычные проекты:** При повторном вызове для второго `{lang}` — ДОПОЛНЯЙ существующие скиллы секциями для нового языка, НЕ перезаписывай целиком.
+Шаблоны: `templates/skills/code-style.md` и `templates/skills/testing.md` — используй как reference для формата секции. Каждый фрагмент = секция `## {Lang}` с правилами для конкретного языка.
 
-### Версионирование
-- Поле `version` в YAML frontmatter (например `version: "8.2.0"`)
-- При `validate`: нет версии или version < `7.2.0` → `[REGEN]`
-
-### Валидация (режим `validate`)
-- Начинается с YAML frontmatter (`---` блок) с полями `name`, `description`, `version`
+### Валидация (режим `patch`)
+- Начинается с YAML frontmatter (`---` блок) с полями `name`, `description`
 - `description` — ОДНА строка (критичное ограничение Claude Code)
-- `version` — совпадает с версией шаблона
 - `user-invocable: false`
 → Нет frontmatter → добавить из шаблона → `[FIX] {path}: добавлен frontmatter`
-→ Нет `version` или version < шаблона → перегенерировать → `[REGEN] {path}: version outdated`
 
 ---
 
@@ -98,24 +94,47 @@ mkdir -p .claude/{agents,skills,pipelines}
 | `templates/pipelines/review.md` | `.claude/pipelines/review.md` |
 | `templates/pipelines/tests.md` | `.claude/pipelines/tests.md` |
 
-### Формат пайплайнов v8
+### Формат пайплайнов v9
 
-Пайплайны имеют YAML frontmatter (вместо HTML-комментария `<!-- version -->`):
+Пайплайны имеют YAML frontmatter v9 (phases[] = array, agents{} секция):
 ```yaml
 ---
 name: "new-code"
 description: "..."
-version: "8.2.0"
-phases: 7
+triggers: [...]
+modes: [sequential, team]
 capture: "full"
 user_prompts: true
-parallel_per_lang: true
-error_matrix: true
-chains: []
-triggers: [...]
-error_routing: {...}
+error_routing:
+  test_fail: retry_current
+  review_block: stop
+  agent_error: {max_retries: 2, action: stop}
+  timeout: skip
+phases:
+  - id: 1
+    name: ANALYSIS
+    agent: "{lang}-architect"
+    inputs: ["task description", "memory/facts.md"]
+    output: ".claude/output/plans/{task-slug}-analysis.md"
+    gate: review
+    artifact: ".claude/output/plans/{task-slug}-analysis.md"
+  - id: 2
+    name: CODE
+    agent: "{lang}-developer"
+    inputs: ["plan from phase 1"]
+    output: "project source"
+    gate: silent
+agents:
+  "{lang}-architect":
+    on_block: {action: stop, message: "Architect blocked"}
+  "{lang}-developer":
+    on_block: {action: retry_current, max_retries: 2}
 ---
 ```
+
+**Убрано из v8 frontmatter:** `adaptive_teams`, `parallel_per_lang`, `error_matrix`, `chains`, `peer_validation`
+**Добавлено в v9:** `modes`, `phases` (array), `agents` (секция с `on_block`), structured `error_routing`
+**Фаза без агента:** `agent: lead` — special value, означает что фазу выполняет сам роутер
 
 ### Include-подстановки
 
@@ -123,7 +142,17 @@ error_routing: {...}
 - `{CAPTURE:full}` → содержимое `templates/includes/capture-full.md`
 - `{CAPTURE:partial}` → содержимое `templates/includes/capture-partial.md`
 - `{CAPTURE:review}` → содержимое `templates/includes/capture-review.md`
-- `{PARALLEL_PER_LANG}` → содержимое `templates/includes/parallel-per-lang.md`
+- `{TEAM_AGENT_RULES}` → содержимое `templates/includes/team-agent-rules.md`
+- `{AGENT_BASE_CONTEXT}` → содержимое `templates/includes/agent-base-context.md`
+- `{MCP_SKILLS_CONTEXT}` → содержимое `templates/includes/mcp-skills-context.md`
+
+**УДАЛЁННЫЕ includes (НЕ подставлять):**
+- ~~`{CAPABILITY_DETECT}`~~ — удалён
+- ~~`{PIPELINE_STATE_INIT}`~~ — удалён
+- ~~`{PIPELINE_STATE_UPDATE}`~~ — удалён
+- ~~`{PEER_REVIEW}`~~ — удалён
+- ~~`{PARALLEL_PER_LANG}`~~ — удалён
+- ~~`{TEAM_SHUTDOWN}`~~ — удалён
 
 ### Task() формат
 
@@ -142,44 +171,33 @@ Task(<agent-path>, subagent_type: "general-purpose"):
 - Если неоднозначно — используй `stack.primary_lang`
 - Для задач, затрагивающих несколько языков — фазы CODE, TESTS, REVIEW повторяются для каждого затронутого языка
 
-**Мульти-язычные проекты:** При повторном вызове для второго `{lang}` — пайплайны уже существуют. Task()-синтаксис использует `{lang}-developer` и т.д., где `{lang}` подставляется динамически в runtime. НЕ перезаписывай пайплайны — они language-agnostic.
+**Мульти-язычные проекты:** При повторном вызове для второго `{lang}` — пайплайны уже существуют. Task()-синтаксис использует `{lang}-developer` и т.д., где `{lang}` подставляется динамически в runtime. Пайплайны language-agnostic: если файл существует — пропусти, если нет — создай.
 
-### Adaptive Teams
+### Pipeline body — dual sections
 
-Пайплайны **new-code**, **fix-code**, **tests**, **review** содержат dual execution modes прямо в шаблонах:
-- `{CAPABILITY_DETECT}` — Phase 0, подставляется из `templates/includes/capability-detect.md`
-- "Режим TEAM" — агенты запускаются как команда, общаются через файлы в `.claude/output/`
-- "Режим SEQUENTIAL" — последовательные Task()-вызовы (fallback)
-- `adaptive_teams: true` в YAML frontmatter
+Пайплайны содержат две секции в body:
+- `### [sequential]` — Task()-вызовы по task-syntax.md (тупой диспетчер)
+- `### [team]` — structured shorthand (TeamCreate, Agent, SendMessage)
 
-Генератору **НЕ НУЖНО** добавлять adaptive-секции — они уже в шаблонах. Нужно только подставить `{CAPABILITY_DETECT}` как обычный include-плейсхолдер.
+Генератору НЕ нужно добавлять team-секции вручную — они уже в шаблонах. `modes:` в frontmatter определяет доступные режимы выполнения.
 
-**Валидация adaptive (режим `validate`):**
-- Пайплайны с `adaptive_teams: true` в frontmatter должны содержать Phase 0: CAPABILITY DETECT
-- Каждая adaptive-фаза содержит ОБА режима (TEAM + SEQUENTIAL)
-- Секции "Режим TEAM" используют Teammate-синтаксис (НЕ устаревший TeamCreate/Spawn/Shutdown)
-- Task() только в секциях "Режим SEQUENTIAL"
-→ Нет Phase 0 при `adaptive_teams: true` → `[FIX] {path}: добавлен CAPABILITY DETECT`
+Пайплайны с `modes: [sequential]` (review, api-docs, qa-docs) — содержат только `### [sequential]`.
 
-### Версионирование
-- Версия в YAML frontmatter поле `version` (например `version: "8.2.0"`)
-- При `validate`: нет version или version < `8.0.0` → `[REGEN]`
-- **МИГРАЦИЯ:** Если первая строка содержит `<!-- version: X.Y.Z -->` (старый формат) → `[REGEN]` в новый формат с frontmatter
+### Миграция
+- **МИГРАЦИЯ:** Если первая строка содержит `<!-- version: X.Y.Z -->` (старый формат) → `[REGEN]`
+- **МИГРАЦИЯ v8→v9:** phases: int → phases: array, adaptive_teams → modes, добавить agents{}, убрать deprecated fields → `[REGEN]`
 
-### Валидация (режим `validate`)
+### Валидация (режим `patch`)
 
 **Приоритет 1 — формат:**
-- Содержит YAML frontmatter с полями `name`, `version`, `triggers`
-- Если старый формат (HTML-комментарий) → `[REGEN]`
+- Содержит YAML frontmatter с полями `name`, `triggers`, `phases` (array), `modes`
+- Если старый формат (HTML-комментарий или phases: int) → `[REGEN]`
 
-**Приоритет 2 — версия:**
-- `version` в frontmatter < `8.0.0` → `[REGEN] {path}: version outdated`
-
-**Приоритет 3 — структура (только если версия совпала):**
-- Содержат Task() pseudo-syntax с 4 полями (Вход, Выход, Ограничение, Верни)
-- Содержат `## Матрица ошибок`
-- НЕ содержат устаревших текстовых инструкций
-→ Task()-пайплайн без Task() → `[REGEN] {path}`
+**Приоритет 2 — структура:**
+- Содержат `### [sequential]` с Task() pseudo-syntax
+- НЕ содержат deprecated includes (`{CAPABILITY_DETECT}`, `{PIPELINE_STATE_*}`, `{PEER_REVIEW}`, `{PARALLEL_PER_LANG}`, `{TEAM_SHUTDOWN}`)
+- НЕ содержат `## Матрица ошибок` (заменена structured error_routing)
+→ Проблемы найдены → `[REGEN] {path}`
 
 **Сохранение пользовательского контента:**
 При `[REGEN]` — обнаружить non-template контент (кастомные фазы, комментарии пользователя).
@@ -192,7 +210,7 @@ Task(<agent-path>, subagent_type: "general-purpose"):
 ### Режим `fresh`
 Записывать все файлы без проверок.
 
-### Режим `validate`
+### Режим `patch`
 **Всё автоматически, без AskUserQuestion.** Для КАЖДОГО файла:
 
 1. **Файл НЕ существует** → создать из шаблона → `[NEW] {path}`
@@ -213,10 +231,10 @@ Task(<agent-path>, subagent_type: "general-purpose"):
 
 #### Маркер [USER]
 Файлы в `.claude/agents/`, `.claude/skills/`, `.claude/pipelines/`, которых НЕТ в соответствующих registries — пользовательские.
-→ `[USER] {path}` — НЕ ТРОГАТЬ, НЕ УДАЛЯТЬ, НЕ МОДИФИЦИРОВАТЬ
+→ `[USER] {path}` — user content, skip
 
 ### Паттерн "Write first"
-ОБЯЗАТЕЛЬНО Write файл ПЕРЕД возвратом результата. Не возвращай содержимое без записи на диск.
+Записывай файл перед возвратом результата.
 
 ### Error tracking
 
@@ -232,34 +250,33 @@ Task(<agent-path>, subagent_type: "general-purpose"):
 ---
 
 ## Выход
-- `.bootstrap-cache/gen-report-8-{lang}.json`
+- `.claude/.cache/gen-report-8-{lang}.json`
 
-Формат отчёта:
+Единый формат gen-report:
 ```json
 {
-  "step": "8-lang",
-  "lang": "{lang}",
-  "agents": [
-    {"name": "{lang}-architect", "path": ".claude/agents/{lang}-architect.md", "status": "[NEW]"},
-    {"name": "{lang}-developer", "path": ".claude/agents/{lang}-developer.md", "status": "[NEW]"}
+  "step": "8-lang-{lang}",
+  "generated_at": "ISO8601",
+  "files": [
+    {"path": "agents/{lang}-architect.md", "type": "agent", "status": "created", "source": "template"},
+    {"path": "agents/{lang}-developer.md", "type": "agent", "status": "created", "source": "template"}
   ],
-  "skills": [
-    {"name": "code-style", "path": ".claude/skills/code-style/SKILL.md", "status": "[NEW]"}
-  ],
-  "pipelines": [
-    {"name": "new-code", "path": ".claude/pipelines/new-code.md", "status": "[NEW]"}
-  ],
-  "written": [".claude/agents/{lang}-architect.md", ".claude/agents/{lang}-developer.md", "..."],
-  "failed": [],
   "errors": []
 }
 ```
 
-**Важно:** `failed` содержит объекты `{"path", "error", "status"}`. `errors` — строки для backward compat. Если `failed` не пуст — оркестратор обработает partial failure.
+| Поле files[] | Описание |
+|--------------|----------|
+| path | Относительно .claude/ |
+| type | agent, skill, pipeline, hook, script, memory, config |
+| status | created, skipped, error, user_exists |
+| source | template, custom |
+
+`errors[]` — объекты `{"path", "error"}`. Если не пуст — оркестратор обработает partial failure.
 
 ## Лог
 
-**ОБЯЗАТЕЛЬНО** перед checkpoint запиши лог в `.bootstrap-cache/step-8-lang-log.md`:
+Перед checkpoint запиши лог в `.claude/.cache/step-8-lang-log.md`:
 
 ```markdown
 # Step 8: Генерация per-language — Log
@@ -278,14 +295,7 @@ Task(<agent-path>, subagent_type: "general-purpose"):
 
 ## Checkpoint
 
-После завершения обнови state:
-```json
-{
-  "generation": {
-    "checkpoint": "8-lang_{lang}_done",
-    "completed_files": ["...список созданных файлов..."]
-  }
-}
-```
+> **НЕ пиши в state.json** — при параллельном выполнении это вызывает race condition.
+> Оркестратор обновит state после сбора всех gen-reports.
 
-Запиши отчёт в `.bootstrap-cache/gen-report-8-{lang}.json`.
+Запиши отчёт в `.claude/.cache/gen-report-8-{lang}.json` — это ЕДИНСТВЕННЫЙ выходной файл.

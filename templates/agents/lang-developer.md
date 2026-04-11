@@ -1,7 +1,6 @@
 ---
 name: "{lang}-developer"
 description: "Написание {LANG}-кода по плану архитектора"
-version: "8.2.0"
 mode: "implement"
 ---
 

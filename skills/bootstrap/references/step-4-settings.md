@@ -1,9 +1,11 @@
 # Шаг 4: Settings.json
 
+> Modes: fresh. Секция 4.4 (patch) — legacy, оркестратор не вызывает step-4 при patch.
+
 > **SUBAGENT ISOLATION:** Этот шаг выполняется как изолированный субагент.
 
 ## Вход
-- `.bootstrap-cache/state.json` → `config` (permissions_level, git_permissions), `stack`
+- `.claude/.cache/state.json` → `config` (permissions_level, git_permissions), `stack`
 
 **Defaults если поля отсутствуют в config:**
 - `permissions_level` → `"balanced"`
@@ -18,7 +20,7 @@
 
 ## ФОРМАТ SETTINGS.JSON
 
-**КРИТИЧЕСКИ ВАЖНО:** Соблюдай точный формат Claude Code settings.json.
+Важно: Соблюдай точный формат Claude Code settings.json.
 
 ### Permissions
 
@@ -90,11 +92,14 @@
 
 ### Базовые (всегда)
 ```json
-"Read", "Write", "Edit", "WebSearch", "WebFetch",
-"Bash(ls:*)", "Bash(find:*)", "Bash(cat:*)", "Bash(head:*)", "Bash(wc:*)",
-"Bash(echo:*)", "Bash(test:*)", "Bash(sort:*)", "Bash(du:*)", "Bash(touch:*)",
-"Bash(xargs:*)", "Bash(grep:*)", "Bash(cd:*)"
+"Read", "Write", "Edit",
+"Read(.claude/**)", "Write(.claude/**)", "Edit(.claude/**)",
+"WebSearch", "WebFetch",
+"Bash(wc:*)", "Bash(sort:*)", "Bash(du:*)", "Bash(touch:*)",
+"Bash(test:*)", "Bash(mkdir:*)"
 ```
+
+> `Write(.claude/**)` и `Edit(.claude/**)` — explicit allow для .claude/ директории.
 
 ### Git (из `config.git_permissions[]`)
 
@@ -171,7 +176,7 @@
 
 Генерировать **ВСЕГДА**, даже для non-Node проектов (vendor, site-packages покрывают PHP/Python).
 
-В validate mode: если deny отсутствует → `[+ADD]`. Если есть кастомные deny-правила пользователя → `[USER]`, сохранить.
+В patch mode: если deny отсутствует → `[+ADD]`. Если есть кастомные deny-правила пользователя → `[USER]`, сохранить.
 
 ---
 
@@ -184,7 +189,7 @@
 Если `stack.db` != none (реальная БД, не кэш/очередь):
 - `update-schema.sh` → SessionStart
 
-### Deprecated hooks (удалять автоматически в validate mode)
+### Deprecated hooks (удалять автоматически в patch mode)
 
 Если в текущем `settings.json` найдены — удалить БЕЗ подтверждения пользователя:
 
@@ -205,12 +210,14 @@
 
 Собрать permissions + hooks → записать в `.claude/settings.json`.
 
+Если Write отклонён пользователем — верни error.
+
 ---
 
-## 4.4 Режим `validate` (DIFF-BASED MERGE)
+## 4.4 Режим `patch` (DIFF-BASED MERGE)
 
 1. Прочитай `.claude/settings.json` (если существует)
-2. Прочитай `.claude/settings.local.json` (если существует) — **НИКОГДА НЕ МОДИФИЦИРОВАТЬ**
+2. Прочитай `.claude/settings.local.json` (если существует) — read-only
 3. Рассчитай diff:
 
 | Маркер | Значение | Действие |
@@ -218,7 +225,7 @@
 | `[KEEP]` | Совпадает | Ничего |
 | `[+ADD]` | Есть в целевом, нет в текущем | Предложить добавить |
 | `[-DEL]` | Есть в текущем, нет в целевом | Предложить удалить |
-| `[USER]` | Есть в текущем, нет в registry | НЕ ТРОГАТЬ |
+| `[USER]` | Есть в текущем, нет в registry | skip |
 
 4. Показать diff пользователю
 
@@ -242,7 +249,7 @@
 
 ## Лог
 
-**ОБЯЗАТЕЛЬНО** перед checkpoint запиши лог в `.bootstrap-cache/step-4-log.md`:
+Перед checkpoint запиши лог в `.claude/.cache/step-4-log.md`:
 
 ```markdown
 # Step 4: Settings.json — Log
@@ -261,7 +268,6 @@
 
 ## Checkpoint
 
-Обнови `.bootstrap-cache/state.json`:
-- `steps.4.status` → `"completed"`
-- `steps.4.completed_at` → `"{ISO8601}"`
-- `current_step` → 5
+Обнови `.claude/.cache/state.json`:
+- `steps.settings.status` → `"completed"`
+- `steps.settings.completed_at` → `"{ISO8601}"`

@@ -1,7 +1,6 @@
 ---
 name: "github"
 description: "Интеграция с GitHub: issues, PR, actions, releases через gh CLI"
-version: "8.2.0"
 user-invocable: false
 condition: "config.github_mcp"
 ---

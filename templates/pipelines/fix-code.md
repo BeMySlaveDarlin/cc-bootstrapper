@@ -1,199 +1,76 @@
 ---
 name: "fix-code"
 description: "Диагностика и исправление бага"
-version: "8.2.0"
-phases: 5
-capture: "partial"
+triggers: [баг, ошибка, fix, не работает, сломалось, regression]
+modes: [sequential, team]
+capture: partial
 user_prompts: true
-parallel_per_lang: true
-error_matrix: true
-adaptive_teams: true
-chains: []
-triggers:
-  - баг
-  - ошибка
-  - fix
-  - не работает
-  - сломалось
-  - regression
-peer_validation:
-  - phase: 1
-    author: analyst
-    validator: "{lang}-developer"
-    artifact: "plans/{task-slug}.md"
-    max_iterations: 2
 error_routing:
-  diagnosis_rejected: retry_current
-  syntax_error: retry_current
-  test_fail: {max_retries: 2, action: stop_and_report}
-  review_block: retry_from:4
-  team_spawn_fail: fallback_sequential
-  peer_review_stuck: show_with_warnings
+  test_fail: {max_retries: 2, action: stop}
+  review_block: retry_current
+phases:
+  - id: 1
+    name: DIAGNOSIS
+    needs: []
+    gate: review
+    artifact: plans/{task-slug}.md
+  - id: 2
+    name: FIX
+    needs: [1]
+    gate: silent
+  - id: 3
+    name: TESTS
+    needs: [2]
+    gate: silent
+  - id: 4
+    name: REVIEW
+    needs: [3]
+    gate: confirm
+    artifact: reviews/{task-slug}-{lang}.md
+agents:
+  analyst:
+    phases: [1]
+    input: [description, memory/facts.md, memory/issues.md]
+    output: plans/{task-slug}.md
+  "{lang}-developer":
+    phases: [2]
+    input: [plans/{task-slug}.md]
+    output: fixed files
+    notify: "{lang}-test-developer"
+  "{lang}-test-developer":
+    phases: [3]
+    after: "{lang}-developer"
+    input: [fixed files, bug description]
+    output: regression test
+    notify: "{lang}-reviewer"
+  "{lang}-reviewer":
+    phases: [4]
+    after: "{lang}-test-developer"
+    input: [git diff]
+    output: reviews/{task-slug}-{lang}.md
+    notify: lead
+    on_block:
+      target: "{lang}-developer"
+      max_retries: 2
 ---
 
-# Pipeline: Fix Code
+### [team]
 
-## Phase 0: CAPABILITY DETECT
+TeamCreate("fix-code-{slug}")
 
-{CAPABILITY_DETECT}
+# Phase 1: DIAGNOSIS
+Agent(name="analyst", team_name=T)
+  → SendMessage(to=lead): done + diagnosis path
+Gate: review
+Cleanup: shutdown analyst
 
-{PIPELINE_STATE_INIT}
-
-## Вход
-- Описание бага / ошибки
-- Структурированный контекст из роутера: type, affected_modules
-- `.claude/memory/facts.md`
-
-## Phase 1: DIAGNOSIS
-
-Task(.claude/agents/analyst.md, subagent_type: "general-purpose"):
-  Вход: описание бага, `.claude/memory/facts.md`, `.claude/memory/issues.md`, `.claude/memory/decisions/`
-  Выход: `.claude/output/plans/{task-slug}.md`
-  Ограничение: read-only
-  Инструкция:
-    1. Прочитай `.claude/memory/facts.md` → секции: Stack, Key Paths
-    2. Прочитай `.claude/memory/issues.md`
-    3. Локализуй проблему: файл, строка, причина
-    4. Определи root cause
-    5. Проверь `.claude/memory/decisions/` на релевантные ограничения
-    6. Запиши диагностику в `.claude/output/plans/{task-slug}.md`
-  Верни: summary (root cause, затронутые модули, план исправления)
-
-{PEER_REVIEW}
-
-**После peer review** — прочитай `.claude/output/plans/{task-slug}.md` и покажи пользователю.
-
-AskUserQuestion:
-  question: "Диагностика готова. Подтвердить план исправления?"
-  options:
-    - {label: "Подтвердить", description: "Приступить к исправлению"}
-    - {label: "Уточнить", description: "Скорректировать диагностику"}
-    - {label: "Отменить", description: "Не исправлять"}
-
-→ "Уточнить":
-  AskUserQuestion:
-    question: "Что скорректировать?"
-    header: "Поправки"
-    options:
-      - {label: "Root cause", description: "Другая причина проблемы"}
-      - {label: "Scope", description: "Другие затронутые модули"}
-      - {label: "Подход", description: "Другой способ исправления"}
-  Перезапусти диагностику с поправками. Повтори AskUserQuestion.
-
-{PIPELINE_STATE_UPDATE}
-
-## Phase 2+3+4: FIX → TESTS → REVIEW
-
-### Режим TEAM
-
-Для КАЖДОГО затронутого `{lang}`:
-
-```python
-TeamCreate(team_name="fix-code-{lang}")
-
-Agent(name="{lang}-developer", team_name="fix-code-{lang}", prompt="""
-Прочитай .claude/agents/{lang}-developer.md — выполняй workflow.
-{TEAM_AGENT_RULES}
-ЗАДАНИЕ: исправь код по диагностике `.claude/output/plans/{task-slug}.md` + `.claude/skills/code-style/SKILL.md`.
-После записи: {SYNTAX_CHECK_CMD}.
-Отчёт запиши в `.claude/output/plans/{task-slug}-fix-{lang}.md`.
-SendMessage(to="{lang}-test-developer"): done + путь к отчёту.
-""")
-
-Agent(name="{lang}-test-developer", team_name="fix-code-{lang}", prompt="""
-Прочитай .claude/agents/{lang}-test-developer.md — выполняй workflow.
-{TEAM_AGENT_RULES}
-Жди сообщение от {lang}-developer (done).
-ЗАДАНИЕ: напиши regression test по описанию бага + исправленным файлам.
-После записи: {TEST_CMD}. Если fail — исправь (макс. 2 итерации).
-Отчёт запиши в `.claude/output/plans/{task-slug}-tests-{lang}.md`.
-SendMessage(to="{lang}-reviewer"): done + путь к отчёту.
-""")
-
-Agent(name="{lang}-reviewer", team_name="fix-code-{lang}", prompt="""
-Прочитай .claude/agents/{lang}-reviewer.md — выполняй workflow.
-{TEAM_AGENT_RULES}
-Жди сообщение от {lang}-test-developer (done).
-ЗАДАНИЕ: ревью изменённых файлов (git diff).
-Запиши ревью в `.claude/output/reviews/{task-slug}-{lang}.md`.
-BLOCK → SendMessage(to="{lang}-developer"): реестр правок. Жди исправление. Макс. 2 цикла.
-PASS → SendMessage(to=lead): verdict + путь к ревью.
-""")
-```
-
-### Flow
-```
-{lang}-developer → {lang}-test-developer → {lang}-reviewer
-                                                 ↓ BLOCK
-                                           {lang}-developer (fix) → ... (макс. 2 цикла)
-                                                 ↓ PASS
-                                                lead
-```
-
-Если затронуто несколько языков — команды per-lang ПАРАЛЛЕЛЬНО (отдельный TeamCreate на каждый lang).
-
-{TEAM_SHUTDOWN}
-
-### Режим SEQUENTIAL
-
-Task(.claude/agents/{lang}-developer.md, subagent_type: "general-purpose"):
-  Вход: `.claude/output/plans/{task-slug}.md` + `.claude/skills/code-style/SKILL.md`
-  Выход: исправленные файлы
-  Ограничение: project-write
-  Верни: summary (изменённые файлы, что исправлено)
-
-```bash
-{SYNTAX_CHECK_CMD}
-```
-
-Task(.claude/agents/{lang}-test-developer.md, subagent_type: "general-purpose"):
-  Вход: исправленные файлы (из git diff или summary Phase 2) + описание бага
-  Выход: regression test, подтверждающий исправление
-  Ограничение: project-write
-  Верни: summary (тесты, результат)
-
-```bash
-{TEST_CMD}
-```
-
-Если тесты fail — исправить (максимум 2 итерации).
-
-{PARALLEL_PER_LANG}
-
-Task(.claude/agents/{lang}-reviewer.md, subagent_type: "general-purpose"):
-  Вход: изменённые файлы {lang} (git diff)
-  Выход: `.claude/output/reviews/{task-slug}-{lang}.md`
-  Ограничение: read-only
-  Верни: summary (verdict, замечания по severity)
-
-### Обработка результатов (оба режима)
-- **BLOCK** → исправить и повторить review
-- **PASS WITH WARNINGS** → исправить WARN, продолжить
-- **PASS** → продолжить
-
-{PIPELINE_STATE_UPDATE}
-
-## Phase 5: CAPTURE
-
-{CAPTURE:partial}
-
-### Итог
-```
-[FIX-CODE COMPLETE]
-Режим: {TEAM | SEQUENTIAL}
-Root cause: {описание}
-Исправлено файлов: {N}
-Regression test: {pass/fail}
-Review: {verdict}
-```
-
-## Матрица ошибок
-
-| Фаза | Ошибка | Действие |
-|------|--------|----------|
-| CAPABILITY DETECT | Teams недоступны | Fallback → SEQUENTIAL |
-| DIAGNOSIS | Диагностика отклонена | Уточнить → повторить Phase 1 |
-| FIX+TESTS (TEAM) | Spawn fail | Fallback → SEQUENTIAL |
-| FIX | Syntax error | Исправить → повторить проверку |
-| TESTS | Тесты fail (>2 итераций) | Остановить, показать ошибки пользователю |
-| REVIEW | BLOCK (>2 циклов) | Остановить, показать замечания пользователю |
+# Phase 2-4: FIX → TESTS → REVIEW (per-lang)
+Agent(name="{lang}-developer", team_name=T)
+Agent(name="{lang}-test-developer", team_name=T)
+Agent(name="{lang}-reviewer", team_name=T)
+  {lang}-developer → SendMessage(to={lang}-test-developer): done
+  {lang}-test-developer → SendMessage(to={lang}-reviewer): done
+  {lang}-reviewer: BLOCK → SendMessage(to={lang}-developer): fix + comments
+                   PASS → SendMessage(to=lead): verdict
+Gate: confirm
+Cleanup: shutdown all → TeamDelete

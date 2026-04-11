@@ -1,5 +1,7 @@
 # Шаг 5B: Плагины, MCP и LSP — Применение конфигурации
 
+> Modes: fresh
+
 > **SUBAGENT ISOLATION:** Этот шаг выполняется как изолированный субагент.
 
 ## Роль
@@ -87,11 +89,7 @@
 
 Если `.mcp.json` уже существует — мержи `mcpServers`, не перезаписывай.
 
-### 2. `.gitignore`
-
-Если любой MCP enabled — добавь `.mcp.json` в `.gitignore` (если ещё нет).
-
-### 3. Settings.json
+### 2. Settings.json
 
 Прочитай `.claude/settings.json`. Добавь permissions из входных данных в массив `allow`. Не дублируй.
 
@@ -99,15 +97,14 @@
 
 ### 4. State
 
-Обнови `.bootstrap-cache/state.json`:
+Обнови `.claude/.cache/state.json`:
 - `config.gitlab_mcp` / `config.github_mcp` / `config.docker_mcp` → true/false
-- `steps.5.status` → `"completed"`
-- `steps.5.completed_at` → `"{ISO8601}"`
-- `current_step` → 6
+- `steps.plugins.status` → `"completed"`
+- `steps.plugins.completed_at` → `"{ISO8601}"`
 
 ### 5. Лог
 
-Запиши `.bootstrap-cache/step-5-log.md`:
+Запиши `.claude/.cache/step-5-log.md`:
 
 ```markdown
 # Step 5: Plugins & MCP — Log

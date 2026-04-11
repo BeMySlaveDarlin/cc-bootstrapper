@@ -1,7 +1,6 @@
 ---
 name: "{lang}-architect"
 description: "Планирование модулей, сервисов, архитектуры {LANG}-проекта"
-version: "8.2.0"
 mode: "plan"
 ---
 
@@ -47,9 +46,9 @@ mode: "plan"
 3. **Поищи существующие компоненты для переиспользования** (Grep/Glob по проекту)
 4. Определи затрагиваемые модули и cross-module зависимости
 5. Создай план реализации
-5. Запиши ключевые архитектурные решения в `memory/decisions/{date}-{slug}.md`
-6. Обнови `memory/facts.md` (Active Decisions, Key Paths если изменились)
-7. Обнови `memory/patterns.md` если выявлены новые архитектурные паттерны
+6. Запиши ключевые архитектурные решения в `memory/decisions/{date}-{slug}.md`
+7. Обнови `memory/facts.md` (Active Decisions, Key Paths если изменились)
+8. Обнови `memory/patterns.md` если выявлены новые архитектурные паттерны
 
 ## Формат вывода
 
