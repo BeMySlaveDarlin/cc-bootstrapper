@@ -79,30 +79,12 @@
 
 | Placeholder | Файл-источник | Используется в |
 |-------------|--------------|---------------|
-| `{PIPELINE_STATE_INIT}` | `includes/pipeline-state-init.md` | все pipeline-ы (после Phase 0) |
-| `{PIPELINE_STATE_UPDATE}` | `includes/pipeline-state-update.md` | все pipeline-ы (после каждой рабочей фазы) |
 | `{CAPTURE:full}` | `includes/capture-full.md` | new-code, full-feature |
-| `{CAPTURE:partial}` | `includes/capture-partial.md` | fix-code, hotfix, brainstorm |
+| `{CAPTURE:partial}` | `includes/capture-partial.md` | fix-code, brainstorm |
 | `{CAPTURE:review}` | `includes/capture-review.md` | review |
-| `{PARALLEL_PER_LANG}` | `includes/parallel-per-lang.md` | new-code, fix-code, review, tests |
-| `{CAPABILITY_DETECT}` | `includes/capability-detect.md` | new-code, fix-code, tests, review, brainstorm |
-| `{TEAM_AGENT_RULES}` | `includes/team-agent-rules.md` | все Agent() промпты в team-секциях пайплайнов |
-| `{TEAM_SHUTDOWN}` | `includes/team-shutdown.md` | все adaptive пайплайны (после team flow) |
+| `{TEAM_AGENT_RULES}` | `includes/team-agent-rules.md` | все Agent() промпты в team mode |
 | `{AGENT_BASE_CONTEXT}` | `includes/agent-base-context.md` | все агенты (memory ссылки) |
 | `{MCP_SKILLS_CONTEXT}` | `includes/mcp-skills-context.md` | все агенты (MCP skills ссылки) |
-| `{PEER_REVIEW}` | `includes/peer-review.md` (параметризованный) | new-code, fix-code, brainstorm, tests |
-
-### Параметры `{PEER_REVIEW}`
-
-Генератор step-8 подставляет значения из `peer_validation` секции frontmatter пайплайна:
-
-| Параметр | Описание | Пример |
-|----------|----------|--------|
-| `{PEER_AUTHOR}` | Агент-автор результата | `analyst`, `{lang}-architect` |
-| `{PEER_VALIDATOR}` | Агент-валидатор | `{lang}-architect`, `{lang}-reviewer` |
-| `{PEER_ARTIFACT}` | Путь к артефакту (относительно `.claude/output/`) | `plans/{task-slug}-spec.md` |
-| `{PEER_PHASE}` | ID фазы (для имени review-файла) | `spec`, `arch`, `diagnosis` |
-| `{PEER_MAX_ITERATIONS}` | Макс. итераций автор↔валидатор | `2`, `3` |
 
 ## Кастомные плейсхолдеры (pipeline router)
 
@@ -120,3 +102,30 @@
 | `(условная секция, если CACHE != none)` | `state.stack.cache != "none"` | skills/storage |
 | `(условная секция, если QUEUE != none)` | `state.stack.queue != "none"` | skills/storage |
 | `(условная секция, если FRONTEND != none)` | `state.stack.frontend != "none"` | skills/testing |
+
+## v9 special values
+
+| Значение | Контекст | Описание |
+|----------|----------|----------|
+| `agent: lead` | phases[].agent | Роутер выполняет фазу inline, без Task()/Agent() |
+| `gate: silent` | phases[].gate | Фаза без остановки |
+| `gate: review` | phases[].gate | Показать artifact + Подтвердить/Повторить/Отменить |
+| `gate: confirm` | phases[].gate | Продолжить/Стоп |
+
+## Удалённые плейсхолдеры (v9)
+
+Следующие плейсхолдеры удалены в v9 и НЕ должны использоваться:
+
+| Placeholder | Причина удаления |
+|-------------|-----------------|
+| `{PIPELINE_STATE_INIT}` | State принадлежит роутеру |
+| `{PIPELINE_STATE_UPDATE}` | State принадлежит роутеру |
+| `{CAPABILITY_DETECT}` | Роутер сам через AskUserQuestion |
+| `{PARALLEL_PER_LANG}` | Нотация `\|\|` в sequential |
+| `{TEAM_SHUTDOWN}` | Shutdown protocol в SKILL.md роутера |
+| `{PEER_REVIEW}` | Peer validation убрана |
+| `{PEER_AUTHOR}` | Peer validation убрана |
+| `{PEER_VALIDATOR}` | Peer validation убрана |
+| `{PEER_ARTIFACT}` | Peer validation убрана |
+| `{PEER_PHASE}` | Peer validation убрана |
+| `{PEER_MAX_ITERATIONS}` | Peer validation убрана |

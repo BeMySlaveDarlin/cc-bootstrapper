@@ -1,0 +1,281 @@
+{
+  "description": "Кумулятивный реестр всех template-файлов по всем версиям cc-bootstrapper. Используется upgrade для классификации файлов при отсутствии manifest.",
+  "version": "9.0.0",
+  "agents": [
+    {
+      "pattern": "{lang}-architect",
+      "added_in": "v4.0.0",
+      "removed_in": null,
+      "conditional": null
+    },
+    {
+      "pattern": "{lang}-developer",
+      "added_in": "v4.0.0",
+      "removed_in": null,
+      "conditional": null
+    },
+    {
+      "pattern": "{lang}-test-developer",
+      "added_in": "v4.0.0",
+      "removed_in": null,
+      "conditional": null
+    },
+    {
+      "pattern": "{lang}-reviewer",
+      "added_in": "v7.2.0",
+      "removed_in": null,
+      "renamed_from": [
+        "{lang}-reviewer-logic",
+        "{lang}-reviewer-security"
+      ],
+      "conditional": null
+    },
+    {
+      "pattern": "{lang}-reviewer-logic",
+      "added_in": "v4.0.0",
+      "removed_in": "v7.2.0",
+      "renamed_to": "{lang}-reviewer",
+      "conditional": null
+    },
+    {
+      "pattern": "{lang}-reviewer-security",
+      "added_in": "v4.0.0",
+      "removed_in": "v7.2.0",
+      "renamed_to": "{lang}-reviewer",
+      "conditional": null
+    },
+    {
+      "pattern": "frontend-developer",
+      "added_in": "v4.0.0",
+      "removed_in": "v7.2.0",
+      "conditional": null
+    },
+    {
+      "pattern": "frontend-reviewer",
+      "added_in": "v4.0.0",
+      "removed_in": "v7.2.0",
+      "conditional": null
+    },
+    {
+      "pattern": "frontend-test-developer",
+      "added_in": "v4.0.0",
+      "removed_in": "v7.2.0",
+      "conditional": null
+    },
+    {
+      "pattern": "frontend-contract",
+      "added_in": "v4.0.0",
+      "removed_in": "v7.2.0",
+      "conditional": null
+    },
+    {
+      "pattern": "db-architect",
+      "added_in": "v4.0.0",
+      "removed_in": "v7.2.0",
+      "renamed_to": "storage-architect",
+      "conditional": "stack.db != none"
+    },
+    {
+      "pattern": "storage-architect",
+      "added_in": "v7.2.0",
+      "removed_in": null,
+      "renamed_from": "db-architect",
+      "conditional": "stack.db != none"
+    },
+    {
+      "pattern": "analyst",
+      "added_in": "v5.4.0",
+      "removed_in": null,
+      "conditional": null
+    },
+    {
+      "pattern": "devops",
+      "added_in": "v4.0.0",
+      "removed_in": null,
+      "conditional": null
+    },
+    {
+      "pattern": "qa-engineer",
+      "added_in": "v4.0.0",
+      "removed_in": null,
+      "conditional": null
+    }
+  ],
+  "skills": [
+    {
+      "name": "architecture",
+      "added_in": "v4.0.0",
+      "removed_in": null,
+      "conditional": null
+    },
+    {
+      "name": "code-style",
+      "added_in": "v4.0.0",
+      "removed_in": null,
+      "conditional": null
+    },
+    {
+      "name": "database",
+      "added_in": "v4.0.0",
+      "removed_in": "v7.2.0",
+      "renamed_to": "storage",
+      "conditional": null
+    },
+    {
+      "name": "storage",
+      "added_in": "v7.2.0",
+      "removed_in": null,
+      "renamed_from": "database",
+      "conditional": null
+    },
+    {
+      "name": "memory",
+      "added_in": "v4.0.0",
+      "removed_in": null,
+      "conditional": null
+    },
+    {
+      "name": "pipeline",
+      "added_in": "v4.0.0",
+      "removed_in": null,
+      "conditional": null
+    },
+    {
+      "name": "p",
+      "added_in": "v4.0.0",
+      "removed_in": null,
+      "conditional": null
+    },
+    {
+      "name": "testing",
+      "added_in": "v4.0.0",
+      "removed_in": null,
+      "conditional": null
+    },
+    {
+      "name": "gitlab",
+      "added_in": "v8.0.0",
+      "removed_in": null,
+      "conditional": "config.gitlab_mcp == true"
+    },
+    {
+      "name": "github",
+      "added_in": "v8.0.0",
+      "removed_in": null,
+      "conditional": "config.github_mcp == true"
+    },
+    {
+      "name": "playwright",
+      "added_in": "v8.0.0",
+      "removed_in": null,
+      "conditional": "playwright in plugins"
+    }
+  ],
+  "pipelines": [
+    {
+      "name": "new-code",
+      "added_in": "v4.0.0",
+      "removed_in": null,
+      "conditional": null
+    },
+    {
+      "name": "fix-code",
+      "added_in": "v4.0.0",
+      "removed_in": null,
+      "conditional": null
+    },
+    {
+      "name": "review",
+      "added_in": "v4.0.0",
+      "removed_in": null,
+      "conditional": null
+    },
+    {
+      "name": "tests",
+      "added_in": "v4.0.0",
+      "removed_in": null,
+      "conditional": null
+    },
+    {
+      "name": "full-feature",
+      "added_in": "v4.0.0",
+      "removed_in": null,
+      "conditional": null
+    },
+    {
+      "name": "api-docs",
+      "added_in": "v4.0.0",
+      "removed_in": null,
+      "conditional": null
+    },
+    {
+      "name": "qa-docs",
+      "added_in": "v4.0.0",
+      "removed_in": null,
+      "conditional": null
+    },
+    {
+      "name": "hotfix",
+      "added_in": "v4.0.0",
+      "removed_in": "v9.0.0",
+      "conditional": null
+    },
+    {
+      "name": "brainstorm",
+      "added_in": "v8.0.0",
+      "removed_in": null,
+      "conditional": null
+    },
+    {
+      "name": "gitlab",
+      "added_in": "v7.2.0",
+      "removed_in": null,
+      "conditional": "config.gitlab_mcp == true"
+    },
+    {
+      "name": "github",
+      "added_in": "v9.0.0",
+      "removed_in": null,
+      "conditional": "config.github_mcp == true"
+    }
+  ],
+  "hooks": [
+    {
+      "name": "track-agent.sh",
+      "added_in": "v4.0.0",
+      "removed_in": null,
+      "conditional": null
+    },
+    {
+      "name": "maintain-memory.sh",
+      "added_in": "v4.0.0",
+      "removed_in": null,
+      "conditional": null
+    },
+    {
+      "name": "update-schema.sh",
+      "added_in": "v4.0.0",
+      "removed_in": null,
+      "conditional": "stack.db != none"
+    },
+    {
+      "name": "git-context.sh",
+      "added_in": "v4.0.0",
+      "removed_in": "v5.2.0",
+      "conditional": null
+    },
+    {
+      "name": "session-summary.sh",
+      "added_in": "v4.0.0",
+      "removed_in": "v5.2.0",
+      "conditional": null
+    },
+    {
+      "name": "verify-bootstrap.sh",
+      "added_in": "v4.0.0",
+      "removed_in": null,
+      "conditional": null,
+      "path": "scripts/verify-bootstrap.sh"
+    }
+  ]
+}

@@ -1,5 +1,7 @@
 # Шаг 5A: Плагины, MCP и LSP — Сканирование
 
+> Modes: fresh
+
 > **SUBAGENT ISOLATION:** Этот шаг выполняется как изолированный субагент.
 
 ## Роль
@@ -7,7 +9,7 @@
 Ты — сканер. Проверяешь что установлено через ToolSearch, определяешь что нужно, формируешь вопросы и авто-действия для оркестратора. **НЕ задаёшь вопросов пользователю. НЕ пишешь файлы.**
 
 ## Вход
-- `.bootstrap-cache/state.json` → `plugin_recommendations[]`, `stack`, `mode`
+- `.claude/.cache/state.json` → `plugin_recommendations[]`, `stack`, `mode`
 
 ## Выход
 
@@ -105,7 +107,7 @@
 4. Если уже работает → в `auto.plugins_already_installed` + permission в `auto.permissions_to_add`
 5. Если не установлен → сформируй вопрос в `questions`
 
-**ВАЖНО:** НЕ проверяй settings.json. Проверяй ТОЛЬКО через ToolSearch (рантайм).
+Проверка доступности — только через ToolSearch (рантайм), не через settings.json.
 
 #### 5.1 Playwright
 - Условие: `stack.frontend != none` ИЛИ E2E тесты

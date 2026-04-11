@@ -1,6 +1,19 @@
-TEAM MODE: НЕ вызывай AskUserQuestion — он недоступен в team context.
+TEAM MODE: не вызывай AskUserQuestion — он недоступен в team context.
 Если нужен пользовательский ввод:
 1. Запиши вопрос/данные в `.claude/output/interaction-{task-slug}.json`
-2. SendMessage(to=lead): interaction_required + путь к файлу
+2. SendMessage(to="team-lead", summary="interaction required", message="interaction_required: путь к файлу")
 3. Жди ответ от lead через SendMessage
 Твой output не виден пользователю — только lead видит диалог.
+
+Формат SendMessage (обязательные поля):
+- `to` — имя получателя (строка)
+- `message` — текст сообщения (строка)
+- `summary` — краткое описание 5-10 слов (обязателен для текстовых сообщений)
+
+## Правила lead'а (Team mode)
+
+1. **Молчи** — lead не пишет пользователю, кроме: финальный отчёт, эскалация, ответ на прямой вопрос
+2. **Не вмешивайся** — не собирай данные за агентов. Агенты сами читают код и артефакты
+3. **Делегация** — агенты автономны в рамках фазы. Lead координирует, не исполняет
+4. **Строгие гейты** — failed фазы не пропускаются. BLOCK = retry или эскалация
+5. **Подпинывание** — если агент молчит, SendMessage(to="{agent}", summary="reminder", message="напоминание о задании"). Не отвечает → эскалация

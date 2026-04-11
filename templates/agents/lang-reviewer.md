@@ -1,7 +1,6 @@
 ---
 name: "{lang}-reviewer"
 description: "Комплексное ревью {LANG}-кода: архитектура, логика, безопасность, оптимизация"
-version: "8.2.0"
 mode: "plan"
 ---
 

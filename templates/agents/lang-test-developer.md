@@ -1,7 +1,6 @@
 ---
 name: "{lang}-test-developer"
 description: "Написание тестов для {LANG}-кода"
-version: "8.2.0"
 mode: "implement"
 ---
 

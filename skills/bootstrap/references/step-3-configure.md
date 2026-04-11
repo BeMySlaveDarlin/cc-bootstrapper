@@ -1,5 +1,7 @@
 # Шаг 3A: Настройка bootstrap — Сбор данных
 
+> Modes: fresh, upgrade
+
 > **SUBAGENT ISOLATION:** Этот шаг выполняется как изолированный субагент.
 
 ## Роль
@@ -7,7 +9,7 @@
 Ты — сборщик. Читаешь state, рассчитываешь estimates, формируешь структуру вопросов для оркестратора. **НЕ задаёшь вопросов пользователю. НЕ пишешь в state.**
 
 ## Вход
-- `.bootstrap-cache/state.json` (stack + mode из step 1-2)
+- `.claude/.cache/state.json` (stack + mode из step 1-2)
 
 ## Выход
 
@@ -90,7 +92,7 @@
       }
     },
     "custom_pipelines": {
-      "base_pipelines": ["new-code", "fix-code", "review", "tests", "api-docs", "qa-docs", "full-feature", "hotfix"],
+      "base_pipelines": ["new-code", "fix-code", "review", "tests", "api-docs", "qa-docs", "full-feature", "brainstorm"],
       "question": {
         "question": "Какие кастомные пайплайны добавить?",
         "header": "Pipelines",
@@ -119,7 +121,7 @@
 
 ## Логика
 
-1. Прочитай `.bootstrap-cache/state.json`
+1. Прочитай `.claude/.cache/state.json`
 2. Из `state.stack` извлеки: langs, file_count, CI detection, DB detection
 3. Рассчитай estimates:
    ```
@@ -132,8 +134,6 @@
 5. Сформируй `base_agents` на основе langs: `{lang}-architect`, `{lang}-developer`, `{lang}-test-developer`, `{lang}-reviewer` для каждого lang + `analyst`, `devops`, `qa-engineer` + `storage-architect` (если has_db) + `ci-manager` (если has_ci)
 6. Верни JSON-блок и слово `done`
 
-## Правило resume
+## Правило skip
 
-Если `state.mode = "resume"` и `state.config` уже содержит ответы — верни `skip` вместо JSON. Оркестратор пропустит вопросы.
-
-**НЕ задавай вопросов. НЕ пиши в state. Только формируй и возвращай.**
+Если `state.config.analysis_depth` существует (config реально заполнен) — верни `skip`. Пустой `{}` — не skip.

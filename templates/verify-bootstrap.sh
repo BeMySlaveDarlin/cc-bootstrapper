@@ -99,13 +99,13 @@ done
 
 echo ""
 echo "=== Checking state file ==="
-if [ -f "$PROJECT_DIR/.bootstrap-cache/state.json" ]; then
-    echo "[WARN] .bootstrap-cache/state.json exists (incomplete bootstrap?)"
+if [ -f "$PROJECT_DIR/.claude/.cache/state.json" ]; then
+    echo "[WARN] .claude/.cache/state.json exists (incomplete bootstrap?)"
 else
     echo "[OK] No stale state file"
 fi
-if [ -d "$PROJECT_DIR/.bootstrap-cache" ]; then
-    echo "[WARN] .bootstrap-cache/ exists (incomplete bootstrap?)"
+if [ -d "$PROJECT_DIR/.claude/.cache" ]; then
+    echo "[WARN] .claude/.cache/ exists (incomplete bootstrap?)"
 else
     echo "[OK] No stale cache"
 fi

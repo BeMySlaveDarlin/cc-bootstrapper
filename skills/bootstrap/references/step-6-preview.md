@@ -1,5 +1,7 @@
 # Шаг 6: План и превью
 
+> Modes: fresh, upgrade
+
 ## Вход
 - `state.stack` (из step 1)
 - `state.registries` (частичные, из step 3: custom agents/skills/pipelines)
@@ -7,7 +9,7 @@
 ## Выход
 - `state.registries` — финальные реестры (agents, skills, pipelines, hooks)
 - `state.metrics` — оценка токенов и файлов
-- `.bootstrap-cache/dry-run/preview.md` — сохранённый preview
+- `.claude/.cache/dry-run/preview.md` — сохранённый preview
 
 ## 6.1 Формирование финальных реестров
 
@@ -67,9 +69,9 @@
 | 3 | review | `pipelines/review.md` |
 | 4 | tests | `pipelines/tests.md` |
 | 5 | full-feature | `pipelines/full-feature.md` |
-| 6 | hotfix | `pipelines/hotfix.md` |
-| 7 | api-docs | `pipelines/api-docs.md` |
-| 8 | qa-docs | `pipelines/qa-docs.md` |
+| 6 | api-docs | `pipelines/api-docs.md` |
+| 7 | qa-docs | `pipelines/qa-docs.md` |
+| 8 | brainstorm | `pipelines/brainstorm.md` |
 
 Кастомные пайплайны из `state.registries.pipelines` где `type = "custom"` — добавить как есть.
 
@@ -95,7 +97,7 @@
 | CLAUDE.md | `3000` |
 | Memory (facts + patterns + issues) | `500` |
 | verify-bootstrap.sh | `400` |
-| .bootstrap-version | `200` |
+| .bootstrap-manifest.json | `200` |
 
 **Итого:** сумма всех категорий.
 
@@ -142,7 +144,7 @@
 ╚══════════════════════════════════════════════════════════╝
 ```
 
-При `validate` mode — для каждого файла показать статус: `[OK]` / `[FIX]` / `[NEW]` / `[REGEN]`.
+При `patch` mode — для каждого файла показать статус: `[OK]` / `[FIX]` / `[NEW]` / `[REGEN]`.
 
 ### Подтверждение
 
@@ -155,19 +157,19 @@
   - {label: "Отменить", description: "Прервать bootstrap"}
 - multiSelect: false
 
-Если "Скорректировать" → вернуть управление оркестратору с `state.current_step = 3`.
-Если "Отменить" → завершить bootstrap, удалить `.bootstrap-cache/state.json`.
+Если "Скорректировать" → верни `change` оркестратору (он вернётся к Configure).
+Если "Отменить" → верни `pause`, оркестратор завершит bootstrap.
 
 ## 6.4 Сохранение
 
 1. Записать финальные реестры в `state.registries`
 2. Записать метрики в `state.metrics`
-3. Сохранить preview в `.bootstrap-cache/dry-run/preview.md`
-4. Обновить `.bootstrap-cache/_index.md` — добавить секцию `dry-run/`
+3. Сохранить preview в `.claude/.cache/dry-run/preview.md`
+4. Обновить `.claude/.cache/_index.md` — добавить секцию `dry-run/`
 
 ## Лог
 
-**ОБЯЗАТЕЛЬНО** перед checkpoint запиши лог в `.bootstrap-cache/step-6-log.md`:
+Перед checkpoint запиши лог в `.claude/.cache/step-6-log.md`:
 
 ```markdown
 # Step 6: План и превью — Log
@@ -189,7 +191,6 @@
 Обнови state:
 ```json
 {
-  "steps": {"6": {"status": "completed", "completed_at": "..."}},
-  "current_step": 7
+  "steps": {"preview": {"status": "completed", "completed_at": "..."}},
 }
 ```

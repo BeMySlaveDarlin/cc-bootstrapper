@@ -39,7 +39,7 @@ If Agent Teams are available — prompts for mode: **Team** (parallel agents, ~x
 Auto-detection:
 - Empty project → generates spec template, stops early
 - No `.claude/` → full generation (fresh)
-- Existing `.claude/` → validation + migration (validate)
+- Existing `.claude/` v8.x → patch (mini-upgrade) or upgrade
 - Existing state → resume from last step
 
 Supported stacks: PHP, Node.js/TypeScript, Python, Go, Rust, Java, C#, Ruby. Multi-language projects get agent sets for each language.
@@ -49,7 +49,7 @@ Supported stacks: PHP, Node.js/TypeScript, Python, Go, Rust, Java, C#, Ruby. Mul
 | Step | Name | What It Does |
 |------|------|------------|
 | 1 | Scan | Light scan: manifests, structure, stack, git remote |
-| 2 | Detect Mode | empty / fresh / validate / resume |
+| 2 | Detect Mode | empty / fresh / patch / upgrade / resume |
 | 3 | Configure | permissions, git, analysis depth, custom agents/skills/pipelines |
 | 4 | Settings.json | Base permissions + hooks |
 | 5 | Plugins & MCP | Playwright, Context7, LSP, GitLab/GitHub/Docker MCP |
@@ -57,7 +57,7 @@ Supported stacks: PHP, Node.js/TypeScript, Python, Go, Rust, Java, C#, Ruby. Mul
 | 7 | Deep Analysis | Per-lang patterns, architecture, API (optional) |
 | 8 | Generation | Per-domain in parallel: per-lang + common + infra |
 | 9 | CLAUDE.md | Generation with agent/skill/pipeline tables |
-| 10 | Finalization | Verification, .bootstrap-version, cleanup |
+| 10 | Finalization | Verification, .bootstrap-manifest.json, cleanup |
 
 **Team mode:** phases A(scan∥) → B(config) → C(preview) → D(gen∥) → E(finalize∥). Per-lang generation in parallel via TeamCreate.
 
@@ -83,7 +83,7 @@ CLAUDE.md contains a HARD RULE: any code-related request is routed through `/pip
 
 ## Pipelines
 
-9 base pipelines + custom ones. Pipelines have YAML frontmatter with triggers, error_routing, adaptive_teams.
+8 base pipelines + custom ones. v9 frontmatter: phases[] array, agents{}, modes, structured error_routing.
 
 | Pipeline | When | Key Phases | Agent Teams |
 |----------|------|------------|-------------|
@@ -94,24 +94,9 @@ CLAUDE.md contains a HARD RULE: any code-related request is routed through `/pip
 | `brainstorm` | Discuss idea, approach | Frame → Perspectives → Capture | analyst ∥ architect ∥ storage ∥ devops |
 | `api-docs` | API contracts | Scan → Generate → Save | — |
 | `qa-docs` | Checklists, Postman, E2E | Input → Checklist → Automation → Save | — |
-| `full-feature` | Full feature cycle | new-code + api-docs + qa-docs | — (chains) |
-| `hotfix` | Urgent fix | fix-code + review | — (chains) |
+| `full-feature` | Full feature cycle | 8 inline phases: Analysis→...→QA | — |
 
-5 pipelines support **Agent Teams**: TeamCreate → Agent spawn → SendMessage coordination → TeamDelete. Automatic fallback to sequential.
-
-### Peer Validation (v8.2.0)
-
-Before each user approval gate — internal peer review: a validator agent (existing agent in read-only mode) reviews the author's output, sends remarks back, author fixes. Max 2-3 iterations. User sees an already reviewed plan.
-
-| Gate | Author | Validator |
-|------|--------|-----------|
-| new-code Phase 1 (spec) | analyst | {lang}-architect |
-| new-code Phase 2 (architecture) | {lang}-architect | {lang}-reviewer |
-| fix-code Phase 1 (diagnosis) | analyst | {lang}-developer |
-| tests Phase 1 (test plan) | analyst | qa-engineer |
-| brainstorm Phase 2 (options) | {lang}-architect | analyst |
-
-Configured via `peer_validation` section in pipeline frontmatter.
+4 pipelines support **Agent Teams** (new-code, fix-code, tests, brainstorm): TeamCreate → Agent spawn → SendMessage coordination → TeamDelete. Automatic fallback to sequential.
 
 ### Data Passing Between Phases
 
@@ -123,7 +108,6 @@ Architect  → plan in output/plans/{task-slug}.md
 Developer  → code from plan
 Tester     → tests from code (git diff)
 Reviewer   → report in output/reviews/{task-slug}-{lang}.md
-Validator  → remarks in output/reviews/{task-slug}-peer-{phase}.md
 ```
 
 Agents **write artifacts to file first, then return summary**. On crash, artifacts are preserved.

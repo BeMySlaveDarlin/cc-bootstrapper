@@ -2,7 +2,6 @@
 name: "memory"
 description: "Трёхуровневая система памяти проекта"
 user-invocable: false
-version: "8.2.0"
 ---
 
 # Skill: Memory — Трёхуровневая система памяти проекта
@@ -48,6 +47,17 @@ version: "8.2.0"
 ## Consequences
 {Что это означает для проекта}
 ```
+
+### 4. Patterns (`memory/patterns.md`)
+Повторяющиеся паттерны кода, выявленные при разработке: naming, architecture, error handling.
+- Обновляется Developer и Architect при обнаружении паттернов
+- Читается Developer, Test-Developer, Reviewer для consistency
+
+### 5. Issues (`memory/issues.md`)
+Известные повторяющиеся проблемы, выявленные при ревью.
+- Формат: таблица Date / Issue / Frequency / Resolution
+- Обновляется Reviewer при обнаружении повторяющихся проблем
+- Читается Analyst (для диагностики), Developer (для избежания)
 
 ## Правила записи
 - Пиши decision только для архитектурно-значимых решений (не для каждого бага)

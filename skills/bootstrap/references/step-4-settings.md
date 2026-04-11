@@ -1,9 +1,11 @@
 # Шаг 4: Settings.json
 
+> Modes: fresh
+
 > **SUBAGENT ISOLATION:** Этот шаг выполняется как изолированный субагент.
 
 ## Вход
-- `.bootstrap-cache/state.json` → `config` (permissions_level, git_permissions), `stack`
+- `.claude/.cache/state.json` → `config` (permissions_level, git_permissions), `stack`
 
 **Defaults если поля отсутствуют в config:**
 - `permissions_level` → `"balanced"`
@@ -18,7 +20,7 @@
 
 ## ФОРМАТ SETTINGS.JSON
 
-**КРИТИЧЕСКИ ВАЖНО:** Соблюдай точный формат Claude Code settings.json.
+Важно: Соблюдай точный формат Claude Code settings.json.
 
 ### Permissions
 
@@ -39,10 +41,18 @@
       "Read(**/node_modules/**/.cursorrules)",
       "Read(**/vendor/**/SKILL.md)",
       "Read(**/vendor/**/CLAUDE.md)",
+      "Read(**/vendor/**/AGENTS.md)",
+      "Read(**/vendor/**/.cursorrules)",
       "Read(**/site-packages/**/SKILL.md)",
       "Read(**/site-packages/**/CLAUDE.md)",
+      "Read(**/site-packages/**/AGENTS.md)",
+      "Read(**/site-packages/**/.cursorrules)",
       "Glob(**/node_modules/**/SKILL.md)",
       "Glob(**/node_modules/**/CLAUDE.md)",
+      "Glob(**/vendor/**/SKILL.md)",
+      "Glob(**/vendor/**/CLAUDE.md)",
+      "Glob(**/site-packages/**/SKILL.md)",
+      "Glob(**/site-packages/**/CLAUDE.md)",
       "Bash(*npm install -g*)",
       "Bash(*npm i -g*)",
       "Bash(*yarn global add*)",
@@ -90,11 +100,14 @@
 
 ### Базовые (всегда)
 ```json
-"Read", "Write", "Edit", "WebSearch", "WebFetch",
-"Bash(ls:*)", "Bash(find:*)", "Bash(cat:*)", "Bash(head:*)", "Bash(wc:*)",
-"Bash(echo:*)", "Bash(test:*)", "Bash(sort:*)", "Bash(du:*)", "Bash(touch:*)",
-"Bash(xargs:*)", "Bash(grep:*)", "Bash(cd:*)"
+"Read", "Write", "Edit",
+"Read(.claude/**)", "Write(.claude/**)", "Edit(.claude/**)",
+"WebSearch", "WebFetch",
+"Bash(wc:*)", "Bash(sort:*)", "Bash(du:*)", "Bash(touch:*)",
+"Bash(test:*)", "Bash(mkdir:*)"
 ```
+
+> `Write(.claude/**)` и `Edit(.claude/**)` — explicit allow для .claude/ директории.
 
 ### Git (из `config.git_permissions[]`)
 
@@ -154,10 +167,18 @@
   "Read(**/node_modules/**/.cursorrules)",
   "Read(**/vendor/**/SKILL.md)",
   "Read(**/vendor/**/CLAUDE.md)",
+  "Read(**/vendor/**/AGENTS.md)",
+  "Read(**/vendor/**/.cursorrules)",
   "Read(**/site-packages/**/SKILL.md)",
   "Read(**/site-packages/**/CLAUDE.md)",
+  "Read(**/site-packages/**/AGENTS.md)",
+  "Read(**/site-packages/**/.cursorrules)",
   "Glob(**/node_modules/**/SKILL.md)",
   "Glob(**/node_modules/**/CLAUDE.md)",
+  "Glob(**/vendor/**/SKILL.md)",
+  "Glob(**/vendor/**/CLAUDE.md)",
+  "Glob(**/site-packages/**/SKILL.md)",
+  "Glob(**/site-packages/**/CLAUDE.md)",
   "Bash(*npm install -g*)",
   "Bash(*npm i -g*)",
   "Bash(*yarn global add*)",
@@ -171,7 +192,7 @@
 
 Генерировать **ВСЕГДА**, даже для non-Node проектов (vendor, site-packages покрывают PHP/Python).
 
-В validate mode: если deny отсутствует → `[+ADD]`. Если есть кастомные deny-правила пользователя → `[USER]`, сохранить.
+В patch mode: если deny отсутствует → `[+ADD]`. Если есть кастомные deny-правила пользователя → `[USER]`, сохранить.
 
 ---
 
@@ -184,7 +205,7 @@
 Если `stack.db` != none (реальная БД, не кэш/очередь):
 - `update-schema.sh` → SessionStart
 
-### Deprecated hooks (удалять автоматически в validate mode)
+### Deprecated hooks (удалять автоматически в patch mode)
 
 Если в текущем `settings.json` найдены — удалить БЕЗ подтверждения пользователя:
 
@@ -205,44 +226,13 @@
 
 Собрать permissions + hooks → записать в `.claude/settings.json`.
 
----
-
-## 4.4 Режим `validate` (DIFF-BASED MERGE)
-
-1. Прочитай `.claude/settings.json` (если существует)
-2. Прочитай `.claude/settings.local.json` (если существует) — **НИКОГДА НЕ МОДИФИЦИРОВАТЬ**
-3. Рассчитай diff:
-
-| Маркер | Значение | Действие |
-|--------|----------|----------|
-| `[KEEP]` | Совпадает | Ничего |
-| `[+ADD]` | Есть в целевом, нет в текущем | Предложить добавить |
-| `[-DEL]` | Есть в текущем, нет в целевом | Предложить удалить |
-| `[USER]` | Есть в текущем, нет в registry | НЕ ТРОГАТЬ |
-
-4. Показать diff пользователю
-
-5. AskUserQuestion:
-   questions:
-     - question: "Как применить изменения к settings.json?\n\nЕсли выборочно — укажи через Other номера строк для [+ADD] и [-DEL]"
-       header: "Settings diff"
-       options:
-         - {label: "Принять все", description: "Применить все [+ADD] и [-DEL]"}
-         - {label: "Только ADD", description: "Добавить новые, не удалять существующие"}
-         - {label: "Пропустить", description: "Оставить без изменений"}
-       multiSelect: false
-
-   Если Other → парси список номеров/названий для применения.
-
-6. Применить
-
-**Примечание:** MCP permissions будут добавлены на step 5 (plugins) после установки плагинов.
+Если Write отклонён пользователем — верни error.
 
 ---
 
 ## Лог
 
-**ОБЯЗАТЕЛЬНО** перед checkpoint запиши лог в `.bootstrap-cache/step-4-log.md`:
+Перед checkpoint запиши лог в `.claude/.cache/step-4-log.md`:
 
 ```markdown
 # Step 4: Settings.json — Log
@@ -261,7 +251,6 @@
 
 ## Checkpoint
 
-Обнови `.bootstrap-cache/state.json`:
-- `steps.4.status` → `"completed"`
-- `steps.4.completed_at` → `"{ISO8601}"`
-- `current_step` → 5
+Обнови `.claude/.cache/state.json`:
+- `steps.settings.status` → `"completed"`
+- `steps.settings.completed_at` → `"{ISO8601}"`

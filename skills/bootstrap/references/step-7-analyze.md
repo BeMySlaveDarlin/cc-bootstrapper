@@ -1,19 +1,21 @@
 # Шаг 7: Глубокий анализ
 
+> Modes: fresh, upgrade
+
 ## Вход
-- `.bootstrap-cache/state.json` → `config.analysis_depth`, `stack`
-- `.bootstrap-cache/analysis/` (из step 1)
+- `.claude/.cache/state.json` → `config.analysis_depth`, `stack`
+- `.claude/.cache/analysis/` (из step 1)
 
 ## Выход
-- `.bootstrap-cache/deep/` — файлы глубокого анализа
-- Обновлённый `.bootstrap-cache/_index.md`
+- `.claude/.cache/deep/` — файлы глубокого анализа
+- Обновлённый `.claude/.cache/_index.md`
 
 ## 7.0 Проверка режима
 
 Если `analysis_depth = "light"`:
 → Вывести: `[7/10] Глубокий анализ [ПРОПУСК — режим light]`
 → Обновить state, перейти к checkpoint
-→ НЕ создавать `.bootstrap-cache/deep/`
+→ НЕ создавать `.claude/.cache/deep/`
 
 ---
 
@@ -36,33 +38,33 @@
 
   Если справляешься (< 500 файлов) — выполни анализ и верни 'done'.
   Если scope слишком большой (500+ файлов) — НЕ делай работу сам. Верни 'need_split' и запиши
-  план дробления в .bootstrap-cache/deep/{lang}-split-plan.json:
+  план дробления в .claude/.cache/deep/{lang}-split-plan.json:
   {\"status\": \"need_split\", \"scopes\": [
     {\"dir\": \"src/Auth\", \"prompt\": \"Проанализируй {lang}-код в {PROJECT_DIR}/src/Auth. ...\"},
     {\"dir\": \"src/Billing\", \"prompt\": \"...\"}
   ]}
 
-  Запиши результат в .bootstrap-cache/deep/{lang}-patterns.md (если done).
+  Запиши результат в .claude/.cache/deep/{lang}-patterns.md (если done).
   Вопросы — только через AskUserQuestion."
 
 Запускай per-lang субагентов ПАРАЛЛЕЛЬНО если языков > 1.
 
-**Обработка need_split (оркестратор шага 5, не главный оркестратор):**
+**Обработка need_split (оркестратор шага 7, не главный оркестратор):**
 Если субагент вернул `need_split`:
 1. Прочитай `{lang}-split-plan.json`
 2. Для каждого scope из плана — запусти Agent tool (mode: "auto") с промптом из плана
 3. После завершения всех — запусти ещё один Agent tool для мержа:
-   "Прочитай все файлы .bootstrap-cache/deep/{lang}-*.md и объедини в {lang}-patterns.md"
+   "Прочитай все файлы .claude/.cache/deep/{lang}-*.md и объедини в {lang}-patterns.md"
 
 ### Deep-анализ (deep, дополнительно)
 
 Запусти отдельные субагенты per-domain ПАРАЛЛЕЛЬНО через Agent tool (mode: "auto"):
 
-- **Архитектура**: "Проанализируй архитектуру проекта в {PROJECT_DIR}. Модули, слои, DI. Запиши в .bootstrap-cache/deep/architecture.md"
-- **API** (если есть): "Проанализируй API проекта в {PROJECT_DIR}. Endpoints, методы, middleware. Запиши в .bootstrap-cache/deep/api-contracts.md"
-- **Тесты**: "Проанализируй тесты проекта в {PROJECT_DIR}. Фреймворки, fixtures, покрытие. Запиши в .bootstrap-cache/deep/testing-patterns.md"
-- **Инфра** (если контейнеры/CI): "Проанализируй инфру в {PROJECT_DIR}. Docker, CI/CD, deploy. Запиши в .bootstrap-cache/deep/infra.md"
-- **Storage** (если есть): "Проанализируй хранилища в {PROJECT_DIR}. Схема, миграции, ORM. Запиши в .bootstrap-cache/deep/storage.md"
+- **Архитектура**: "Проанализируй архитектуру проекта в {PROJECT_DIR}. Модули, слои, DI. Запиши в .claude/.cache/deep/architecture.md"
+- **API** (если есть): "Проанализируй API проекта в {PROJECT_DIR}. Endpoints, методы, middleware. Запиши в .claude/.cache/deep/api-contracts.md"
+- **Тесты**: "Проанализируй тесты проекта в {PROJECT_DIR}. Фреймворки, fixtures, покрытие. Запиши в .claude/.cache/deep/testing-patterns.md"
+- **Инфра** (если контейнеры/CI): "Проанализируй инфру в {PROJECT_DIR}. Docker, CI/CD, deploy. Запиши в .claude/.cache/deep/infra.md"
+- **Storage** (если есть): "Проанализируй хранилища в {PROJECT_DIR}. Схема, миграции, ORM. Запиши в .claude/.cache/deep/storage.md"
 
 Пропусти домен если данных для него нет.
 
@@ -72,7 +74,7 @@
 
 Для КАЖДОГО `{lang}`:
 
-Файл: `.bootstrap-cache/deep/{lang}-patterns.md`
+Файл: `.claude/.cache/deep/{lang}-patterns.md`
 
 ```markdown
 # {Lang} — Паттерны кода
@@ -136,11 +138,11 @@
 
 ## 7.5 Обновление индекса
 
-Обновить `.bootstrap-cache/_index.md` — добавить созданные файлы в deep/.
+Обновить `.claude/.cache/_index.md` — добавить созданные файлы в deep/.
 
 ## Лог
 
-**ОБЯЗАТЕЛЬНО** перед checkpoint запиши лог в `.bootstrap-cache/step-7-log.md`:
+Перед checkpoint запиши лог в `.claude/.cache/step-7-log.md`:
 
 ```markdown
 # Step 7: Глубокий анализ — Log
@@ -162,7 +164,6 @@
 Обнови state:
 ```json
 {
-  "steps": {"7": {"status": "completed", "completed_at": "..."}},
-  "current_step": 8
+  "steps": {"analyze": {"status": "completed", "completed_at": "..."}},
 }
 ```

@@ -1,5 +1,7 @@
 # Шаг 3B: Настройка bootstrap — Применение
 
+> Modes: fresh, upgrade
+
 > **SUBAGENT ISOLATION:** Этот шаг выполняется как изолированный субагент.
 
 ## Роль
@@ -75,7 +77,7 @@
 
 ## Запись в state
 
-Обнови `.bootstrap-cache/state.json`:
+Обнови `.claude/.cache/state.json`:
 
 ```json
 {
@@ -90,19 +92,18 @@
     "custom_pipelines": [{"name": "...", "trigger": "...", "agents": [...]}]
   },
   "steps": {
-    "3": {
+    "configure": {
       "status": "completed",
       "completed_at": "{ISO8601}"
     }
   },
-  "current_step": 4,
   "updated_at": "{ISO8601}"
 }
 ```
 
 ## Лог
 
-Запиши `.bootstrap-cache/step-3-log.md`:
+Запиши `.claude/.cache/step-3-log.md`:
 
 ```markdown
 # Step 3: Настройка bootstrap — Log
