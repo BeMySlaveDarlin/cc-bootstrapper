@@ -5,6 +5,27 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [9.0.1] - 2026-04-12
+
+### Fixed
+- SendMessage формат с обязательным summary во всех шаблонах (pipelines, skills, includes)
+- verify-bootstrap.sh: legacy путь `.bootstrap-cache` → `.claude/.cache`
+- Deny rules: .cursorrules и AGENTS.md покрыты для vendor/ и site-packages/
+- enableAllProjectMcpServers: привязка к любому MCP серверу, не только GitLab
+- Patch manifest: классификация через known-templates.json при пустых registries
+- Corrupted state.json: fallback в Resume Detection (удалить cache, начать заново)
+- Team mode: common-gen стартует после всех lang-gen (per-lang фрагменты ready)
+- Пустой .claude/ без agents/skills/pipelines → fresh вместо upgrade
+- step-init: Write state.json отклонён → error (bootstrap невозможен)
+- tar backup: проверка exit code
+- Удалена мёртвая секция 4.4 (patch mode) из step-4-settings
+- Checkpoint keys: числовые → именованные (init, configure, settings, plugins, preview, analyze, patch, finalize)
+- Удалён current_step из всех step-файлов
+- step-finalize: redundant rm убран, gen-reports помечены как опциональные для patch mode
+- step-5-apply: нумерация секций исправлена (1,2,3,4)
+- step-3-configure: "Правило resume" → "Правило skip", проверка config.analysis_depth
+- step-upgrade U.4: явно указано "без Settings и Plugins"
+
 ## [9.0.0] - 2026-04-12
 
 ### Breaking

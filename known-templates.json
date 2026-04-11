@@ -1,6 +1,6 @@
 {
   "description": "Кумулятивный реестр всех template-файлов по всем версиям cc-bootstrapper. Используется upgrade для классификации файлов при отсутствии manifest.",
-  "version": "9.0.0",
+  "version": "9.0.1",
   "agents": [
     {
       "pattern": "{lang}-architect",

@@ -241,7 +241,7 @@ for f in .claude/agents/*.md .claude/skills/*/SKILL.md .claude/pipelines/*.md .c
 done
 
 jq -n \
-    --arg version "9.0.0" \
+    --arg version "9.0.1" \
     --arg generated "$(date -u +%Y-%m-%dT%H:%M:%SZ)" \
     --argjson files "$FILES" \
     --argjson hashes "$HASHES" \
